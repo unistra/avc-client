@@ -1,0 +1,82 @@
+= Audiovideocours / Univ-RAV (Technical site) =
+
+This is the technical site of Audiovideocours (also know as Univ-RAV), a freeware software solution (and optionally  hardware) dedicated to automatic multimedia capture of presentations or lectures. 
+
+The end user site of the University Louis-Pasteur is located here (in French):
+http://audiovideocours.u-strasbg.fr/
+
+The software is available in English and French and developed by the "ULP Multimedia" department in University Louis-Pasteur (Strasbourg, France) 
+
+== Features ==
+
+  * Automatically capture a screenshot at relevant mouse or keyboard events
+  * Automatically capture audio or video inputs
+  * can be used in "on demand" (and podcasting) and/or "live" mode
+  * a single Windows installer for an application entirely configurable depending of your usage
+  * automatic screenshot and audio or video synchronization through a SMIL file (W3C specification)
+  * AutomationControl via a serial keyboard available (+ eventual videoprojector RS232 control)
+ 
+== Installation ==
+  
+  * Download this [http://audiovideocours.u-strasbg.fr/releases/AudioVideoCours.exe windows installer] and follow the instructions
+  * The above installer is preconfigured for an audio and "standalone" usage but you can change it by editing the configuration file (menu "informations">"configuration")
+  * For playback we recommend {{{RealPayer 10}}} or above available on Windows, Mac and Linux (good support of the SMIL specification)
+
+
+== Contacts ==
+
+Project supervisors:
+  * Christophe Debeire (technical director of ULP multimedia department): christophe.debeire AT ulpmm.u-strasbg.fr
+  * Eric Laemmer (Chief projet http://audiovideocours.u-strasbg.fr/) : Eric.Laemmer AT ulpmm.u-strasbg.fr
+
+PC development ("standalone" and client + R&D software/hardware):
+  * francois schnell, mail: francois.schnell  [AT ulpmm.u-strasbg.fr] Tel: 0390240016
+
+Web serveur development audiovideocours.u-strasbg.fr:
+  * Laurent Kieffer : lau.kieffer@gmail.com
+  * http://audiovideocours.u-strasbg.fr
+  
+  ####################################
+  Editing "AutomationControl"
+  
+  This page describes the optional hardware and automation interface:
+
+[http://ulpmm-projets.u-strasbg.fr/projets/videocours/browser/documentation/automationScheme.jpeg Automation scheme (in French)]
+
+[http://ulpmm-projets.u-strasbg.fr/projets/videocours/browser/documentation/SerialKB-schema.jpeg Serial keyboard Scheme (in French)]
+
+######################################
+
+Editing "VideoLogTool"
+
+Videolog is a command-line tool developed to make a new version of audiovideocours that doesn't install in the user computer but capture the video output going to the videoprojector. At regular intervals the script compare images and decide if the new one must be saved as a new screenshot. The end-result is a "screenshots" folder with numbered pictures and a timecode file. 
+
+A video acquisition card is necessary but another source like a webcam can be used. Default options should work fine but it is possible to set various parameters:
+
+{{{
+usage: videolog.py [options]
+
+options:
+  -h, --help            show this help message and exit
+  -v VIDEOINPUT, --videoinput=VIDEOINPUT
+                        Give here the video input to use (default 0)
+  -p PATH, --path=PATH  Path to data folder inside double quotes.
+  -x PIXLIMIT, --pixLimit=PIXLIMIT
+                        Differential value above which a pixel is considered
+                        changed (default=100).
+  -i IMGLIMIT, --imgLimit=IMGLIMIT
+                        An image is considered changed above imgLimit
+                        pixels(default=200).
+  -t TEMPO, --tempo=TEMPO
+                        Make an image comparison each tempo seconds
+                        (default=1).
+  -s STEP, --step=STEP  Check a pixel each 'step' pixels: If step=2 check for
+                        pixels 0,2,4,etc.
+  -m MONITORING, --monitoring=MONITORING
+                        Monitoring option: a monitoring.jpg image is saved
+                        each second (True or False).
+}}}
+
+ 
+ ###############################################################"
+  

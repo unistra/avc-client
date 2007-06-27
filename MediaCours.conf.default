@@ -1,0 +1,79 @@
+################################################################################
+##
+##       This is a configuration file for AudioVideoCours.
+##
+## 	(You must save the file as "mediacours.conf" 
+##      and restart the application for the changes to take effect)
+##
+## 	For more technical informations and help: 
+## 	francois.schnell [AT ulpmultimedia.u-strasbg.fr] or 03 90 24 00 16
+##
+################################################################################
+
+# Don't change this section name : [univraudiocours]
+[mediacours]
+
+# Language (English or French available)
+
+Language=French
+
+# Usage : 'audiocours' (usage=audio)  or 'videocours' (usage=video)
+# Put standalone=False if the software must always work in a amphitheatre
+# to use the live option you must have installed VLC (videolan) 
+
+usage=audio
+standalone=True
+live=False
+
+# If needed give another folder path where you want your recordings to be saved
+#Examples:
+#pathData=C:\recordings
+
+# choose your encoder if usage=video and Real Media Producer and/or 
+#Windows Media Encoder are installed (videoEncoder= wmv or videoEncoder=real)
+videoEncoder=real
+
+# Set the URL of the audiocours server form and ftp and ftp passeword  and login
+urlserver= 
+ftpUrl=
+ftpLogin=
+ftpPass=
+
+# Set samplingFrequency. Expl: 8000, 16000, 32000, 44100, 48000 Hz (default) and bitrate (128000 default). Warning not all combinations works !
+samplingFrequency=48000 
+bitrate=64000
+
+# Set the keyStop to start/stop recording if you don't have the special serial keyboard
+stopKey= F8
+
+# Set the delay before a new screenshot can be taken in seconds (useful on an slow computer if it misses some screenshots)
+eventDelay=1.5
+
+# Maximum Recording Length (in seconds). The recording stops above this duration and the soft come back in the initial state
+# (1h=3600s ... 5h=18000s) 
+maxRecordingLength= 18000
+
+# If you use a special keyboard on the serial port put "True"  here and indicate the port number to use (com1=0,com2=1,etc)
+serialKeyboard=False
+keyboardPort=0
+amxKeyboard=False
+ 
+# If a videoprojector is connected to a serial port of the PC put True here and indicate the port number to use (com1=0,com2=1,etc) 
+videoprojectorInstalled=False
+videoprojectorPort=1
+#videoProjON='PWR ON\x0D'
+#videoProjOFF='PWR OFF\x0D'
+
+# Recording place (for the log record)
+recordingPlace=unknown
+
+# the socket is looking for (id:xxxx) on PortNumber
+socketEnabled=False
+portNumber = 3737
+
+
+
+
+
+
+

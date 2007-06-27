@@ -1,0 +1,109 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2007-05-29 17:37+Paris, Madrid (heure d'été)\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: MediaCours.py:860
+msgid "Help"
+msgstr "Aide"
+
+#: MediaCours.py:868
+msgid "By pressing the  ' Record ! '  button, the  recording will  "
+msgstr "En cliquant sur le bouton 'Enregistrer !', l'enregistrement"
+
+#: MediaCours.py:869
+msgid "begin immediately and this window will disappear. "
+msgstr "débutera  immédiatemment  et  cette  fenêtre  disparaîtra."
+
+#: MediaCours.py:870
+msgid "To stop the recording press the following key:   "
+msgstr "Pour  finir  l' enregistrement  appuyez  sur  la  touche  "
+
+#: MediaCours.py:885
+msgid "Live streaming"
+msgstr "Diffuser aussi en direct"
+
+#: MediaCours.py:886
+msgid "Record!"
+msgstr "Enregistrer !"
+
+#: MediaCours.py:888
+msgid "Other choices"
+msgstr "Autres choix"
+
+#: MediaCours.py:889 MediaCours.py:1029
+msgid "Quit"
+msgstr "Quitter"
+
+#: MediaCours.py:926
+msgid "Website:"
+msgstr "Site internet"
+
+#: MediaCours.py:976
+msgid "Status bar"
+msgstr "Barre d'état"
+
+#: MediaCours.py:984
+msgid "Title:"
+msgstr "Titre :"
+
+#: MediaCours.py:988
+msgid "Eventual description:"
+msgstr "Description éventuelle:"
+
+#: MediaCours.py:991
+msgid "Name:"
+msgstr "Nom :"
+
+#: MediaCours.py:993
+msgid "First name:"
+msgstr "Prénom :"
+
+#: MediaCours.py:995
+msgid "Degree:"
+msgstr "Unité d'enseignement ou formation éventuelle :"
+
+#: MediaCours.py:999
+msgid "Access Code if you wish to set a limited access:"
+msgstr "Code d'accès au cours si accès limité souhaité :"
+
+#: MediaCours.py:1006
+msgid "Access to"
+msgstr "Accès à"
+
+#: MediaCours.py:1024
+msgid "Publish!"
+msgstr "Publier !"
+
+#: MediaCours.py:1025
+msgid "Cancel"
+msgstr "Annuler"
+
+#: MediaCours.py:1028
+msgid "Read"
+msgstr "Lire"
+
+#: MediaCours.py:1030
+msgid "Open"
+msgstr "Ouvrir"
+
+#: MediaCours.py:1089
+msgid "Current recording "
+msgstr "Enregistrement courant"
+
+#: MediaCours.py:1138
+msgid "Nothing to read."
+msgstr "Rien à lire (faire d'abord un enregistrement, bouton 'Annuler' ou en 'Ouvrir' un existant)"
+
