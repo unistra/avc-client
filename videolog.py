@@ -3,17 +3,18 @@
 #  VideoLogTool (c) ULP Multimedia 2007
 #  Developper: Francois Schnell  (AT ulpmultimedia.u-strasbg.fr)
 #
-# A command-line tool to automatically detect changes of a video input and take
-# screenshots (plus a generate a timecode file)
+# A command-line tool to automatically detect changes in a video input and take
+# screenshots (plus generate a timecode file "timecode.csv")
 #
+# For usage type videolog.py --help in the DOS shell
 #
 # Requires VideoCapture module(Windows):http://videocapture.sourceforge.net/
+#
 ###############################################################################
 
 import time,os,sys,fnmatch
 from optparse import OptionParser
 from VideoCapture import Device
-
         
 def compareImages(img1,img2, pixLimit=100, imgLimit=200,step=4):
     """
@@ -21,7 +22,7 @@ def compareImages(img1,img2, pixLimit=100, imgLimit=200,step=4):
     - pixLimit: a pixel is considered changed above this value
     - imgLimit: the minimal number of pixels which have to change to
                      consider that the picture is changed   
-    For information in a 768*576 picture there is 442368 pixels
+    For information in a 768*576 picture there are 442368 pixels
     - step: test a pixel each 'step' pixels (default=1)
             Expl: if step=4, test pixels 0,4,8,12,etc...
     """
@@ -29,7 +30,7 @@ def compareImages(img1,img2, pixLimit=100, imgLimit=200,step=4):
     img2 = img2.getdata()
     totalPixels= len(img1)
     pixdiff = 0
-    step=4 # test a pixel at each step (step=2 => check pix 0,2,4...)
+    step=4 
     for i in range(totalPixels/step):
         if abs(sum(img1[i*step]) - sum(img2[i*step])) > pixLimit:
             pixdiff += 1
@@ -40,14 +41,13 @@ if __name__=="__main__":
     
     ## Global variables
     videoInput=0
-    diaId=0
-    tempo=1 # at which interval to check for changes (seconds)
-    path=r"C:\Documents and Settings\franz\Bureau\test" # the path where to put the data (timecode + screenshots folder)
-    #path=""
-    pixLimit=100 #a pixel is considered changed above this value (RGB sum)
-    imgLimit=200 # number of pixels wich have to change to have a postive test 
-    step=4 # test a pixel each 'step' pixels (default=1)
-    monitoring=True
+    diaId=0 #If diaID=0  Screenshot will be called D1.jpg, D2.jpg, etc
+    tempo=1 # Set time interval to check for changes in seconds
+    path="" # Expl: r"C:\Documents and Settings\MrSmith\Desktop\Data"
+    pixLimit=100 #A pixel is considered changed above this value (RGB sum)
+    imgLimit=200 # The number of pixels wich have to change to have a postive
+    step=4 # test a pixel each 'step' pixels, incresa this number for slow PC
+    monitoring=True # Create a monitoring.jpg pic at each 'step' time interval 
     
     ## Read command line arguments
     print "Launching videoLog tool...\n"
@@ -91,7 +91,7 @@ if __name__=="__main__":
     print "Using monitoring= ", str(monitoring) 
     
     
-    ## Define the working directory and create a screenshots directory
+    ## Define the working directory and create a "screenshots" directory
     if path=="":
         path=os.getcwd()
         print "Using path= ",path
@@ -100,19 +100,21 @@ if __name__=="__main__":
 
     print "Beginning VideoLog..."
     
-    ## Open video input and take a first screenshot
+    ## Open video input
     cam = Device(videoInput)
     oldImage=cam.getImage()
-    ## Open a timecode file
-    #timecode=open(path+"/timecode.csv","a")
     t0=time.time()
     
     print "Comparing images... ",
+    
+    ## Enter main loop
     while 1:
         time.sleep(tempo)
         print "*",
         newImage=cam.getImage()
+        
         if compareImages(oldImage,newImage,imgLimit,pixLimit,step=1) or diaId==0:
+            
             print " Screenshot "+str(diaId)+" "
             oldImage=newImage
             diaId += 1
@@ -122,10 +124,12 @@ if __name__=="__main__":
             timecode=open(path+"/timecode.csv","a")
             timecode.write(timeStamp+"\n")
             timecode.close()
+
         if monitoring==True:
             cam.getImage().save("monitoring.jpg")
 
     timecode.close()
+
     print "End of program"
 
 
