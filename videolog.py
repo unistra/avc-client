@@ -3,12 +3,15 @@
 #  VideoLogTool (c) ULP Multimedia 2007
 #  Developper: Francois Schnell  (AT ulpmultimedia.u-strasbg.fr)
 #
-# A command-line tool to automatically detect changes in a video input and take
-# screenshots (plus generate a timecode file "timecode.csv")
+#  This script is relesased under the Free Software GPL license version 2
+#  (you can find a copy of the GNU General Public License in the current folder)
 #
-# For usage type videolog.py --help in the DOS shell
+#  A command-line tool to automatically detect changes in a video input and take
+#  screenshots (plus generate a timecode file "timecode.csv")
 #
-# Requires VideoCapture module(Windows):http://videocapture.sourceforge.net/
+#  For usage type videolog.py --help in the DOS shell
+#
+#  Requires VideoCapture module(Windows):http://videocapture.sourceforge.net/
 #
 ###############################################################################
 
