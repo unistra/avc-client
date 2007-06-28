@@ -817,7 +817,7 @@ class BeginFrame(wx.Frame):
             self.Bind(wx.EVT_MENU,self.configuration,conf)
             #self.SetMenuBar
             
-        im1 = wx.Image('ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
         text1="\n\t"+_("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
         _("begin immediately and this window will disappear. ")+"\n\n\t"+\
@@ -921,7 +921,7 @@ class EndingFrame(wx.Frame):
         self.statusBar.SetStatusText(_("Status bar"))
         panel=wx.Panel(self)
         panel.SetBackgroundColour((244,180,56))
-        im1 = wx.Image('ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         textTitre = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entry1 = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
         textDescription = wx.StaticText(panel, -1, _("Eventual description:"),
@@ -1144,13 +1144,13 @@ if __name__=="__main__":
     ## Systray 
     
     if usage=="audio":
-        icon1 = wx.Icon('audiocours1.ico', wx.BITMAP_TYPE_ICO)
-        icon2 = wx.Icon('audiocours2.ico', wx.BITMAP_TYPE_ICO)
+        icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
+        icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "AudioCours en attente")
     if usage=="video":
-        icon1 = wx.Icon('videocours1.ico', wx.BITMAP_TYPE_ICO)
-        icon2 = wx.Icon('videocours2.ico', wx.BITMAP_TYPE_ICO)
+        icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
+        icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "VideoCours en attente")
         
