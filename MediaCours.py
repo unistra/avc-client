@@ -189,6 +189,7 @@ def readConfFile():
         recordingPlace=readParam("recordingPlace")
         ftpLogin=readParam("ftpLogin")
         ftpPass=readParam("ftpPass")
+        live=readParam("live")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -797,6 +798,7 @@ class BeginFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         global liveFeed
+        print "################## live=",live
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(500, 340),
