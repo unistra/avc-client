@@ -1,0 +1,47 @@
+
+<html>
+
+<head>
+
+<script type="text/javascript">
+
+// A small script to update the monitoring.jpg image without reloading the page
+// Francois Schnell ( ULP Multimedia)
+
+live_picture="monitoring.jpg" //name of your live picture
+refresh_interval=2; // number of seconds between each picture refresh 
+image_width=768     // diplay image width
+image_height=576    // display image eight
+
+
+function wait()
+{
+setTimeout("refresh_image()", refresh_interval*1000);
+}
+
+function refresh_image()
+{
+document.live_picture.src = live_picture+"?" + Math.random();
+// ?+ Math.random() is trick to force the browser to reload the image
+wait();
+}
+
+</script>
+
+<style type="text/css">
+
+</style>
+
+</head>
+
+<body onLoad="wait()">
+<h1> Monitoring image without page reload</h1>
+<p>See the variables in the javascript of the webpage to see what you can  set:
+time interval, height, width </p>
+<p>
+<P>Monitoring.jpg:</p>
+<img src=live_picture width=image_width height=image_height name="live_picture" />
+</p>
+</body>
+
+</html>
