@@ -334,11 +334,11 @@ def recordStop():
     ## Create a second smil at the end
     smil=SmilGen(usage,workDirectory)
     f=open(workDirectory+"/timecode.csv")
-    diaTime=f.read().split("\n")[:-2]
+    diaTime=f.read().split("\n")[:-1]
     #nbDia=len(diaTime)
     diaId=1
     for timeStamp in diaTime:
-        smil.smilEvent(timeStamp,diaId+1)
+        smil.smilEvent(timeStamp,diaId)
         diaId+=1
     smil.smilEnd(usage,videoEncoder="real")
         
