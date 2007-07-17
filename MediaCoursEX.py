@@ -4,6 +4,11 @@
 #
 #    (c) ULP Multimedia 2006 - 2007 
 #     Developer : francois.schnell [AT ulpmm.u-strasbg.fr]
+#
+#     For this version a serial keyboard and a videocard aquisition
+#     or a frame grabber is necessary. See this URL for more informations:
+#     http://ulpmm-projets.u-strasbg.fr/projets/videocours/wiki/ExternalVersion
+#
 #---
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -134,6 +139,7 @@ live=False
 language="French"
 ftpLogin=""
 ftpPass=""
+videoinput="0"
 
 #------ i18n settings -------
 
@@ -148,7 +154,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard\
-    ,live,language,ftpLogin,ftpPass
+    ,live,language,ftpLogin,ftpPass,videoinput
     
     section="mediacours"
 
@@ -193,6 +199,7 @@ def readConfFile():
         recordingPlace=readParam("recordingPlace")
         ftpLogin=readParam("ftpLogin")
         ftpPass=readParam("ftpPass")
+        videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -218,24 +225,15 @@ def recordNow():
         pathData=os.getcwd()
         
     workDirectory=pathData+"\\"+dirName
-    #print "###"+pathData+"###", os.getcwd(),type(pathData)
-    #print "workDirectory= ",workDirectory
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
-    #os.mkdir(workDirectory + "/screenshots")
-    #timecodeFile = open (workDirectory +'\\timecode.csv','w')
-    #smil=SmilGen(usage,workDirectory)
+
     def screenshotThread():
         """ Launch videolog tool"""
         global recording,videolog_pid
-        #videolog_pid = subprocess.Popen([r'python', ["videolog.py","-p",workDirectory]]).pid
-        order= 'python videolog.py -p "%s"'% (workDirectory)
-        #order='python videolog.py'
-        #print "oder: ",order
-        #videolog_pid=os.spawnl(os.P_NOWAIT,order)
-        #os.spawnl(os.P_NOWAIT,order)
+        order= 'python videolog.py -v %s -p "%s"'% (videoinput,workDirectory)
         videolog_pid = subprocess.Popen(order).pid
-        #os.system(order)
+
     ## Engage videlog tool
     start_new_thread(screenshotThread,())    
     def record():

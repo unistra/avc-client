@@ -1,6 +1,6 @@
 ################################################################################
 ##
-##       This is a configuration file for AudioVideoCours.
+##       This is a configuration file for AudioVideoCours (External version).
 ##
 ## 	(You must save the file as "mediacours.conf" 
 ##      and restart the application for the changes to take effect)
@@ -15,6 +15,9 @@
 
 # Language (English or French available)
 Language=French
+
+# VideoInput of the aquisition card or the frame grabber
+videoinput=0
 
 # Usage : 'audiocours' (usage=audio)  or 'videocours' (usage=video)
 # Put standalone=False if the software must always work in a amphitheatre
