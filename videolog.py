@@ -50,7 +50,8 @@ if __name__=="__main__":
     pixLimit=100 #A pixel is considered changed above this value (RGB sum)
     imgLimit=200 # The number of pixels wich have to change to have a postive
     step=4 # test a pixel each 'step' pixels, incresa this number for slow PC
-    monitoring=True # Create a monitoring.jpg pic at each 'step' time interval 
+    monitoring=True # Create a monitoring.jpg pic at each 'step' time interval
+    offset=3.0
     
     ## Read command line arguments
     print "Launching videoLog tool...\n"
@@ -123,7 +124,10 @@ if __name__=="__main__":
             diaId += 1
             t=time.time()
             newImage.save(path+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-            timeStamp = str(round((t-t0),2))
+            if diaId!=0:
+                timeStamp = str(abs(round((t-t0),2)-offset))
+            elif diId==0:
+                timeStamp = str(round((t-t0),2))
             timecode=open(path+"/timecode.csv","a")
             timecode.write(timeStamp+"\n")
             timecode.close()

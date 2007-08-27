@@ -335,7 +335,9 @@ def recordStop():
     diaTime=f.read().split("\n")[:-1]
     #nbDia=len(diaTime)
     diaId=1
+    offset=0 # the estimate time it takes to videolog to begin
     for timeStamp in diaTime:
+        timeStamp=str(float(timeStamp)+offset)
         smil.smilEvent(timeStamp,diaId)
         diaId+=1
     smil.smilEnd(usage,videoEncoder="real")
@@ -385,7 +387,8 @@ def confirmPublish(folder=''):
         # For the logFile :
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+id+" title="+title+" description="+description+" mediapath="+\
-        dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
+        dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+\
+        ue+ " To server ="+urlserver+"\n")
         #try:
         print "------ tar ordered------"
         # Send by ftp
@@ -409,7 +412,8 @@ def confirmPublish(folder=''):
             #Send data to the AudioCours server (submit form)
             page = urlopen(urlserver,\
             "fichier="+dirName+".zip"+"&id="+id+"&title="+title+"&description="+description+\
-            "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirName+".zip")
+            "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+\
+            "&ue="+ue+"&timing=n"+"&mediapath="+dirName+".zip")
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
