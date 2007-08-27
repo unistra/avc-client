@@ -592,7 +592,9 @@ class Videoprojector:
     def __init__(self):
         """ Open the serial port of the videoprojector"""
         print "Opening serial port of the videoprojector"
-        self.ser = serial.Serial(videoprojectorPort)
+        print "with serial port number =", videoprojectorPort
+        #self.ser = serial.Serial(videoprojectorPort)
+        self.ser = serial.Serial(int(videoprojectorPort))
     def projOn(self):
         """Send the 'switch on' command to the videoprojector"""
         self.ser.write(videoProjON)
