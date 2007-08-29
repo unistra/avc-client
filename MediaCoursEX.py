@@ -594,15 +594,21 @@ class Videoprojector:
         print "Opening serial port of the videoprojector"
         print "with serial port number =", videoprojectorPort
         #self.ser = serial.Serial(videoprojectorPort)
+        print "Testing videoporjector port"
         self.ser = serial.Serial(int(videoprojectorPort))
+        self.ser.close()
     def projOn(self):
         """Send the 'switch on' command to the videoprojector"""
+        self.ser = serial.Serial(int(videoprojectorPort))
         self.ser.write(videoProjON)
         print "- sending "+videoProjON+" to port com "+str(videoprojectorPort)
+        self.ser.close()
     def projOff(self):
         """Send the 'switch off' command to the videoprojector"""
+        self.ser = serial.Serial(int(videoprojectorPort))
         self.ser.write(videoProjOFF)
         print "- sending "+videoProjOFF+" to port com "+str(videoprojectorPort)
+        self.ser.close()
 
 class SmilGen:
     """ A class to produce a SMIL file on the fly """
