@@ -752,7 +752,9 @@ class BeginFrame(wx.Frame):
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
         text1="\n\t"+_("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
-        _("begin immediately and this window will disappear. ")+"\n\n\t"+\
+        _("begin immediately and this window will disappear. ")
+        if serialKeyboard==False:
+            text1=text1+"\n\n\t"+\
         _("To stop the recording press the following key:   ")+stopKey+\
         ".   "
         
