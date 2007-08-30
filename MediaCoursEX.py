@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-
+
 #*****************************************************************************
 #
 #     MediaCours (Windows audio/video client and 'standalone' version)
@@ -52,7 +55,16 @@ from pywinauto import application
 
 ## Defautl global variables before config file reading
 #------------------------------------------------------------
+univr_order=False # Is the recording order comes from Univr ?
 standalone=False
+# Publishing form variables
+title=""
+description=""
+name=""
+firstname=""
+login=""
+genre=""
+ue=""
 " To use the app without a  webserver to publish to"
 recording = False
 " To know if we are recording now" 
@@ -62,7 +74,7 @@ dirName=""
 "The data directory"
 pathData=""
 "Name of the last recording folder"
-id= "(id:no)"
+id= ""
 "An id which could be received and send from the socket"
 urlserver= ""
 "Default URL of the audiovideocours server containing the submit form"
@@ -369,7 +381,7 @@ def playAudio():
 def confirmPublish(folder=''):
     "Publish the recording when hitting the 'publish' button "
     global id,entry1,entry2,entry25,entry3,entry4
-    print "description = ", description
+    #print "description = ", description
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
     if dirName =="":
         frameEnd.statusBar.SetStatusText("Rien ? publier ...")
@@ -418,8 +430,8 @@ def confirmPublish(folder=''):
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
         # set the id variable to (id:no) again
-        print "id is now back to value (id:no)" 
-        id= "(id:no)"
+        print "id is now back to empty" 
+        id= ""
         print "setting entry fields back to empty"
         entry1.SetValue("")
         entry2.SetValue("")
@@ -436,18 +448,21 @@ def confirmPublish(folder=''):
 def LaunchSocketServer():
     """ Launch a socket server, listen to eventual orders
     and decide what to do """
-    global id
+    global id,univr_order
     print "Client is listening for socket order ..."
     mySocket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
-    mySocket.bind ( ( '', portNumber ) )
+    mySocket.bind ( ( '', int(portNumber) ) )
     mySocket.listen ( 1 )
     while True:
         channel, details = mySocket.accept()
         print 'We have an opened connection with', details
         writeInLogs('- We have an opened connection with '+str(details)+"\n")
         received = channel.recv(100)
+        print "===> Received =",received
         writeInLogs("- received = "+str(received)+"\n")
         if received != "":
+            if received=="SHOW_AVC":
+                frameBegin.Show()
             # search for an (id:xxxxx) pattern
             iDbegin1= received.find("(id:")
             iDbegin2= received.find("(title:")
@@ -458,7 +473,21 @@ def LaunchSocketServer():
                 id=received[(iDbegin1+4):iDend]
                 print "received ID number ", id 
                 channel.send ( 'Received ID' + str(id))
-                windowBack(frameBegin)
+                #windowBack(frameBegin)
+                caption="Enregistrement via Univ-R"
+                text="Veulliez appuyer sur le bouton audiovideocours\
+                \ndu clavier de commande de la salle."
+                dialog=wx.MessageDialog(None,message=text,caption=caption,
+                style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                #if the user clicks on "cancel" we should put id back to ""?
+                #dialog.ShowModal()
+                if dialog.ShowModal() == wx.ID_OK:
+                    print "user clicked on OK in the Univ-r dialog"
+                else:
+                    print "user canceled the Univ-R dialg"
+                    print "putting id back to empty"
+                    id=""
+                    
             if (iDbegin2 > -1)and (iDend > -1):
                 title=received[(iDbegin2+6):iDend]
                 print "received title ", title
@@ -533,7 +562,17 @@ class SerialHook:
                 print "kb1 False"
                 if recording== True:
                     recordStop()
-                    windowBack(frameEnd)
+                    if id=="":
+                        windowBack(frameEnd)
+                    else:
+                        print "Not showing form (because UnivR recording"
+                        start_new_thread(confirmPublish,())
+                        caption="Fin enregistrement via Univ-R"
+                        text="Votre enregistrement a été envoyé."
+                        dialog=wx.MessageDialog(None,message=text,caption=caption,
+                        style=wx.OK|wx.ICON_INFORMATION)
+                        dialog.ShowModal()
+                        
                 if recording==False:
                     frameBegin.Hide()
             if (self.ser.getDSR()!=self.kb2) and (self.ser.getDSR()==True):
