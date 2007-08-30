@@ -619,7 +619,7 @@ class SerialHook:
     def __init__(self):
         """ Open the serial port and initialize the serial keyboard"""
         print "Opening the serial port of the serial keyboard"
-        self.ser = serial.Serial(keyboardPort)
+        self.ser = serial.Serial(int(keyboardPort))
         print "Setting DTR to level 1 : +12 Volts"
         self.ser.setDTR(level=1)  #set DTR line to specified logic level
         self.kb1=self.ser.getCD()
@@ -821,10 +821,13 @@ class BeginFrame(wx.Frame):
             
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
-        text1="\n\t"+_("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
-        _("begin immediately and this window will disappear. ")+"\n\n\t"+\
-        _("To stop the recording press the following key:   ")+stopKey+\
-        ".   "
+        text1="\n\t"+\
+        _("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
+        _("begin immediately and this window will disappear. ")
+        if serialKeyboard==False:
+            text1=text1+"\n\n\t"+\
+            _("To stop the recording press the following key:   ")+stopKey+\
+            ".   "
         text = wx.StaticText(panel, -1,  text1,size=(420,100),style=wx.LEFT)
         text.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         text.SetBackgroundColour("steel blue") 
