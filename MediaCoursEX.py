@@ -52,6 +52,8 @@ from os import chdir
 from ftplib import FTP
 from pywinauto import *
 from pywinauto import application
+from optparse import OptionParser # this for videolog.exe
+import fnmatch #this is for videolog.exe (library going in library.zip)
 
 ## Defautl global variables before config file reading
 #------------------------------------------------------------
@@ -551,6 +553,7 @@ class SerialHook:
         
     def listen(self,delta=0.001):
         """ Read the state of the Kb at each delta """
+        global id
         print "Entering listen loop ..."
         while 1:
             if (self.ser.getCD()!=self.kb1) and (self.ser.getCD()==True):
@@ -562,6 +565,7 @@ class SerialHook:
                 print "kb1 False"
                 if recording== True:
                     recordStop()
+                    print "id=",id
                     if id=="":
                         windowBack(frameEnd)
                     else:
