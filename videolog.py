@@ -42,13 +42,14 @@ def compareImages(img1,img2, pixLimit=100, imgLimit=200,step=4):
 
 if __name__=="__main__":
     
+    t0=time.time() # reference time
     ## Global variables
     videoInput=0
     diaId=0 #If diaID=0  Screenshot will be called D1.jpg, D2.jpg, etc
     tempo=1 # Set time interval to check for changes in seconds
     path="" # Expl: r"C:\Documents and Settings\MrSmith\Desktop\Data"
     pixLimit=100 #A pixel is considered changed above this value (RGB sum)
-    imgLimit=200 # The number of pixels wich have to change to have a postive
+    imgLimit=300 # The number of pixels wich have to change to have a postive
     step=4 # test a pixel each 'step' pixels, incresa this number for slow PC
     monitoring=True # Create a monitoring.jpg pic at each 'step' time interval
     offset=3.0
@@ -63,7 +64,7 @@ if __name__=="__main__":
     parser.add_option("-x", "--pixLimit",dest="pixLimit",
     help="Differential value above which a pixel is considered changed (default=100).")
     parser.add_option("-i", "--imgLimit",dest="imgLimit",
-    help="An image is considered changed above imgLimit pixels(default=200).")
+    help="An image is considered changed above imgLimit pixels(default=300).")
     parser.add_option("-t", "--tempo",dest="tempo",
     help="Make an image comparison each tempo seconds (default=1).")
     parser.add_option("-s", "--step",dest="step",
@@ -101,13 +102,18 @@ if __name__=="__main__":
         print "Using path= ",path
     try:os.mkdir(path+"/screenshots")
     except: pass
-
+    # Create an empty timecode file
+    f=open(path+"/timecode.csv","w")
+    f.close()
     print "Beginning VideoLog..."
     
     ## Open video input
-    cam = Device(videoInput)
-    oldImage=cam.getImage()
-    t0=time.time()
+    try:
+        cam = Device(videoInput)
+        oldImage=cam.getImage()
+    except:
+        print "Couldn't open videoport: no signal present"
+        sys.exit(0)
     
     print "Comparing images... ",
     
