@@ -17,7 +17,7 @@
 Language=French
 
 # VideoInput of the aquisition card or the frame grabber
-videoinput=0
+videoinput=2
 
 # Usage : 'audiocours' (usage=audio)  or 'videocours' (usage=video)
 # Put standalone=False if the software must always work in a amphitheatre
@@ -72,6 +72,7 @@ recordingPlace=unknown
 # the socket is looking for (id:xxxx) on PortNumber
 socketEnabled=False
 portNumber = 3737
+id=
 
 
 
