@@ -40,6 +40,7 @@ def compareImages(img1,img2, pixLimit=100, imgLimit=200,step=4):
             if pixdiff > imgLimit:
                 return True
 
+
 if __name__=="__main__":
     
     t0=time.time() # reference time
@@ -122,21 +123,29 @@ if __name__=="__main__":
         time.sleep(tempo)
         print "*",
         newImage=cam.getImage()
+        compareOldNew=compareImages(oldImage,newImage,imgLimit,pixLimit,step=1)
+        #print "compareOldNew", compareOldNew,type(compareOldNew)
         
-        if compareImages(oldImage,newImage,imgLimit,pixLimit,step=1) or diaId==0:
-            
-            print " Screenshot "+str(diaId)+" "
-            oldImage=newImage
-            diaId += 1
-            t=time.time()
-            newImage.save(path+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-            if diaId!=0:
-                timeStamp = str(abs(round((t-t0),2)-offset))
-            elif diId==0:
-                timeStamp = str(round((t-t0),2))
-            timecode=open(path+"/timecode.csv","a")
-            timecode.write(timeStamp+"\n")
-            timecode.close()
+        if (compareOldNew==True) or diaId==0:
+            time.sleep(1)
+            checkImage=cam.getImage()
+            # Before taking screenshot check again (to avoid artefacts when
+            # something is moving on the screen) => only take still images
+            checkResult=compareImages(checkImage,newImage,imgLimit,pixLimit,step=1)
+            #print "checkResult", checkResult,type(checkResult)
+            if (checkResult!= True) or (diaId==0):
+                print " Screenshot "+str(diaId)+" "
+                oldImage=newImage
+                diaId += 1
+                t=time.time()
+                newImage.save(path+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+                if diaId!=0:
+                    timeStamp = str(abs(round((t-t0),2)-offset))
+                elif diId==0:
+                    timeStamp = str(round((t-t0),2))
+                timecode=open(path+"/timecode.csv","a")
+                timecode.write(timeStamp+"\n")
+                timecode.close()
 
         if monitoring==True:
             cam.getImage().save("monitoring.jpg")
