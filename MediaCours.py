@@ -132,6 +132,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 
+
 ##------ i18n settings -------
 gettext.install("mediacours","locale")
 
@@ -321,24 +322,32 @@ def recordNow():
         """ 
         Record video with Real Producer basic 
         """
-        os.system("producer.exe -vc 0 -ac 0 -pid pid.txt -o "+dirName+\
-        "\enregistrement-video.rm -d "+str(maxRecordingLength))
-
+        if live==False:
+            os.system("producer.exe -vc 0 -ac 0 -pid pid.txt -o "+dirName+\
+            "\enregistrement-video.rm -d "+str(maxRecordingLength))
+        elif live==True:
+            fileVideo=dirName+ '\enregistrement-video.rm'
+            todoLiveReal=r'producer.exe -vc 1 -ac 1 -pid pid.txt -o '+fileVideo+" -sp Admin:Admin@130.79.188.5/"+recordingPlace+".rm"
+            os.system(todoLiveReal)
+            
     def liveStream():
         """
         Control VLC for audio live stream
         """
         global vlcPid
         time.sleep(2)
-        print "Going live ..."
+        print "Going audio live with VLC ..."
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
         file=dirName+ '\enregistrement-micro.mp3'
+        fileVideo=dirName+ '\enregistrement-video.rm'
         argument =' --sout "#standard{access=http,mux=asf}" '
         argument2 =' --sout \"\#standard{access=http,mux=asf}\" '
         todo=command + file+ argument
-        todo2=command + file+ argument2
+        todo2=r'producer.exe -vc 1 -ac 1 -o '+fileVideo+" -sp Admin:Admin@130.79.188.5/test.rm" 
+        #todo2=command + file+ argument2
         print "todo= ", todo
         os.system(todo)
+            
     
     # Check for usage and engage recording
     if usage=="audio":
@@ -349,7 +358,7 @@ def recordNow():
     if usage=="video" and videoEncoder=="real":
         print "searching Real media encoder"    
         start_new_thread(realProducerRecord,())
-    if live==True:
+    if live==True and usage=="audio":
         start_new_thread(liveStream,())
         #Send the information that live is ON
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
@@ -1106,6 +1115,10 @@ if __name__=="__main__":
     str(datetime.datetime.now())+"\n")
     # Read configuration file
     readConfFile()
+    
+    if pathData == "None":
+        pathData=os.getcwd()
+        print "pathData=None => PathData is now ", pathData
     # Set-up language
     if language=="French":
         print "Setting French language..."

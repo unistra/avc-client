@@ -26,12 +26,14 @@ Name: {app}\locale\fr
 Name: {app}\locale\fr\LC_MESSAGES
 
 [Files]
-Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
-Source: ..\images\audiocours1.ico; DestDir:{app}
-Source: ..\images\audiocours2.ico; DestDir:{app}
-Source: ..\images\videocours1.ico; DestDir:{app}
-Source: ..\images\videocours2.ico; DestDir:{app}
-Source: ..\images\ban1.jpg; DestDir:{app}
+;Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
+;Source: ..\mediacours.conf; DestDir:{%USERPROFILE}
+Source: ..\mediacours.conf.default; DestDir:{app}
+Source: ..\images\audiocours1.ico; DestDir:{app}\images
+Source: ..\images\audiocours2.ico; DestDir:{app}\images
+Source: ..\images\videocours1.ico; DestDir:{app}\images
+Source: ..\images\videocours2.ico; DestDir:{app}\images
+Source: ..\images\ban1.jpg; DestDir:{app}\images
 Source: ..\readme.txt; DestDir:{app}
 ;Source: ..\changelog.txt; DestDir:{app}
 Source: ..\AudioVideoCours.url; DestDir:{app}
