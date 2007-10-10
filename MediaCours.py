@@ -284,7 +284,7 @@ def recordNow():
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
     os.mkdir(workDirectory + "/screenshots")
-    timecodeFile = open (workDirectory +'\\timecode.csv','w')
+    #timecodeFile = open (workDirectory +'\\timecode.csv','w')
     #smil=SmilGen(usage,workDirectory)
     start_new_thread(screenshot,())    
     def record():
@@ -380,7 +380,9 @@ def screenshot():
         myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
         timeStamp = str(round((t-t0),2))
         print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+        timecodeFile = open (workDirectory +'\\timecode.csv','a')
         timecodeFile.write(timeStamp+"\n")
+        timecodeFile.close()
         """smilFile.write('<a href="screenshots/D'+str(diaId)+'.jpg" external="true">\n'\
         + '<img begin="'+timeStamp+'" region="Images" src="screenshots/D'\
         + str(diaId)+'.jpg"/> </a>\n')"""
@@ -414,7 +416,7 @@ def recordStop():
     tbicon.SetIcon(icon1, usage+"cours en attente")
     print "from recordStop, recording= ", recording 
     print "Received order to stop recording => stopping recording \n"
-    timecodeFile.close()
+    #timecodeFile.close()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
     if usage=="video" and videoEncoder=="real":
