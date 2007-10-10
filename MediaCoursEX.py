@@ -183,6 +183,8 @@ def readConfFile():
                 paramValue=eval(paramValue)
             return paramValue
         else:
+            param="None"
+            print "None for",param
             return "None"
     try:
         fconf=open("mediacoursExt.conf","r")
@@ -216,6 +218,7 @@ def readConfFile():
         videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
+        print "======pathData",pathData
     except:
         print "Something went wrong while reading the configuration file\n"
     
@@ -823,11 +826,13 @@ class BeginFrame(wx.Frame):
         dialog.ShowModal()
         
     def help(self,evt):
-        """ A fucntion to provide help on how to use the software"""
+        """ A function to provide help on how to use the software"""
         def launch():
-            #subprocess.Popen([r'C:\Windows\System32\notepad.exe', "readme.txt"])
-            subprocess.Popen(['notepad.exe', pathData+"/redame.txt"])
-            
+            global pathData
+            print ">>> pathData",pathData, len(pathData)
+            if (pathData=="") or (pathData=="None"):
+                pathData=os.getcwd()
+            subprocess.Popen(['notepad.exe', pathData+"/readme.txt"])
         start_new_thread(launch,())
     
     def configuration(self,evt):
