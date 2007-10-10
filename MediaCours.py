@@ -888,7 +888,7 @@ class BeginFrame(wx.Frame):
     def help(self,evt):
         """ A function to provide help on how to use the software"""
         def launch():
-            subprocess.Popen(['notepad.exe', pathData+"/redame.txt"])
+            subprocess.Popen(['notepad.exe', pathData+"/readme.txt"])
         start_new_thread(launch,())
     
     def configuration(self,evt):

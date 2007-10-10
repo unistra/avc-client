@@ -1,9 +1,9 @@
-#################################################################################################
-# This is a README file for the "client" and "standalone" part of the audiovideocours project
-#
-# Audiovideocours is released under the Free Software GPL license
-#################################################################################################
- 
+**********************************************************************************************
+* This is a README file for the "client" and "standalone" part of the audiovideocours project
+*
+* Audiovideocours is released under the Free Software GPL license
+**********************************************************************************************
+
 This README describes the main files of this folder mainly for an audio usage under a Windows platform (Linux version will come soon).
  
 1) mediacours.conf.default or mediacoursExt.conf.default
