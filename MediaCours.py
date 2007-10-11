@@ -44,7 +44,16 @@ from pywinauto import *
 from pywinauto import application
 
 ## Defautl global variables before config file reading
+univr_order=False #If the order comes from Univr?
 standalone=False
+# Publishing form variables
+title=""
+description=""
+name=""
+firstname=""
+login=""
+genre=""
+ue=""
 " To use the app without a  webserver to publish to"
 recording = False
 " To know if we are recording now" 
@@ -176,7 +185,7 @@ def readConfFile():
         bitrate=readParam("bitrate")
         stopKey=readParam("stopKey")
         socketEnabled=readParam("socketEnabled")
-        portNumber=readParam("portNumber")
+        portNumber=int(readParam("portNumber"))
         serialKeyboard=readParam("serialKeyboard")
         amxKeyboard=readParam("amxKeyboard")
         keyboardPort=readParam("keyboardPort")
@@ -200,13 +209,23 @@ def stopFromKBhook():
     """
     Start/stop recording when asked from the PC keyboard 'stopKey'
     """
-    global frameEnd, frameBegin, tryFocus
+    global frameEnd, frameBegin, tryFocus,id
     screenshot()
     if recording==False and tryFocus==False:
         windowBack(frameBegin)
     if recording==True and tryFocus==False:
-        windowBack(frameEnd)
-        recordStop()
+        if id=="":
+            windowBack(frameEnd)
+            recordStop()
+        else:
+            recordStop()
+            print "Not showing form"
+            start_new_thread(confirmPublish,())
+            caption="Fin enregistrement via Univ-R"
+            text="Enregistrement transmis."
+            dialog=wx.MessageDialog(None,message=text,caption=caption,
+            style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
         
 def OnKeyboardEvent(event):
     """
@@ -465,7 +484,7 @@ def confirmPublish(folder=''):
     Publish the recording when hitting the 'publish' button 
     """
     global id,entry1,entry2,entry25,entry3,entry4
-    print "description = ", description
+    #print "description = ", description
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
     if dirName =="":
         frameEnd.statusBar.SetStatusText("Rien a publier ...")
@@ -508,7 +527,6 @@ def confirmPublish(folder=''):
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
         """
         if folder=="":
-            
             #Send data to the AudioCours server (submit form)
             page = urlopen(urlserver,\
             "fichier="+dirName+".zip"+"&id="+id+"&title="+title+"&description="+description+\
@@ -516,17 +534,8 @@ def confirmPublish(folder=''):
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
-            """
-            print "!!! Something went wrong while filing the server form !!!"
-            print serverAnswer
-            writeInLogs("!!! Something went wrong while filing the server form at"\
-            +str(datetime.datetime.now())+" !!!\n")
-            writeInLogs(serverAnswer)
-            frameEnd.statusBar.SetStatusText("Pas de reponse du serveur (formulaire)")
-            """
-        # set the id variable to (id:no) again
-        print "id is now back to value (id:no)" 
-        id= "(id:no)"
+        # set the id variable to id="" again
+        id= ""
         print "setting entry fields back to empty"
         entry1.SetValue("")
         entry2.SetValue("")
@@ -554,6 +563,8 @@ def LaunchSocketServer():
         received = channel.recv(100)
         writeInLogs("- received = "+str(received)+"\n")
         if received != "":
+            if received=="SHOW_AVC":
+                frameBegin.Show()
             # search for an (id:xxxxx) pattern
             iDbegin1= received.find("(id:")
             iDbegin2= received.find("(title:")
@@ -564,7 +575,18 @@ def LaunchSocketServer():
                 id=received[(iDbegin1+4):iDend]
                 print "received ID number ", id 
                 channel.send ( 'Received ID' + str(id))
-                windowBack(frameBegin)
+                #windowBack(frameBegin)
+                caption="Enregistrement via Univ-R"
+                text="Veulliez appuyer sur le bouton audiovideocours\
+                \ndu clavier de commande de la salle."
+                dialog=wx.MessageDialog(None,message=text,caption=caption,
+                style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                if dialog.ShowModal() == wx.ID_OK:
+                    print "user clicked on OK in the Univ-r dialog"
+                else:
+                    print "user canceled the Univ-R dialg"
+                    print "putting id back to empty"
+                    id=""
             if (iDbegin2 > -1)and (iDend > -1):
                 title=received[(iDbegin2+6):iDend]
                 print "received title ", title
@@ -1112,8 +1134,8 @@ class EndingFrame(wx.Frame):
 if __name__=="__main__":
     
     # Start-up message
-    print "UnivrAudioCoursPM client launched at ", datetime.datetime.now(), " ...\n"
-    writeInLogs("\n\n>>> UnivrAudioCoursPM client launched at "+ \
+    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ...\n"
+    writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
     str(datetime.datetime.now())+"\n")
     # Read configuration file
     readConfFile()
