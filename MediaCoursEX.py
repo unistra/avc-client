@@ -154,6 +154,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
+id=""
 
 #------ i18n settings -------
 
@@ -195,7 +196,6 @@ def readConfFile():
         pathData=readParam("pathData")
         standalone=readParam("standalone")
         videoEncoder=readParam("videoEncoder")
-        id=readParam("id")
         urlserver=readParam("urlserver")
         samplingFrequency=readParam("samplingFrequency")
         bitrate=readParam("bitrate")

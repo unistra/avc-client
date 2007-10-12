@@ -63,7 +63,7 @@ dirName=""
 "The data directory"
 pathData=""
 "Name of the last recording folder"
-id= "(id:no)"
+id= ""
 "An id which could be received and send from the socket"
 urlserver= ""
 "Default URL of the audiovideocours server containing the submit form"
@@ -169,7 +169,7 @@ def readConfFile():
                 paramValue=eval(paramValue)
             return paramValue
         else:
-            return "None"
+            pass
     try:
         fconf=open("mediacours.conf","r")
         config= ConfigParser.ConfigParser() 
@@ -179,7 +179,6 @@ def readConfFile():
         pathData=readParam("pathData")
         standalone=readParam("standalone")
         videoEncoder=readParam("videoEncoder")
-        id=readParam("id")
         urlserver=readParam("urlserver")
         samplingFrequency=readParam("samplingFrequency")
         bitrate=readParam("bitrate")
@@ -214,6 +213,7 @@ def stopFromKBhook():
     if recording==False and tryFocus==False:
         windowBack(frameBegin)
     if recording==True and tryFocus==False:
+        print ">>> id:",id
         if id=="":
             windowBack(frameEnd)
             recordStop()
@@ -676,8 +676,20 @@ class SerialHook:
                 self.kb1=False
                 print "kb1 False"
                 if recording== True:
-                    recordStop()
-                    windowBack(frameEnd)
+                    print ">>> id:",id
+                    if id=="":
+                        windowBack(frameEnd)
+                        recordStop()
+                    else:
+                        recordStop()
+                        print "Not showing form"
+                        start_new_thread(confirmPublish,())
+                        caption="Fin enregistrement via Univ-R"
+                        text="Enregistrement transmis."
+                        dialog=wx.MessageDialog(None,message=text,caption=caption,
+                        style=wx.OK|wx.ICON_INFORMATION)
+                        dialog.ShowModal()
+                    
                 if recording==False:
                     frameBegin.Hide()
             if (self.ser.getDSR()!=self.kb2) and (self.ser.getDSR()==True):
