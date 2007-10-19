@@ -24,6 +24,9 @@ usage=audio
 standalone=True
 live=False
 
+# VideoInput of the aquisition card or the frame grabber
+videoinput=0
+
 # If needed give another folder path where you want your recordings to be saved
 #Examples:
 #pathData=C:\recordings

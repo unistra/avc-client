@@ -140,6 +140,7 @@ live=False
 language="French"
 ftpLogin=""
 ftpPass=""
+videoinput="0"
 
 
 ##------ i18n settings -------
@@ -199,6 +200,7 @@ def readConfFile():
         ftpLogin=readParam("ftpLogin")
         ftpPass=readParam("ftpPass")
         live=readParam("live")
+        videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -342,11 +344,11 @@ def recordNow():
         Record video with Real Producer basic 
         """
         if live==False:
-            os.system("producer.exe -vc 0 -ac 0 -pid pid.txt -o "+dirName+\
+            os.system("producer.exe -vc "+videoinput+" -ac "+videoinput+" -pid pid.txt -o "+dirName+\
             "\enregistrement-video.rm -d "+str(maxRecordingLength))
         elif live==True:
             fileVideo=dirName+ '\enregistrement-video.rm'
-            todoLiveReal=r'producer.exe -vc 1 -ac 1 -pid pid.txt -o '+fileVideo+" -sp Admin:Admin@130.79.188.5/"+recordingPlace+".rm"
+            todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
             os.system(todoLiveReal)
             
     def liveStream():
@@ -440,7 +442,7 @@ def recordStop():
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
-    if live==True:
+    if live==True and usage=="audio":
         os.system('tskill vlc')
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     ## Create a second smil at the end

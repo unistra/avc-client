@@ -155,6 +155,7 @@ ftpLogin=""
 ftpPass=""
 videoinput="0"
 id=""
+videoinput="1"
 
 #------ i18n settings -------
 
@@ -215,6 +216,7 @@ def readConfFile():
         recordingPlace=readParam("recordingPlace")
         ftpLogin=readParam("ftpLogin")
         ftpPass=readParam("ftpPass")
+        live=readParam("live")
         videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
@@ -279,21 +281,21 @@ def recordNow():
     def windowsMediaEncoderRecord():
         """ Record Video with Windows Media Encoder Series 9""" 
         scriptPath=r' cscript.exe C:\"Program Files\Windows Media Components\Encoder\WMCmd.vbs"'
-        arguments=" -adevice 1 -vdevice 1 -output "+\
+        arguments=" -adevice "+videoinput+" -vdevice "+videoinput+" -output "+\
         dirName+"\enregistrement-video.wmv -duration "+str(maxRecordingLength)
         os.system(scriptPath+arguments)
         
     def realProducerRecord():
-        """ Record video with Real Producer basic """
-        """os.system("producer -vc 0 -ac 0 -o "+dirName+\
-        "\enregistrement-video.rm -d "+str(maxRecordingLength))
+        """ 
+        Record video with Real Producer basic 
         """
-        #producerPath=r'C:\"Program Files\Real\RealProducer Plus 11\producer.exe"'
-        os.system("producer.exe -vc 0 -ac 0 -pid pid.txt -o "+dirName+\
-        "\enregistrement-video.rm -d "+str(maxRecordingLength))
-        #order="producer.exe -vc 0 -ac 0 -pid pid.txt -o "+dirName+"/enregistrement-video.rm -d "+str(maxRecordingLength)
-        #print "order: ",order
-        #os.spawnl(os.P_NOWAIT,order)
+        if live==False:
+            os.system("producer.exe -vc "+videoinput+" -ac "+videoinput+" -pid pid.txt -o "+dirName+\
+            "\enregistrement-video.rm -d "+str(maxRecordingLength))
+        elif live==True:
+            fileVideo=dirName+ '\enregistrement-video.rm'
+            todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
+            os.system(todoLiveReal)
         
     def liveStream():
         global vlcPid
@@ -316,7 +318,7 @@ def recordNow():
     if usage=="video" and videoEncoder=="real":
         print "searching Real media encoder"    
         start_new_thread(realProducerRecord,())
-    if live==True:
+    if live==True and usage=="audio":
         start_new_thread(liveStream,())
  
 def recordStop():
@@ -738,7 +740,7 @@ class BeginFrame(wx.Frame):
         global liveFeed
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(500, 330),
+                          pos=(150, 150), size=(500, 370),
         style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
 
         panel=wx.Panel(self)
