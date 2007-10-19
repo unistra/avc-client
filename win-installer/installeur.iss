@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 0.85
-AppVersion=0.85
+AppVerName=audiovideocours 0.90
+AppVersion=0.90
 AppPublisher=(C) ULP Multimedia 2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
@@ -85,8 +85,8 @@ Name: Anglais; MessagesFile: compiler:Default.isl
 Name: Allemand; MessagesFile: compiler:Languages\German.isl
 
 [Icons]
-Name: {group}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\audiocours2.ico
-Name: {commondesktop}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\audiocours1.ico
+Name: {group}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours2.ico
+Name: {commondesktop}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours1.ico
 ;Name: {group}\Dossier Cours; Filename: {app}\Cours\local\Media
 Name: {group}\Site web audiovideocours; Filename: {app}\AudioVideoCours.url; WorkingDir: {app}
 Name: {group}\Desinstaller AudioVideoCours; Filename: {uninstallexe}; IconFilename: {app}\unins000.exe; WorkingDir: {app}
