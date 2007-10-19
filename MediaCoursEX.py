@@ -325,6 +325,12 @@ def recordStop():
     "Stop recording the audio input now"
     global recording,timecodeFile,videolog_pid
     #screenshot()
+    if live==True:
+        page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+        "&recordingPlace="+recordingPlace+"&status="+"end")
+        print "------ Response from Audiocours : -----"
+        serverAnswer= page.read() # Read/Check the result
+        print serverAnswer
     lastEvent=time.time()
     recording= False
     tbicon.SetIcon(icon1, usage+"cours en attente")
