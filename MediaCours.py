@@ -61,7 +61,7 @@ workDirectory=""
 "The working/current directory"
 dirName=""
 "The data directory"
-pathData=""
+pathData=None
 "Name of the last recording folder"
 id= ""
 "An id which could be received and send from the socket"
@@ -1155,7 +1155,8 @@ if __name__=="__main__":
     # Read configuration file
     readConfFile()
     
-    if pathData == "None":
+    print ">>> pathData before if",pathData#,len(pathData)
+    if pathData == None:
         pathData=os.getcwd()
         print "pathData=None => PathData is now ", pathData
     # Set-up language
