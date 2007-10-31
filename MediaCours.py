@@ -298,7 +298,8 @@ def recordNow():
     print "- Begin recording now ! ...(We're in recordNow function) \n"
     dirName = str(dateTime0)
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
-    if pathData=="" or "None":
+    #print ">>> pathData in recordNow:",pathData
+    if pathData=="" or pathData=="None":
         pathData=os.getcwd()
     workDirectory=pathData+"\\"+dirName
     print "workDirectory= ",workDirectory
@@ -383,7 +384,7 @@ def recordNow():
         start_new_thread(liveStream,())
         #Send the information that live is ON
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
-        "&recordingPlace="+recordingPlace+"&status="+"begin")
+        "recordingPlace="+recordingPlace+"&status="+"begin")
         print "------ Response from Audiocours : -----"
         serverAnswer= page.read() # Read/Check the result
         print serverAnswer
@@ -429,7 +430,7 @@ def recordStop():
     global recording,timecodeFile
     if live==True:
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
-        "&recordingPlace="+recordingPlace+"&status="+"end")
+        "recordingPlace="+recordingPlace+"&status="+"end")
         print "------ Response from Audiocours : -----"
         serverAnswer= page.read() # Read/Check the result
         print serverAnswer
