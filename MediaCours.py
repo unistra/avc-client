@@ -155,7 +155,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,live,\
-    language,ftpLogin,ftpPass
+    language,ftpLogin,ftpPass,cparams
     
     section="mediacours"
     
@@ -182,7 +182,7 @@ def readConfFile():
         videoEncoder=readParam("videoEncoder")
         urlserver=readParam("urlserver")
         samplingFrequency=readParam("samplingFrequency")
-        bitrate=readParam("bitrate")
+        cparams['bitrate']=eval(readParam("bitrate"))
         stopKey=readParam("stopKey")
         socketEnabled=readParam("socketEnabled")
         portNumber=int(readParam("portNumber"))
@@ -195,7 +195,7 @@ def readConfFile():
         videoProjOFF=readParam("videoProjOFF")
         ftpUrl=readParam("ftpUrl")
         eventDelay=float(readParam("eventDelay"))
-        maxRecordingLength=readParam("maxRecordingLength")
+        maxRecordingLength=float(readParam("maxRecordingLength"))
         recordingPlace=readParam("recordingPlace")
         ftpLogin=readParam("ftpLogin")
         ftpPass=readParam("ftpPass")
