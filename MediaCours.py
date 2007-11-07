@@ -847,7 +847,6 @@ class BeginFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         global liveFeed
-        print "################## live=",live
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(500, 340),
@@ -915,7 +914,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours v 0.84 \n\n"\
+        text="AudioVideoCours v 0.90 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -926,7 +925,10 @@ class BeginFrame(wx.Frame):
     def help(self,evt):
         """ A function to provide help on how to use the software"""
         def launch():
-            subprocess.Popen(['notepad.exe', pathData+"/readme.txt"])
+            try:
+                subprocess.Popen(['notepad.exe',"help.txt"])
+            except:
+                print "Couldn't open help.txt"
         start_new_thread(launch,())
     
     def configuration(self,evt):
