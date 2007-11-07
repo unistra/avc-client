@@ -1128,7 +1128,6 @@ class EndingFrame(wx.Frame):
                         dialog=wx.MessageDialog(None,message=text,caption=caption,
                         style=wx.OK|wx.ICON_INFORMATION)
                         dialog.ShowModal()
-                        
         start_new_thread(readSmilNow,())
         
     def publish(self,evt):

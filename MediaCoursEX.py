@@ -1051,9 +1051,20 @@ class EndingFrame(wx.Frame):
             if dirName =="":
                 frameEnd.statusBar.SetStatusText(_("Nothing to read."))
             if workDirectory!="":
-                #os.system("realplay.exe file://"+workDirectory+"/cours.smil") #works
-                subprocess.Popen(["realplay.exe", "file://"+workDirectory+"/cours.smil"])
-                
+                #os.system("realplay.exe file://"+workDirectory+"/cours.smil") #also works
+                try:
+                    subprocess.Popen(["realplay.exe", "file://"+workDirectory+"/cours.smil"])
+                except:
+                    try:
+                        # try to search for the common full path of realplay.exe
+                        realplay="C:\\Program"+" "+"Files\\Real\\RealPlayer\\realplay.exe"
+                        subprocess.Popen([realplay, "file://"+workDirectory+"/cours.smil"])
+                    except:
+                        caption="Audiovideocours Error Message"
+                        text="RealPlayer software not found"
+                        dialog=wx.MessageDialog(None,message=text,caption=caption,
+                        style=wx.OK|wx.ICON_INFORMATION)
+                        dialog.ShowModal()
         start_new_thread(readSmilNow,())
         
     def publish(self,evt):
