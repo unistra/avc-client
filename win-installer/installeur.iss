@@ -28,7 +28,7 @@ Name: {app}\locale\fr\LC_MESSAGES
 [Files]
 ;Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
 ;Source: ..\mediacours.conf; DestDir:{%USERPROFILE}
-Source: ..\mediacours.conf.default; DestDir:{app}
+Source: ..\mediacours.conf; DestDir:{app}
 Source: ..\images\audiocours1.ico; DestDir:{app}\images
 Source: ..\images\audiocours2.ico; DestDir:{app}\images
 Source: ..\images\videocours1.ico; DestDir:{app}\images

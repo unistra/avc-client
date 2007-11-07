@@ -176,54 +176,48 @@ def readConfFile():
 
     def readParam(param):
         param=str(param)
-        if config.has_option(section,param) == True:
-            paramValue= config.get(section,param)
-            if param not in ["ftpPass","ftpLogin"]:
-                print "... "+param+" = ", paramValue
-                writeInLogs("\n\t:"+param+"+= "+paramValue)
-            if paramValue=="True" or paramValue=="False":
-                paramValue=eval(paramValue)
-            return paramValue
-        else:
-            param="None"
-            print "None for",param
-            return "None"
+        paramValue= config.get(section,param)
+        if param != "ftpPass" or "ftpLogin":
+            print "... "+param+" = ", paramValue
+            writeInLogs("\n\t:"+param+"+= "+paramValue)
+        if paramValue=="True" or paramValue=="False":
+            paramValue=eval(paramValue)
+        return paramValue
+    
     try:
-        fconf=open("mediacoursExt.conf","r")
+        fconf=open("mediacours.conf","r")
         config= ConfigParser.ConfigParser() 
         config.readfp(fconf)
-        language=readParam("language")
-        usage=readParam("usage")
-        pathData=readParam("pathData")
-        standalone=readParam("standalone")
-        videoEncoder=readParam("videoEncoder")
-        urlserver=readParam("urlserver")
-        samplingFrequency=readParam("samplingFrequency")
-        cparams['bitrate']=eval(readParam("bitrate"))
-        stopKey=readParam("stopKey")
-        socketEnabled=readParam("socketEnabled")
-        portNumber=readParam("portNumber")
-        serialKeyboard=readParam("serialKeyboard")
-        amxKeyboard=readParam("amxKeyboard")
-        keyboardPort=readParam("keyboardPort")
-        videoprojectorInstalled=readParam("videoprojectorInstalled")
-        videoprojectorPort=readParam("videoprojectorPort")
-        videoProjON=readParam("videoProjON")
-        videoProjOFF=readParam("videoProjOFF")
-        ftpUrl=readParam("ftpUrl")
-        eventDelay=readParam("eventDelay")
-        maxRecordingLength=float(readParam("maxRecordingLength"))
-        recordingPlace=readParam("recordingPlace")
-        ftpLogin=readParam("ftpLogin")
-        ftpPass=readParam("ftpPass")
-        live=readParam("live")
-        videoinput=readParam("videoinput")
+        if config.has_option(section,"language") == True: language=readParam("language")
+        if config.has_option(section,"usage") == True: usage=readParam("usage")
+        if config.has_option(section,"pathData") == True: pathData=readParam("pathData")
+        if config.has_option(section,"standalone") == True: standalone=readParam("standalone")
+        if config.has_option(section,"videoEncoder") == True: videoEncoder=readParam("videoEncoder")
+        if config.has_option(section,"urlserver") == True: urlserver=readParam("urlserver")
+        if config.has_option(section,"samplingFrequency") == True: samplingFrequency=readParam("samplingFrequency")
+        if config.has_option(section,"bitrate") == True: cparams['bitrate']=eval(readParam("bitrate"))
+        if config.has_option(section,"stopKey") == True: stopKey=readParam("stopKey")
+        if config.has_option(section,"socketEnabled") == True: socketEnabled=readParam("socketEnabled")
+        if config.has_option(section,"portNumber") == True: portNumber=int(readParam("portNumber"))
+        if config.has_option(section,"serialKeyboard") == True: serialKeyboard=readParam("serialKeyboard")
+        if config.has_option(section,"amxKeyboard") == True: amxKeyboard=readParam("amxKeyboard")
+        if config.has_option(section,"keyboardPort") == True: keyboardPort=readParam("keyboardPort")
+        if config.has_option(section,"videoprojectorInstalled") == True: videoprojectorInstalled=readParam("videoprojectorInstalled")
+        if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=readParam("videoprojectorPort")
+        if config.has_option(section,"videoProjON") == True: videoProjON=readParam("videoProjON")
+        if config.has_option(section,"videoProjOFF") == True: videoProjOFF=readParam("videoProjOFF")
+        if config.has_option(section,"ftpUrl") == True: ftpUrl=readParam("ftpUrl")
+        if config.has_option(section,"eventDelay") == True: eventDelay=float(readParam("eventDelay"))
+        if config.has_option(section,"maxRecordingLength") == True: maxRecordingLength=float(readParam("maxRecordingLength"))
+        if config.has_option(section,"recordingPlace") == True: recordingPlace=readParam("recordingPlace")
+        if config.has_option(section,"ftpLogin") == True: ftpLogin=readParam("ftpLogin")
+        if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
+        if config.has_option(section,"live") == True: live=readParam("live")
+        if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
-        print "======pathData",pathData
     except:
         print "Something went wrong while reading the configuration file\n"
-    
         
 def recordNow():
     "Record the audio input now with pymedia "

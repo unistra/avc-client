@@ -65,8 +65,6 @@ pathData=None
 "Name of the last recording folder"
 id= ""
 "An id which could be received and send from the socket"
-urlserver= ""
-"Default URL of the audiovideocours server containing the submit form"
 samplingFrequency= 48000
 "Default sampling frequency for audio recording"
 stopKey= "F8" 
@@ -102,8 +100,10 @@ videoProjON='PWR ON\x0D'
 "Video proj protocol : ON (EPSON here)"
 videoProjOFF='PWR OFF\x0D'
 "Video proj protocol : OFF (EPSON here)"
-ftpUrl=''
+ftpUrl="larsen.u-strasbg.fr"
 "FTP URL server for online publication"
+urlserver= "http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/UploadClient"
+"Default URL of the audiovideocours server containing the submit form"
 eventDelay=1.5
 "Number of seconds before allowing a new screenshot"
 recordingPlace= "not given"
@@ -141,7 +141,9 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
-
+if 0:# in case no server informations found in the configuration file
+    ftpLogin=""
+    ftpPass=""
 
 ##------ i18n settings -------
 gettext.install("mediacours","locale")
@@ -161,46 +163,43 @@ def readConfFile():
     
     def readParam(param):
         param=str(param)
-        if config.has_option(section,param) == True:
-            paramValue= config.get(section,param)
-            if param != "ftpPass" or "ftpLogin":
-                print "... "+param+" = ", paramValue
-                writeInLogs("\n\t:"+param+"+= "+paramValue)
-            if paramValue=="True" or paramValue=="False":
-                paramValue=eval(paramValue)
-            return paramValue
-        else:
-            pass
+        paramValue= config.get(section,param)
+        if param != "ftpPass" or "ftpLogin":
+            print "... "+param+" = ", paramValue
+            writeInLogs("\n\t:"+param+"+= "+paramValue)
+        if paramValue=="True" or paramValue=="False":
+            paramValue=eval(paramValue)
+        return paramValue
     try:
         fconf=open("mediacours.conf","r")
         config= ConfigParser.ConfigParser() 
         config.readfp(fconf)
-        language=readParam("language")
-        usage=readParam("usage")
-        pathData=readParam("pathData")
-        standalone=readParam("standalone")
-        videoEncoder=readParam("videoEncoder")
-        urlserver=readParam("urlserver")
-        samplingFrequency=readParam("samplingFrequency")
-        cparams['bitrate']=eval(readParam("bitrate"))
-        stopKey=readParam("stopKey")
-        socketEnabled=readParam("socketEnabled")
-        portNumber=int(readParam("portNumber"))
-        serialKeyboard=readParam("serialKeyboard")
-        amxKeyboard=readParam("amxKeyboard")
-        keyboardPort=readParam("keyboardPort")
-        videoprojectorInstalled=readParam("videoprojectorInstalled")
-        videoprojectorPort=readParam("videoprojectorPort")
-        videoProjON=readParam("videoProjON")
-        videoProjOFF=readParam("videoProjOFF")
-        ftpUrl=readParam("ftpUrl")
-        eventDelay=float(readParam("eventDelay"))
-        maxRecordingLength=float(readParam("maxRecordingLength"))
-        recordingPlace=readParam("recordingPlace")
-        ftpLogin=readParam("ftpLogin")
-        ftpPass=readParam("ftpPass")
-        live=readParam("live")
-        videoinput=readParam("videoinput")
+        if config.has_option(section,"language") == True: language=readParam("language")
+        if config.has_option(section,"usage") == True: usage=readParam("usage")
+        if config.has_option(section,"pathData") == True: pathData=readParam("pathData")
+        if config.has_option(section,"standalone") == True: standalone=readParam("standalone")
+        if config.has_option(section,"videoEncoder") == True: videoEncoder=readParam("videoEncoder")
+        if config.has_option(section,"urlserver") == True: urlserver=readParam("urlserver")
+        if config.has_option(section,"samplingFrequency") == True: samplingFrequency=readParam("samplingFrequency")
+        if config.has_option(section,"bitrate") == True: cparams['bitrate']=eval(readParam("bitrate"))
+        if config.has_option(section,"stopKey") == True: stopKey=readParam("stopKey")
+        if config.has_option(section,"socketEnabled") == True: socketEnabled=readParam("socketEnabled")
+        if config.has_option(section,"portNumber") == True: portNumber=int(readParam("portNumber"))
+        if config.has_option(section,"serialKeyboard") == True: serialKeyboard=readParam("serialKeyboard")
+        if config.has_option(section,"amxKeyboard") == True: amxKeyboard=readParam("amxKeyboard")
+        if config.has_option(section,"keyboardPort") == True: keyboardPort=readParam("keyboardPort")
+        if config.has_option(section,"videoprojectorInstalled") == True: videoprojectorInstalled=readParam("videoprojectorInstalled")
+        if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=readParam("videoprojectorPort")
+        if config.has_option(section,"videoProjON") == True: videoProjON=readParam("videoProjON")
+        if config.has_option(section,"videoProjOFF") == True: videoProjOFF=readParam("videoProjOFF")
+        if config.has_option(section,"ftpUrl") == True: ftpUrl=readParam("ftpUrl")
+        if config.has_option(section,"eventDelay") == True: eventDelay=float(readParam("eventDelay"))
+        if config.has_option(section,"maxRecordingLength") == True: maxRecordingLength=float(readParam("maxRecordingLength"))
+        if config.has_option(section,"recordingPlace") == True: recordingPlace=readParam("recordingPlace")
+        if config.has_option(section,"ftpLogin") == True: ftpLogin=readParam("ftpLogin")
+        if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
+        if config.has_option(section,"live") == True: live=readParam("live")
+        if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -1169,7 +1168,6 @@ if __name__=="__main__":
     str(datetime.datetime.now())+"\n")
     # Read configuration file
     readConfFile()
-    
     print ">>> pathData before if",pathData#,len(pathData)
     if pathData == None:
         pathData=os.getcwd()
