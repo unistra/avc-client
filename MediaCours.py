@@ -187,7 +187,7 @@ def readConfFile():
         if config.has_option(section,"portNumber") == True: portNumber=int(readParam("portNumber"))
         if config.has_option(section,"serialKeyboard") == True: serialKeyboard=readParam("serialKeyboard")
         if config.has_option(section,"amxKeyboard") == True: amxKeyboard=readParam("amxKeyboard")
-        if config.has_option(section,"keyboardPort") == True: keyboardPort=readParam("keyboardPort")
+        if config.has_option(section,"keyboardPort") == True: keyboardPort=int(readParam("keyboardPort"))
         if config.has_option(section,"videoprojectorInstalled") == True: videoprojectorInstalled=readParam("videoprojectorInstalled")
         if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=readParam("videoprojectorPort")
         if config.has_option(section,"videoProjON") == True: videoProjON=readParam("videoProjON")
@@ -358,17 +358,17 @@ def recordNow():
         global vlcPid
         time.sleep(2)
         print "Going audio live with VLC ..."
+        vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
         file=dirName+ '\enregistrement-micro.mp3'
         fileVideo=dirName+ '\enregistrement-video.rm'
         argument =' --sout "#standard{access=http,mux=asf}" '
-        argument2 =' --sout \"\#standard{access=http,mux=asf}\" '
+        typeout="#standard{access=http,mux=asf}"
         todo=command + file+ argument
-        todo2=r'producer.exe -vc 1 -ac 1 -o '+fileVideo+" -sp Admin:Admin@130.79.188.5/test.rm" 
-        #todo2=command + file+ argument2
         print "todo= ", todo
-        os.system(todo)
-            
+        #os.system(todo)
+        os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
+        #subprocess.Popen(['"%s"'%(vlcapp),'-vvvv '+file+' --sout'+' "#standard{access=http,mux=asf}" '])
     
     # Check for usage and engage recording
     if usage=="audio":
@@ -427,6 +427,7 @@ def recordStop():
     Stop recording the audio input now
     """
     global recording,timecodeFile
+    print ">>> In recordStop"
     if live==True:
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
         "recordingPlace="+recordingPlace+"&status="+"end")
@@ -645,7 +646,21 @@ def writeInLogs(what):
     logFile = open ("log-"+yearMonth+".txt","a")
     logFile.write(what)
     logFile.close()
-    
+
+def kill_if_double():
+    """ 
+    Kill an eventual running instance of mediacours.exe
+    """
+    try:
+        print ">>> Trying to kill an eventual running instance of mediacours.exe."
+        PID_f=open("PID_mediacours.txt",'r')
+        PID=PID_f.readline()
+        #print "PID of mediacours is ",PID
+        #print "Killing PID ",PID
+        os.popen("tskill "+PID)
+    except:
+        print ">>> Passed kill_if_double"
+            
 ##############################################
 
 class SerialHook:
@@ -726,7 +741,7 @@ class AMX:
     in ULP main amphitheatres and control the recording
     """
     def __init__(self):
-        self.ser = serial.Serial(keyboardPort)
+        self.ser = serial.Serial(int(keyboardPort))
         print "AMX keyboard init"
     def listen(self,frameEnd, frameBegin, tryFocus):
         while 1:
@@ -913,7 +928,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours v 0.90 \n\n"\
+        text="AudioVideoCours version 0.92 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1157,15 +1172,16 @@ class EndingFrame(wx.Frame):
             if standalone !=True:
                 self.Hide()
             start_new_thread(confirmPublish,())
-    
+                
+        
 ## Start app
-
 if __name__=="__main__":
     
     # Start-up message
     print "AudioVideoCours client launched at ", datetime.datetime.now(), " ...\n"
     writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
     str(datetime.datetime.now())+"\n")
+    kill_if_double()
     # Read configuration file
     readConfFile()
     print ">>> pathData before if",pathData#,len(pathData)
@@ -1190,7 +1206,6 @@ if __name__=="__main__":
     PID_f=open("PID_mediacours.txt",'w')
     PID_f.write(str(os.getpid()))
     PID_f.close()
-       
     
     ## GUI launch
     

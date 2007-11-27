@@ -201,7 +201,7 @@ def readConfFile():
         if config.has_option(section,"portNumber") == True: portNumber=int(readParam("portNumber"))
         if config.has_option(section,"serialKeyboard") == True: serialKeyboard=readParam("serialKeyboard")
         if config.has_option(section,"amxKeyboard") == True: amxKeyboard=readParam("amxKeyboard")
-        if config.has_option(section,"keyboardPort") == True: keyboardPort=readParam("keyboardPort")
+        if config.has_option(section,"keyboardPort") == True: keyboardPort=int(readParam("keyboardPort"))
         if config.has_option(section,"videoprojectorInstalled") == True: videoprojectorInstalled=readParam("videoprojectorInstalled")
         if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=readParam("videoprojectorPort")
         if config.has_option(section,"videoProjON") == True: videoProjON=readParam("videoProjON")
@@ -292,17 +292,23 @@ def recordNow():
             os.system(todoLiveReal)
         
     def liveStream():
+        """
+        Control VLC for audio live stream
+        """
         global vlcPid
         time.sleep(2)
-        print "Going live ..."
+        print "Going audio live with VLC ..."
+        vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
         file=dirName+ '\enregistrement-micro.mp3'
+        fileVideo=dirName+ '\enregistrement-video.rm'
         argument =' --sout "#standard{access=http,mux=asf}" '
-        argument2 =' --sout \"\#standard{access=http,mux=asf}\" '
+        typeout="#standard{access=http,mux=asf}"
         todo=command + file+ argument
-        todo2=command + file+ argument2
         print "todo= ", todo
-        os.system(todo)
+        #os.system(todo)
+        os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
+        
     if usage=="audio":
         start_new_thread(record,())
         

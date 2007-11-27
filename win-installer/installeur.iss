@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 0.90
-AppVersion=0.90
+AppVerName=audiovideocours 0.91
+AppVersion=0.91
 AppPublisher=(C) ULP Multimedia 2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
