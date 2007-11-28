@@ -141,7 +141,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
-if 0:# in case no server informations found in the configuration file
+if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
 
@@ -189,7 +189,7 @@ def readConfFile():
         if config.has_option(section,"amxKeyboard") == True: amxKeyboard=readParam("amxKeyboard")
         if config.has_option(section,"keyboardPort") == True: keyboardPort=int(readParam("keyboardPort"))
         if config.has_option(section,"videoprojectorInstalled") == True: videoprojectorInstalled=readParam("videoprojectorInstalled")
-        if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=readParam("videoprojectorPort")
+        if config.has_option(section,"videoprojectorPort") == True: videoprojectorPort=int(readParam("videoprojectorPort"))
         if config.has_option(section,"videoProjON") == True: videoProjON=readParam("videoProjON")
         if config.has_option(section,"videoProjOFF") == True: videoProjOFF=readParam("videoProjOFF")
         if config.has_option(section,"ftpUrl") == True: ftpUrl=readParam("ftpUrl")
@@ -210,13 +210,15 @@ def stopFromKBhook():
     Start/stop recording when asked from the PC keyboard 'stopKey'
     """
     global frameEnd, frameBegin, tryFocus,id
-    screenshot()
+    #screenshot()#gives a delay too long in case of live recording here
     if recording==False and tryFocus==False:
         windowBack(frameBegin)
     if recording==True and tryFocus==False:
         print ">>> id:",id
         if id=="":
+            print ">>>> Asking ending frame to come back"
             windowBack(frameEnd)
+            screenshot()#Added recently to check
             recordStop()
         else:
             recordStop()
@@ -368,6 +370,8 @@ def recordNow():
         print "todo= ", todo
         #os.system(todo)
         os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
+        #gogo='"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout)
+        #os.spawnl(os.P_NOWAIT,gogo)
         #subprocess.Popen(['"%s"'%(vlcapp),'-vvvv '+file+' --sout'+' "#standard{access=http,mux=asf}" '])
     
     # Check for usage and engage recording
@@ -394,7 +398,7 @@ def screenshot():
     """
     global recording, diaId, t0, timecodeFile
     time.sleep(tempo)
-    if recording == True :
+    if recording == True or False :
         myscreen= ImageGrab.grab() #print "screenshot from mouse"
         t = time.time()
         diaId += 1
@@ -446,6 +450,8 @@ def recordStop():
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if live==True and usage=="audio":
         os.system('tskill vlc')
+    if live==True:
+        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     ## Create a second smil at the end
     smil=SmilGen(usage,workDirectory)
@@ -928,7 +934,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.92 \n\n"\
+        text="AudioVideoCours version 0.93 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1182,6 +1188,7 @@ if __name__=="__main__":
     writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
     str(datetime.datetime.now())+"\n")
     kill_if_double()
+    time.sleep(1)#tempo to be sure serial port is free if just killed a double?
     # Read configuration file
     readConfFile()
     print ">>> pathData before if",pathData#,len(pathData)
