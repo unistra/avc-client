@@ -157,7 +157,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,live,\
-    language,ftpLogin,ftpPass,cparams
+    language,ftpLogin,ftpPass,cparams, videoinput
     
     section="mediacours"
     
@@ -346,6 +346,7 @@ def recordNow():
         Record video with Real Producer basic 
         """
         if live==False:
+            print ">>> videoinput port = ",videoinput
             os.system("producer.exe -vc "+videoinput+" -ac "+videoinput+" -pid pid.txt -o "+dirName+\
             "\enregistrement-video.rm -d "+str(maxRecordingLength))
         elif live==True:
