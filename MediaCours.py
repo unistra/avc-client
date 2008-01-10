@@ -42,6 +42,7 @@ from os import chdir
 from ftplib import FTP
 from pywinauto import *
 from pywinauto import application
+from FMEcmd import *
 
 ## Defautl global variables before config file reading
 univr_order=False #If the order comes from Univr?
@@ -141,7 +142,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
-if 1:# in case no server informations found in the configuration file
+if 0:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
 
@@ -157,7 +158,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,live,\
-    language,ftpLogin,ftpPass,cparams, videoinput
+    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName
     
     section="mediacours"
     
@@ -200,11 +201,13 @@ def readConfFile():
         if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
         if config.has_option(section,"live") == True: live=readParam("live")
         if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
+        if config.has_option(section,"videoDeviceName") == True: videoDeviceName=readParam("videoDeviceName")
+        if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
         print "Something went wrong while reading the configuration file\n"
-        
+         
 def stopFromKBhook():
     """
     Start/stop recording when asked from the PC keyboard 'stopKey'
@@ -354,6 +357,23 @@ def recordNow():
             todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
             os.system(todoLiveReal)
             
+    def flashMediaEncoderRecord():
+        """
+        Record video with Flash Media Encoder
+        """
+        global flv
+        if live==False:
+            print ">>> videoDeviceName = ",videoDeviceName
+            print ">>> audioDeviceName = ",audioDeviceName
+            flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
+            #flvPath=dirName+ '\enregistrement-video.flv'
+            #flvPath=r"%s"%flvPath
+            #flvPath=os.getcwd()+'\\'+ dirName+ '\enregistrement-video.flv'
+            flvPath=pathData+'\\'+ dirName+ '\enregistrement-video.flv'
+            print flvPath
+            flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath)
+            flv.record()
+            
     def liveStream():
         """
         Control VLC for audio live stream
@@ -384,6 +404,10 @@ def recordNow():
     if usage=="video" and videoEncoder=="real":
         print "searching Real media encoder"    
         start_new_thread(realProducerRecord,())
+    if usage=="video" and videoEncoder=="flash":
+        print "searching Flash Media Encoder"    
+        start_new_thread(flashMediaEncoderRecord,())
+        
     if live==True and usage=="audio":
         start_new_thread(liveStream,())
         #Send the information that live is ON
@@ -449,6 +473,8 @@ def recordStop():
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
+    if usage=="video" and videoEncoder=="flash":
+        flv.stop()
     if live==True and usage=="audio":
         os.system('tskill vlc')
     if live==True:
@@ -935,7 +961,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.93 \n\n"\
+        text="AudioVideoCours version 0.94 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
