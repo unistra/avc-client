@@ -488,7 +488,7 @@ def recordStop():
     for timeStamp in diaTime:
         smil.smilEvent(timeStamp,diaId+1)
         diaId+=1
-    smil.smilEnd(usage,videoEncoder="real")
+    smil.smilEnd(usage,videoEncoder)
         
 def playAudio():
     """
@@ -883,6 +883,12 @@ class SmilGen:
                 +'</par>\n'\
                 +'</body>\n'\
                 +'</smil>')
+            if videoEncoder=="flash":
+                self.smilFile.write('<video region="Video" '\
+                +' src="enregistrement-video.flv" />\n'\
+                +'</par>\n'\
+                +'</body>\n'\
+                +'</smil>')                                
         self.smilFile.close()
 
 ## GUI Definition
