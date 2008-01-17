@@ -173,7 +173,7 @@ def readConfFile():
         return paramValue
     try:
         fconf=open("mediacours.conf","r")
-        config= ConfigParser.ConfigParser() 
+        config= ConfigParser.ConfigParser()
         config.readfp(fconf)
         if config.has_option(section,"language") == True: language=readParam("language")
         if config.has_option(section,"usage") == True: usage=readParam("usage")
@@ -378,19 +378,24 @@ def recordNow():
         """
         Control VLC for audio live stream
         """
-        global vlcPid
+        global vlcPid,dirName
         time.sleep(2)
         print "Going audio live with VLC ..."
         vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
-        file=dirName+ '\enregistrement-micro.mp3'
+        #file=dirName+ '\enregistrement-micro.mp3'
+        #file=('"%s"/%s/enregistrement-micro.mp3')%(pathData,dirName)
+        file=pathData+"\\"+dirName+"\\enregistrement-micro.mp3"
+        print ">>> file=", file
         fileVideo=dirName+ '\enregistrement-video.rm'
         argument =' --sout "#standard{access=http,mux=asf}" '
         typeout="#standard{access=http,mux=asf}"
         todo=command + file+ argument
-        print "todo= ", todo
+        #print "todo= ", todo
         #os.system(todo)
-        os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
+        #os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
+        #print ">>>>>>>"+'%s -vvvv "%s" --sout %s'%(vlcapp,file,typeout)
+        os.system('%s -vvvv "%s" --sout %s'%(command,file,typeout))
         #gogo='"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout)
         #os.spawnl(os.P_NOWAIT,gogo)
         #subprocess.Popen(['"%s"'%(vlcapp),'-vvvv '+file+' --sout'+' "#standard{access=http,mux=asf}" '])
@@ -676,7 +681,8 @@ def writeInLogs(what):
     global logFile
     yearMonth=str(datetime.datetime.now())
     yearMonth=yearMonth[:7]
-    logFile = open ("log-"+yearMonth+".txt","a")
+    #logFile = open ("log-"+yearMonth+".txt","a")
+    logFile = open (os.environ["USERPROFILE"]+"/log-audiovideocours-"+yearMonth+".txt","a")
     logFile.write(what)
     logFile.close()
 
@@ -967,7 +973,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.94 \n\n"\
+        text="AudioVideoCours version 0.95 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
