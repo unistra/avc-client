@@ -44,7 +44,7 @@ from pywinauto import *
 from pywinauto import application
 from FMEcmd import *
 
-## Defautl global variables before config file reading
+## Default global variables before config file reading
 univr_order=False #If the order comes from Univr?
 standalone=False
 # Publishing form variables
@@ -145,7 +145,7 @@ videoinput="0"
 if 0:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
-
+ 
 ##------ i18n settings -------
 gettext.install("mediacours","locale")
 
@@ -225,13 +225,19 @@ def stopFromKBhook():
             recordStop()
         else:
             recordStop()
-            print "Not showing form"
+            print "Not showing usual publishing form"
             start_new_thread(confirmPublish,())
-            caption="Fin enregistrement via Univ-R"
-            text="Enregistrement transmis."
+            """
+            caption="Message Univ-R"
+            text="Enregistrement transmis vers Univ-R"
             dialog=wx.MessageDialog(None,message=text,caption=caption,
             style=wx.OK|wx.ICON_INFORMATION)
-            dialog.ShowModal()
+            print "ask window back"
+            windowBack(dialog,windowTitle="Message Univ-R")
+            print "after windowBack"
+            dialog.ShowModal()"""
+            frameUnivr.Show()
+            
         
 def OnKeyboardEvent(event):
     """
@@ -304,7 +310,9 @@ def recordNow():
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
     #print ">>> pathData in recordNow:",pathData
     if pathData=="" or pathData=="None":
-        pathData=os.getcwd()
+        #pathData=os.getcwd() # changed
+        pathData=os.environ["USERPROFILE"]+"/audiovideocours"
+        print pathData
     workDirectory=pathData+"\\"+dirName
     print "workDirectory= ",workDirectory
     os.mkdir(workDirectory)
@@ -526,6 +534,8 @@ def confirmPublish(folder=''):
     Publish the recording when hitting the 'publish' button 
     """
     global id,entry1,entry2,entry25,entry3,entry4
+    idtosend=id
+    id="" # if confirmPublsih fails id is back to ""
     #print "description = ", description
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
     if dirName =="":
@@ -541,43 +551,46 @@ def confirmPublish(folder=''):
                 dirName+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
         zip.close()                    
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
-        " with id="+id+" title="+title+" description="+description+" mediapath="+\
+        " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        #try:
-        print "------ tar ordered------"
-        # Send by ftp
-        print "Sending an FTP version..."
-        ftp = FTP(ftpUrl)
-        ftp.login(ftpLogin, ftpPass)
-        print "debut de ftp"
-        f = open(workDirectory+".zip",'rb')# file to send 
-        if folder=="canceled":
-            print "Trying to open cancel forlder"
-            ftp.cwd("canceled") 
-        ftp.storbinary('STOR '+ dirName+".zip", f) # Send the file
-        f.close() # Close file and FTP
-        ftp.quit()
-        print "fin de ftp"
-        if standalone == True:
-            frameEnd.Hide()
-            frameBegin.Show()
-        """   
+        try:
+            print "------ tar ordered------"
+            # Send by ftp
+            print "Sending an FTP version..."
+            ftp = FTP(ftpUrl)
+            ftp.login(ftpLogin, ftpPass)
+            print "debut de ftp"
+            f = open(workDirectory+".zip",'rb')# file to send 
+            if folder=="canceled":
+                print "Trying to open cancel forlder"
+                ftp.cwd("canceled") 
+            ftp.storbinary('STOR '+ dirName+".zip", f) # Send the file
+            f.close() # Close file and FTP
+            ftp.quit()
+            print "fin de ftp"
+            if standalone == True:
+                frameEnd.Hide()
+                frameBegin.Show()   
         except:
             print "!!! Something went wrong while sending the Tar to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
-        """
+            
         if folder=="":
-            #Send data to the AudioCours server (submit form)
-            page = urlopen(urlserver,\
-            "fichier="+dirName+".zip"+"&id="+id+"&title="+title+"&description="+description+\
-            "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirName+".zip")
-            print "------ Response from Audiocours : -----"
-            serverAnswer= page.read() # Read/Check the result
-            print serverAnswer
+            try:
+                #Send data to the AudioCours server (submit form)
+                page = urlopen(urlserver,\
+                "fichier="+dirName+".zip"+"&id="+idtosend+"&title="+title+"&description="+description+\
+                "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirName+".zip")
+                print "------ Response from Audiocours : -----"
+                serverAnswer= page.read() # Read/Check the result
+                print serverAnswer
+            except:
+                print "Had problem while submitting the form"
+            
         # set the id variable to id="" again
-        id= ""
+        idtosend= ""
         print "setting entry fields back to empty"
         entry1.SetValue("")
         entry2.SetValue("")
@@ -617,18 +630,19 @@ def LaunchSocketServer():
                 id=received[(iDbegin1+4):iDend]
                 print "received ID number ", id 
                 channel.send ( 'Received ID' + str(id))
-                #windowBack(frameBegin)
-                caption="Enregistrement via Univ-R"
-                text="Veulliez appuyer sur le bouton audiovideocours\
-                \ndu clavier de commande de la salle."
-                dialog=wx.MessageDialog(None,message=text,caption=caption,
-                style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-                if dialog.ShowModal() == wx.ID_OK:
-                    print "user clicked on OK in the Univ-r dialog"
-                else:
-                    print "user canceled the Univ-R dialg"
-                    print "putting id back to empty"
-                    id=""
+                windowBack(frameBegin)
+                if 0:
+                    caption="Message Univ-R Debut"
+                    text="Veulliez appuyer sur le bouton audiovideocours\
+                    \ndu clavier de commande de la salle."
+                    dialog=wx.MessageDialog(None,message=text,caption=caption,
+                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                    if dialog.ShowModal() == wx.ID_OK:
+                        print "user clicked on OK in the Univ-r dialog"
+                    else:
+                        print "user canceled the Univ-R dialg"
+                        print "putting id back to empty"
+                        id=""
             if (iDbegin2 > -1)and (iDend > -1):
                 title=received[(iDbegin2+6):iDend]
                 print "received title ", title
@@ -640,11 +654,12 @@ def LaunchSocketServer():
                 recordNow()
         channel.close()
         
-def windowBack(frame):
+def windowBack(frame,windowTitle="Attention"):
     """
     Show the frame back in wiew
     """
     global tryFocus, recording
+    print ">>> windowTitle= ", windowTitle
     tryFocus=True
     frame.Show()
     #time.sleep(0.5)
@@ -652,7 +667,8 @@ def windowBack(frame):
     def comeBack():
         print "-",
         appAuto = application.Application()
-        appAuto.connect_(handle = findwindows.find_windows(title = "Attention")[0])
+        #appAuto.connect_(handle = findwindows.find_windows(title = "Attention")[0])
+        appAuto.connect_(handle = findwindows.find_windows(title = windowTitle)[0])
         appAuto.Attention.SetFocus()
         appAuto.Attention.Restore()
     for i in range(5):
@@ -682,7 +698,7 @@ def writeInLogs(what):
     yearMonth=str(datetime.datetime.now())
     yearMonth=yearMonth[:7]
     #logFile = open ("log-"+yearMonth+".txt","a")
-    logFile = open (os.environ["USERPROFILE"]+"/log-audiovideocours-"+yearMonth+".txt","a")
+    logFile = open (os.environ["USERPROFILE"]+"/audiovideocours/log-audiovideocours-"+yearMonth+".txt","a")
     logFile.write(what)
     logFile.close()
 
@@ -739,13 +755,15 @@ class SerialHook:
                         recordStop()
                     else:
                         recordStop()
+                        """
                         print "Not showing form"
                         start_new_thread(confirmPublish,())
                         caption="Fin enregistrement via Univ-R"
                         text="Enregistrement transmis."
                         dialog=wx.MessageDialog(None,message=text,caption=caption,
                         style=wx.OK|wx.ICON_INFORMATION)
-                        dialog.ShowModal()
+                        dialog.ShowModal()"""
+                        frameUnivr.Show()
                     
                 if recording==False:
                     frameBegin.Hide()
@@ -973,7 +991,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.95 \n\n"\
+        text="AudioVideoCours version 0.96 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -984,10 +1002,12 @@ class BeginFrame(wx.Frame):
     def help(self,evt):
         """ A function to provide help on how to use the software"""
         def launch():
+            print "I'm in launch in help"
             try:
-                subprocess.Popen(['notepad.exe',"help.txt"])
+                #os.popen(os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url")
+                subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
             except:
-                print "Couldn't open help.txt"
+                print "Couldn't open or find Aide_AudioCours_StandAlone.url"
         start_new_thread(launch,())
     
     def configuration(self,evt):
@@ -1217,7 +1237,31 @@ class EndingFrame(wx.Frame):
             if standalone !=True:
                 self.Hide()
             start_new_thread(confirmPublish,())
-                
+
+class univrEndFrame(wx.Frame):
+    """
+    A message from univr
+    """
+    def __init__(self, parent, title):
+        global liveFeed
+        """Create the warning window"""
+        wx.Frame.__init__(self, parent, -1, title,
+                          pos=(150, 150), size=(300,110),
+        style=wx.DEFAULT_FRAME_STYLE)
+
+        panel=wx.Panel(self)
+        #panel.SetBackgroundColour("white") 
+        text = wx.StaticText(panel, -1, "Enregistrement transmis pour Univ-r\net audiovideocours.u-strasbg.fr")  
+        okButton=wx.Button(panel,size=(-1,-1),label="Fermer")
+        self.Bind(wx.EVT_BUTTON, self.hideNow,okButton)
+        vbox=wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(text,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=5)
+        vbox.Add(okButton,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=5) 
+        panel.SetSizer(vbox) 
+    
+    def hideNow(self,evt):
+        self.Hide()
+        
         
 ## Start app
 if __name__=="__main__":
@@ -1226,13 +1270,15 @@ if __name__=="__main__":
     print "AudioVideoCours client launched at ", datetime.datetime.now(), " ...\n"
     writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
     str(datetime.datetime.now())+"\n")
+    # Check if another instance is already launched and kill it if it exist
     kill_if_double()
-    time.sleep(1)#tempo to be sure serial port is free if just killed a double?
+    time.sleep(1)#delay to be sure serial port is free if just killed a double?
     # Read configuration file
     readConfFile()
     print ">>> pathData before if",pathData#,len(pathData)
     if pathData == None:
-        pathData=os.getcwd()
+        #pathData=os.getcwd()
+        pathData=os.environ["USERPROFILE"]+"/audiovideocours"
         print "pathData=None => PathData is now ", pathData
     # Set-up language
     if language=="French":
@@ -1254,7 +1300,8 @@ if __name__=="__main__":
     PID_f.close()
     
     ## GUI launch
-    
+    frameUnivr=univrEndFrame(None,title="Message Univ-R")
+    #frameUnivr.Show()   
     frameBegin=BeginFrame(None,title="Attention")
     #frameBegin.Show() # For debug
     frameBegin.Show()
