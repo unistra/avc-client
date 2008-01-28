@@ -116,7 +116,7 @@ class FMEcmd(object):
 </preview>
 <log>
 <level>100</level>
-<directory>C:\Documents and Settings\franz\Mes documents\Mes videos</directory>
+<directory>C:\</directory>
 </log>
 </flashmediaencoder_profile>
 """

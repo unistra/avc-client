@@ -311,7 +311,7 @@ def recordNow():
     #print ">>> pathData in recordNow:",pathData
     if pathData=="" or pathData=="None":
         #pathData=os.getcwd() # changed
-        pathData=os.environ["USERPROFILE"]+"/audiovideocours"
+        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
         print pathData
     workDirectory=pathData+"\\"+dirName
     print "workDirectory= ",workDirectory
@@ -377,7 +377,7 @@ def recordNow():
             #flvPath=dirName+ '\enregistrement-video.flv'
             #flvPath=r"%s"%flvPath
             #flvPath=os.getcwd()+'\\'+ dirName+ '\enregistrement-video.flv'
-            flvPath=pathData+'\\'+ dirName+ '\enregistrement-video.flv'
+            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
             print flvPath
             flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath)
             flv.record()
@@ -1278,7 +1278,7 @@ if __name__=="__main__":
     print ">>> pathData before if",pathData#,len(pathData)
     if pathData == None:
         #pathData=os.getcwd()
-        pathData=os.environ["USERPROFILE"]+"/audiovideocours"
+        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
         print "pathData=None => PathData is now ", pathData
     # Set-up language
     if language=="French":
