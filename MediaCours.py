@@ -553,6 +553,7 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
+        #if 1:
         try:
             print "------ tar ordered------"
             # Send by ftp
@@ -570,7 +571,8 @@ def confirmPublish(folder=''):
             print "fin de ftp"
             if standalone == True:
                 frameEnd.Hide()
-                frameBegin.Show()   
+                frameBegin.Show() 
+        #if 1:  
         except:
             print "!!! Something went wrong while sending the Tar to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
@@ -606,7 +608,7 @@ def LaunchSocketServer():
     Launch a socket server, listen to eventual orders
     and decide what to do 
     """
-    global id
+    global id,recording
     print "Client is listening for socket order ..."
     mySocket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
     mySocket.bind ( ( '', portNumber ) )
@@ -629,8 +631,12 @@ def LaunchSocketServer():
             if (iDbegin1 > -1)and (iDend > -1):
                 id=received[(iDbegin1+4):iDend]
                 print "received ID number ", id 
-                channel.send ( 'Received ID' + str(id))
-                windowBack(frameBegin)
+                if recording==False:
+                    channel.send ( 'Received ID' + str(id))
+                    windowBack(frameBegin)
+                if recording==True:
+                    channel.send ( 'Received ID' + str(id)+" !!! already recording !!!")
+                    print ">>> Already recording"
                 if 0:
                     caption="Message Univ-R Debut"
                     text="Veulliez appuyer sur le bouton audiovideocours\
@@ -991,7 +997,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.96 \n\n"\
+        text="AudioVideoCours version 0.97 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
