@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 0.97
-AppVersion=0.97
+AppVerName=audiovideocours 1.01
+AppVersion=1.01
 AppPublisher=(C) ULP Multimedia 2008-2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
@@ -24,7 +24,7 @@ Name: {app}\pywinauto
 Name: {app}\locale
 Name: {app}\locale\fr
 Name: {app}\locale\fr\LC_MESSAGES
-Name: {%ALLUSERSPROFILE}\audiovideocours
+Name: {%USERPROFILE}\audiovideocours
 
 [Files]
 ;Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
@@ -36,7 +36,7 @@ Source: ..\images\videocours1.ico; DestDir:{app}\images
 Source: ..\images\videocours2.ico; DestDir:{app}\images
 Source: ..\images\ban1.jpg; DestDir:{app}\images
 Source: ..\readme.txt; DestDir:{app}
-Source: ..\Aide_AudioCours_StandAlone.url; DestDir:{%ALLUSERSPROFILE}\audiovideocours
+Source: ..\Aide_AudioCours_StandAlone.url; DestDir:{%USERPROFILE}\audiovideocours
 ;Source: ..\changelog.txt; DestDir:{app}
 Source: ..\AudioVideoCours.url; DestDir:{app}
 

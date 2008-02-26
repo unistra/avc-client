@@ -142,7 +142,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
-if 0:# in case no server informations found in the configuration file
+if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
  
@@ -383,30 +383,20 @@ def recordNow():
             flv.record()
             
     def liveStream():
-        """
-        Control VLC for audio live stream
-        """
+        """ Control VLC for *audio* live stream """
         global vlcPid,dirName
         time.sleep(2)
         print "Going audio live with VLC ..."
         vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
-        #file=dirName+ '\enregistrement-micro.mp3'
-        #file=('"%s"/%s/enregistrement-micro.mp3')%(pathData,dirName)
         file=pathData+"\\"+dirName+"\\enregistrement-micro.mp3"
-        print ">>> file=", file
-        fileVideo=dirName+ '\enregistrement-video.rm'
-        argument =' --sout "#standard{access=http,mux=asf}" '
-        typeout="#standard{access=http,mux=asf}"
-        todo=command + file+ argument
-        #print "todo= ", todo
-        #os.system(todo)
-        #os.system('"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout))
-        #print ">>>>>>>"+'%s -vvvv "%s" --sout %s'%(vlcapp,file,typeout)
-        os.system('%s -vvvv "%s" --sout %s'%(command,file,typeout))
-        #gogo='"%s" -vvvv %s --sout %s'%(vlcapp,file,typeout)
-        #os.spawnl(os.P_NOWAIT,gogo)
-        #subprocess.Popen(['"%s"'%(vlcapp),'-vvvv '+file+' --sout'+' "#standard{access=http,mux=asf}" '])
+        typeout="#standard{access=http,mux=raw}"
+        if 0: # Using os.system (meaning there will be a DOS window visible)
+            os.system('%s -vvvv "%s" --sout %s'%(command,file,typeout))
+        if 1: # Using subprocess (no DOS window visible)
+            arg1= '-vvvv '+file
+            arg2= '"#standard{access=http,mux=asf}"'
+            subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
     
     # Check for usage and engage recording
     if usage=="audio":
@@ -714,7 +704,7 @@ def kill_if_double():
     """
     try:
         print ">>> Trying to kill an eventual running instance of mediacours.exe."
-        PID_f=open("PID_mediacours.txt",'r')
+        PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'r')
         PID=PID_f.readline()
         #print "PID of mediacours is ",PID
         #print "Killing PID ",PID
@@ -997,7 +987,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 0.97 \n\n"\
+        text="AudioVideoCours version 1.01 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1301,7 +1291,7 @@ if __name__=="__main__":
     if socketEnabled==True:
         start_new_thread(LaunchSocketServer,())
     # Write mediacours PID in a file (for use in the automatic updater) 
-    PID_f=open("PID_mediacours.txt",'w')
+    PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'w')
     PID_f.write(str(os.getpid()))
     PID_f.close()
     
