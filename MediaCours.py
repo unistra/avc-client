@@ -142,6 +142,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
+flashServerIP="130.79.188.196"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
@@ -158,7 +159,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,live,\
-    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName
+    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP
     
     section="mediacours"
     
@@ -203,6 +204,8 @@ def readConfFile():
         if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
         if config.has_option(section,"videoDeviceName") == True: videoDeviceName=readParam("videoDeviceName")
         if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
+        if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
+
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -356,31 +359,42 @@ def recordNow():
         """ 
         Record video with Real Producer basic 
         """
+        MaximumRecordingLength=str(maxRecordingLength)
+        fileVideo=workDirectory+ '\\enregistrement-video.rm'
         if live==False:
             print ">>> videoinput port = ",videoinput
-            os.system("producer.exe -vc "+videoinput+" -ac "+videoinput+" -pid pid.txt -o "+dirName+\
-            "\enregistrement-video.rm -d "+str(maxRecordingLength))
+            os.system(('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -d %s')%(videoinput,videoinput,fileVideo,MaximumRecordingLength))
         elif live==True:
-            fileVideo=dirName+ '\enregistrement-video.rm'
-            todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
+            #todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
+            page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+            "recordingPlace="+recordingPlace+"&status="+"begin")
+            print "------ Response from Audiocours : -----"
+            serverAnswer= page.read() # Read/Check the result
+            print serverAnswer
+            todoLiveReal=('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -sp 130.79.188.5/%s.rm')%(videoinput,videoinput,fileVideo,recordingPlace)
+            print todoLiveReal
             os.system(todoLiveReal)
             
     def flashMediaEncoderRecord():
         """
         Record video with Flash Media Encoder
         """
-        global flv
-        if live==False:
-            print ">>> videoDeviceName = ",videoDeviceName
-            print ">>> audioDeviceName = ",audioDeviceName
-            flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
-            #flvPath=dirName+ '\enregistrement-video.flv'
-            #flvPath=r"%s"%flvPath
-            #flvPath=os.getcwd()+'\\'+ dirName+ '\enregistrement-video.flv'
-            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
-            print flvPath
-            flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath)
-            flv.record()
+        global flv,flashServer
+        if live==True:
+            liveParams="""<rtmp>
+        <url>rtmp://"""+flashServerIP+"""/live</url>
+        <backup_url></backup_url>
+        <stream>"""+recordingPlace+"""</stream>
+        </rtmp>"""
+        else:
+            liveParams=""
+        print ">>> videoDeviceName = ",videoDeviceName
+        print ">>> audioDeviceName = ",audioDeviceName
+        flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
+        flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
+        print flvPath
+        flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath,liveParams)
+        flv.record()
             
     def liveStream():
         """ Control VLC for *audio* live stream """
