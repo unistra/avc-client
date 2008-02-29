@@ -379,13 +379,21 @@ def recordNow():
         """
         Record video with Flash Media Encoder
         """
+        print ">>> In flashMediaEncoderRecord()"
         global flv,flashServer
         if live==True:
+            print ">>> Going for live==True"
             liveParams="""<rtmp>
-        <url>rtmp://"""+flashServerIP+"""/live</url>
-        <backup_url></backup_url>
-        <stream>"""+recordingPlace+"""</stream>
-        </rtmp>"""
+            <url>rtmp://"""+flashServerIP+"""/live</url>
+            <backup_url></backup_url>
+            <stream>"""+recordingPlace+"""</stream>
+            </rtmp>"""
+            #Send the information that live is ON
+            page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+            "recordingPlace="+recordingPlace+"&status="+"begin")
+            print "------ Response from Audiocours : -----"
+            serverAnswer= page.read() # Read/Check the result
+            print serverAnswer
         else:
             liveParams=""
         print ">>> videoDeviceName = ",videoDeviceName
@@ -1001,7 +1009,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.01 \n\n"\
+        text="AudioVideoCours version 1.02 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
