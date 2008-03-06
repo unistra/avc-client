@@ -143,6 +143,7 @@ ftpLogin=""
 ftpPass=""
 videoinput="0"
 flashServerIP="130.79.188.196"
+lastGlobalEvent=time.time()
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
@@ -246,7 +247,8 @@ def OnKeyboardEvent(event):
     """
     Catching keyboard events from the hook and deciding what to do
     """
-    global stopKey,lastEvent
+    global stopKey,lastEvent,lastGlobalEvent
+    lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     screenshotKeys=["Snapshot","Space","Return","Up","Down","Right",
     "Left","Prior","Next"]
     if (stopKey!="") and (event.Key== stopKey)and (tryFocus==False):
@@ -279,7 +281,8 @@ def OnMouseEvent(event):
     """
     Catching mouse events from the hook and deciding what to do
     """
-    global recording,lastEvent
+    global recording,lastEvent,lastGlobalEvent
+    lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     if  (recording == True) and (tryFocus == False)\
     and( (time.time()-lastEvent)>eventDelay):
         if (event.MessageName == "mouse left down"):
@@ -634,6 +637,8 @@ def LaunchSocketServer():
         if received != "":
             if received=="SHOW_AVC":
                 frameBegin.Show()
+            if received=="SHUTDOWN_PC" and recording==False:
+                os.system("shutdown -s -f")
             # search for an (id:xxxxx) pattern
             iDbegin1= received.find("(id:")
             iDbegin2= received.find("(title:")
@@ -733,7 +738,23 @@ def kill_if_double():
         os.popen("tskill "+PID)
     except:
         print ">>> Passed kill_if_double"
-            
+
+def shutdownPC_if_noactivity():
+    """ 
+    This function must reside in a thread and be launched at startup
+    """
+    global lastGlobalEvent # lat time event given by the KB and mouse hooks
+    tempoCheck=5 # time interval in seconds for each check
+    noactivityMax=30 # time threshold in seconds over which the the PC will ... 
+    #... shutdown if no activity is present 
+    while 1:
+        print "*",
+        time.sleep(tempoCheck)
+        if ((time.time()-lastGlobalEvent)>noactivityMax) and (recording==False):
+            print "No activity over "+str(noactivityMax)+" s => shutdown the PC"
+            #os.system("shutdown -s -f")
+            print 'would do: os.system("shutdown -s -f")'
+                  
 ##############################################
 
 class SerialHook:
@@ -1312,6 +1333,9 @@ if __name__=="__main__":
     # Start socket server
     if socketEnabled==True:
         start_new_thread(LaunchSocketServer,())
+    # start shutdown PC thread if no PC activity detected
+    if 0:
+        start_new_thread(shutdownPC_if_noactivity,())
     # Write mediacours PID in a file (for use in the automatic updater) 
     PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'w')
     PID_f.write(str(os.getpid()))
@@ -1337,9 +1361,7 @@ if __name__=="__main__":
         else:
             clavier=SerialHook()    
             start_new_thread(clavier.listen,())
-    
-    ## Systray 
-    
+    ## Systray  
     if usage=="audio":
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
