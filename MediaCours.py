@@ -143,6 +143,7 @@ ftpLogin=""
 ftpPass=""
 videoinput="0"
 flashServerIP="130.79.188.196"
+formFormation="" # a default entry for "formation" in the publishing form
 lastGlobalEvent=time.time()
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
@@ -160,7 +161,7 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP
+    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP,formFormation
     
     section="mediacours"
     
@@ -206,7 +207,7 @@ def readConfFile():
         if config.has_option(section,"videoDeviceName") == True: videoDeviceName=readParam("videoDeviceName")
         if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
-
+        if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -622,7 +623,7 @@ def confirmPublish(folder=''):
         entry2.SetValue("")
         entryNom.SetValue("")
         entryPrenom.SetValue("")
-        entry4.SetValue("")
+        if formFormation=="": entry4.SetValue("")
         frameEnd.statusBar.SetStatusText("---")
     else:
         print "Pas de publication: pas d'enregistrement effectue"
@@ -1120,6 +1121,7 @@ class EndingFrame(wx.Frame):
         entryPrenom = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
         text4 = wx.StaticText(panel, -1, _("Degree:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entry4 = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
+        entry4.SetValue(formFormation)
         textCode=wx.StaticText(panel,-1, _("Access Code if you wish to set a limited access:"),
         size=(400,-1),style=wx.ALIGN_CENTER)
         entryCode = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
@@ -1239,7 +1241,7 @@ class EndingFrame(wx.Frame):
         entry2.SetValue("")
         entryNom.SetValue("")
         entryPrenom.SetValue("")
-        entry4.SetValue("")
+        if formFormation=="": entry4.SetValue("")
 
     def readPreview(self,evt):
         """Read the smil 'recording' file (audio or video + screenshots)"""
@@ -1285,7 +1287,7 @@ class EndingFrame(wx.Frame):
             entryNom.SetValue("")
             entryPrenom.SetValue("")
             entryCode.SetValue("")
-            entry4.SetValue("")
+            if formFormation=="": entry4.SetValue("")
             if standalone !=True:
                 self.Hide()
             start_new_thread(confirmPublish,())
