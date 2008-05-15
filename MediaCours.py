@@ -19,7 +19,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-#
+#ad
 #*******************************************************************************
 
 ## Import modules
@@ -159,7 +159,7 @@ def readConfFile():
     global id,urlserver,samplingFrequency,createMp3,stopKey,portNumber,pathData\
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
-    ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,live,\
+    ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP
     
     section="mediacours"
@@ -201,7 +201,7 @@ def readConfFile():
         if config.has_option(section,"recordingPlace") == True: recordingPlace=readParam("recordingPlace")
         if config.has_option(section,"ftpLogin") == True: ftpLogin=readParam("ftpLogin")
         if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
-        if config.has_option(section,"live") == True: live=readParam("live")
+        if config.has_option(section,"live") == True: liveCheckBox=readParam("live")
         if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
         if config.has_option(section,"videoDeviceName") == True: videoDeviceName=readParam("videoDeviceName")
         if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
@@ -314,9 +314,7 @@ def recordNow():
     print "- Begin recording now ! ...(We're in recordNow function) \n"
     dirName = str(dateTime0)
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
-    #print ">>> pathData in recordNow:",pathData
     if pathData=="" or pathData=="None":
-        #pathData=os.getcwd() # changed
         pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
         print pathData
     workDirectory=pathData+"\\"+dirName
@@ -324,9 +322,8 @@ def recordNow():
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
     os.mkdir(workDirectory + "/screenshots")
-    #timecodeFile = open (workDirectory +'\\timecode.csv','w')
-    #smil=SmilGen(usage,workDirectory)
     start_new_thread(screenshot,())    
+    
     def record():
         """ Record audio only - mp3 - with pymedia"""
         global recording, cparams
@@ -416,6 +413,12 @@ def recordNow():
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
         file=pathData+"\\"+dirName+"\\enregistrement-micro.mp3"
         typeout="#standard{access=http,mux=raw}"
+        # try to launch a pre-configured trayit!.exe to hide VLC GUI
+        try:
+            subprocess.Popen(['trayit!'])
+            #time.sleep(0.5)
+        except:
+            pass
         if 0: # Using os.system (meaning there will be a DOS window visible)
             os.system('%s -vvvv "%s" --sout %s'%(command,file,typeout))
         if 1: # Using subprocess (no DOS window visible)
@@ -426,6 +429,15 @@ def recordNow():
     # Check for usage and engage recording
     if usage=="audio":
         start_new_thread(record,())
+    if live==True and usage=="audio":
+        start_new_thread(liveStream,())
+        #Send the information that live is ON
+        page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+        "recordingPlace="+recordingPlace+"&status="+"begin")
+        if 0:#For Degub
+            print "------ Response from Audiocours : -----"
+            serverAnswer= page.read() # Read/Check the result
+            print serverAnswer
     if usage=="video" and videoEncoder=="wmv":
         print "searching Windows Media Encoder ..."   
         start_new_thread(windowsMediaEncoderRecord,())
@@ -435,16 +447,7 @@ def recordNow():
     if usage=="video" and videoEncoder=="flash":
         print "searching Flash Media Encoder"    
         start_new_thread(flashMediaEncoderRecord,())
-        
-    if live==True and usage=="audio":
-        start_new_thread(liveStream,())
-        #Send the information that live is ON
-        page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
-        "recordingPlace="+recordingPlace+"&status="+"begin")
-        print "------ Response from Audiocours : -----"
-        serverAnswer= page.read() # Read/Check the result
-        print serverAnswer
-                
+                       
 def screenshot():
     """
     Take a screenshot and thumbnails of the screen
@@ -489,8 +492,9 @@ def recordStop():
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
         "recordingPlace="+recordingPlace+"&status="+"end")
         print "------ Response from Audiocours : -----"
-        serverAnswer= page.read() # Read/Check the result
-        print serverAnswer
+        if 0:#For debug
+            serverAnswer= page.read() # Read/Check the result
+            print serverAnswer
     lastEvent=time.time()
     recording= False
     tbicon.SetIcon(icon1, usage+"cours en attente")
@@ -505,6 +509,11 @@ def recordStop():
         flv.stop()
     if live==True and usage=="audio":
         os.system('tskill vlc')
+        try:
+            #os.system('tskill trayit!')
+            subprocess.Popen(['tskill','trayit!'])
+        except:
+            pass
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
@@ -954,8 +963,7 @@ class SmilGen:
                 +'</smil>')                                
         self.smilFile.close()
 
-## GUI Definition
-app=wx.App(redirect=False)
+
 
 class BeginFrame(wx.Frame):
     """
@@ -967,6 +975,9 @@ class BeginFrame(wx.Frame):
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(500, 340),
         style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
+        
+        favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
+        wx.Frame.SetIcon(self, favicon)
 
         panel=wx.Panel(self)
         panel.SetBackgroundColour("white") 
@@ -1001,7 +1012,7 @@ class BeginFrame(wx.Frame):
             e.EnumerateFacenames()
             fontList=e.GetFacenames()
             print fontList
-        if  live==True:
+        if  liveCheckBox==True:
             liveFeed=wx.CheckBox(panel,-1,_("Live streaming"),)
         btn = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
         if standalone == True:
@@ -1011,7 +1022,7 @@ class BeginFrame(wx.Frame):
         sizerH=wx.BoxSizer()
         sizerV.Add(wx.StaticBitmap(panel, -1, im1, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
         sizerV.Add(text, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        if  live==True:
+        if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
         sizerV.Add(sizerH, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         sizerH.Add(btn, 0, wx.ALIGN_CENTER|wx.ALL, 10)
@@ -1030,7 +1041,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.02 \n\n"\
+        text="AudioVideoCours version 1.03 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1068,7 +1079,7 @@ class BeginFrame(wx.Frame):
     def engageRecording(self,evt):
         """Confirms and engage recording"""
         global live
-        if  live==True:
+        if  liveCheckBox==True:
             live=liveFeed.GetValue()
         print  "Live ordered ?  ",live
         if tryFocus==False:
@@ -1090,6 +1101,8 @@ class EndingFrame(wx.Frame):
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(windowXsize, 560),
             style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))            
+        favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
+        wx.Frame.SetIcon(self, favicon)
         # Status bar
         self.statusBar=self.CreateStatusBar()
         self.statusBar.SetStatusText(_("Status bar"))
@@ -1342,6 +1355,7 @@ if __name__=="__main__":
     PID_f.close()
     
     ## GUI launch
+    app=wx.App(redirect=False)
     frameUnivr=univrEndFrame(None,title="Message Univ-R")
     #frameUnivr.Show()   
     frameBegin=BeginFrame(None,title="Attention")
