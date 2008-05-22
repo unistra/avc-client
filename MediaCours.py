@@ -145,6 +145,7 @@ videoinput="0"
 flashServerIP="130.79.188.196"
 formFormation="" # a default entry for "formation" in the publishing form
 lastGlobalEvent=time.time()
+liveCheckBox=False
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
@@ -1042,7 +1043,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.03 \n\n"\
+        text="AudioVideoCours version 1.03.1 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
