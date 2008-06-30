@@ -21,6 +21,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ad
 #*******************************************************************************
+from reportlab.platypus.doctemplate import FrameBreak
 
 ## Import modules
 import wx, wx.lib.colourdb,zipfile
@@ -146,6 +147,7 @@ flashServerIP="130.79.188.196"
 formFormation="" # a default entry for "formation" in the publishing form
 lastGlobalEvent=time.time()
 liveCheckBox=False
+audioVideoChoice=False # give the possibility to choose between an audio or video recording
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
@@ -162,7 +164,8 @@ def readConfFile():
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP,formFormation
+    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP\
+    ,formFormation, audioVideoChoice
     
     section="mediacours"
     
@@ -209,6 +212,7 @@ def readConfFile():
         if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
+        if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
         print "\n"; fconf.close()
         writeInLogs("\n")
     except:
@@ -304,10 +308,12 @@ def OnMouseEvent(event):
 
 def recordNow():
     """
-    Record the audio input now with pymedia 
+    Record the audio input now with pymedia or video via an external encoder 
     """
     global recording, diaId, timecodeFile, t0, dateTime0, dirName, workDirectory
     global snd,ac,cparams, nameRecord,usage,smil,pathData
+    usage=frameBegin.usage
+    print "///////////////////////////// usage", usage
     recording= True
     tbicon.SetIcon(icon2, "Enregistrement en cours")
     diaId = 0 # initialize screenshot number and time
@@ -440,6 +446,7 @@ def recordNow():
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
+    print "------------------ Usage is", usage
     if usage=="video" and videoEncoder=="wmv":
         print "searching Windows Media Encoder ..."   
         start_new_thread(windowsMediaEncoderRecord,())
@@ -973,9 +980,10 @@ class BeginFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         global liveFeed
+        self.usage="audio"
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(500, 340),
+                          pos=(150, 150), size=(500, 370),
         style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
         
         favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
@@ -994,7 +1002,17 @@ class BeginFrame(wx.Frame):
             self.Bind(wx.EVT_MENU,self.help,help)
             self.Bind(wx.EVT_MENU,self.about,version)
             self.Bind(wx.EVT_MENU,self.configuration,conf)
-            #self.SetMenuBar
+            #self.SetMenuBar       
+        audioVideoChoice=True    
+        if audioVideoChoice==True:
+            radio1=wx.RadioButton(panel,-1,"audio")
+            radio2=wx.RadioButton(panel,-1,"video")
+            def onRadio(evt):
+                radioSelected=evt.GetEventObject()
+                self.usage=radioSelected.GetLabel()
+                print "Usage selected (audio or video):",self.usage
+            for eachRadio in [radio1,radio2]:
+                self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
             
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
@@ -1024,6 +1042,11 @@ class BeginFrame(wx.Frame):
         sizerH=wx.BoxSizer()
         sizerV.Add(wx.StaticBitmap(panel, -1, im1, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
         sizerV.Add(text, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        if audioVideoChoice==True:
+            sizerH2=wx.BoxSizer()
+            sizerH2.Add(radio1,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
+            sizerH2.Add(radio2,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
+            sizerV.Add(sizerH2, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
         sizerV.Add(sizerH, 0, wx.ALIGN_CENTER|wx.ALL, 10)
