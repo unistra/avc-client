@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 1.03
-AppVersion=1.03
+AppVerName=audiovideocours 1.05
+AppVersion=1.05
 AppPublisher=(C) ULP Multimedia 2008-2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
@@ -25,6 +25,7 @@ Name: {app}\locale
 Name: {app}\locale\fr
 Name: {app}\locale\fr\LC_MESSAGES
 Name: {%USERPROFILE}\audiovideocours
+Name: {app}\thirdparty
 
 [Files]
 ;Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
@@ -78,6 +79,12 @@ Source: ..\dist\zlib.pyd; DestDir:{app}
 Source: ..\mediacours.pot; DestDir:{app}
 Source: ..\locale\fr\LC_MESSAGES\mediacours.mo; DestDir:{app}\locale\fr\LC_MESSAGES
 Source: ..\locale\fr\LC_MESSAGES\mediacours.po; DestDir:{app}\locale\fr\LC_MESSAGES
+
+; Third party
+Source: ..\thirdparty\player.swf; DestDir:{app}\thirdparty
+Source: ..\thirdparty\swfobject.js; DestDir:{app}\thirdparty
+Source: ..\thirdparty\README.txt; DestDir:{app}\thirdparty
+Source: ..\thirdparty\JSFX_ImageZoom.js; DestDir:{app}\thirdparty
 
 [Run]
 

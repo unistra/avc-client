@@ -4,6 +4,7 @@
 #
 #    (c) ULP Multimedia 2006 - 2007 
 #     Developer : francois.schnell [AT ulpmm.u-strasbg.fr]
+#     Warning: App. very stable but code needs refactoring... 
 #---
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-#ad
+#
 #*******************************************************************************
 from reportlab.platypus.doctemplate import FrameBreak
 
@@ -27,7 +28,7 @@ from reportlab.platypus.doctemplate import FrameBreak
 import wx, wx.lib.colourdb,zipfile
 import wx.lib.hyperlink as hl
 import gettext
-import sys,os,time,datetime,tarfile,ConfigParser,threading
+import sys,os,time,datetime,tarfile,ConfigParser,threading, shutil
 import socket
 import msvcrt,Image,ImageGrab,pythoncom,pyHook,serial,subprocess
 # Static imports from PIL for py2exe
@@ -44,6 +45,7 @@ from ftplib import FTP
 from pywinauto import *
 from pywinauto import application
 from FMEcmd import *
+import htmlBits
 
 ## Default global variables before config file reading
 univr_order=False #If the order comes from Univr?
@@ -239,7 +241,7 @@ def stopFromKBhook():
             start_new_thread(confirmPublish,())
             """
             caption="Message Univ-R"
-            text="Enregistrement transmis vers Univ-R"
+            text="Enregistrement transmis vers Univ-R" 
             dialog=wx.MessageDialog(None,message=text,caption=caption,
             style=wx.OK|wx.ICON_INFORMATION)
             print "ask window back"
@@ -535,6 +537,7 @@ def recordStop():
         smil.smilEvent(timeStamp,diaId+1)
         diaId+=1
     smil.smilEnd(usage,videoEncoder)
+    htmlGen()
         
 def playAudio():
     """
@@ -772,6 +775,43 @@ def shutdownPC_if_noactivity():
             print "No activity over "+str(noactivityMax)+" s => shutdown the PC"
             #os.system("shutdown -s -f")
             print 'would do: os.system("shutdown -s -f")'
+            
+def htmlGen():
+    """ Genereate html version for playback"""
+    global workDirectory, usage
+        
+    f=open(workDirectory+"/timecode.csv")
+    diaTime=f.read().split("\n")[:-2]
+    f.close()
+    diaArray="("
+    for d in diaTime:
+        diaArray+= d+","
+    diaArray=diaArray[:-1]+")"
+    if usage=="audio":
+        media="enregistrement-micro.mp3"
+        playerHeight="20"
+    else:
+        media="enregistrement-video.flv"
+        playerHeight="200"
+    title=workDirectory.split("\\")[-1]
+    
+    htmlVars="// --- Variable generated from script\n// timecode of slides for this recording\n"\
+    +"var timecode=new Array"+diaArray+";\n"\
+    +"var media='"+media+"';\nvar playerHeight='"+playerHeight+"';//Give height='20' for audio and '200' for video\n"\
+    +"var title='"+title+"';\n"+"// ---"
+            
+    file=open(workDirectory+"/recording.html",'w')
+    file.write(htmlBits.head)
+    file.write(htmlVars)
+    file.write(htmlBits.tail)
+    file.close()
+    
+    ## copy third party script in a "thirdparty" folder
+    os.mkdir(workDirectory+"\\thirdparty")
+    shutil.copyfile("thirdparty\\player.swf",workDirectory+"\\thirdparty\\player.swf")
+    shutil.copyfile("thirdparty\\swfobject.js",workDirectory+"\\thirdparty\\swfobject.js")
+    shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
+    shutil.copyfile("thirdparty\\README.txt",workDirectory+"\\thirdparty\\README.txt")
                   
 ##############################################
 
@@ -1002,8 +1042,7 @@ class BeginFrame(wx.Frame):
             self.Bind(wx.EVT_MENU,self.help,help)
             self.Bind(wx.EVT_MENU,self.about,version)
             self.Bind(wx.EVT_MENU,self.configuration,conf)
-            #self.SetMenuBar       
-        audioVideoChoice=True    
+            #self.SetMenuBar          
         if audioVideoChoice==True:
             radio1=wx.RadioButton(panel,-1,"audio")
             radio2=wx.RadioButton(panel,-1,"video")
@@ -1066,7 +1105,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.03.1 \n\n"\
+        text="AudioVideoCours version 1.05 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1343,7 +1382,7 @@ class univrEndFrame(wx.Frame):
         
 ## Start app
 if __name__=="__main__":
-    
+
     # Start-up message
     print "AudioVideoCours client launched at ", datetime.datetime.now(), " ...\n"
     writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
