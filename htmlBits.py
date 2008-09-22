@@ -158,7 +158,7 @@ tail="""
     </div>
     
     <div id="screenshots">
-    <img id="slide"  width="95%"  src="ac-splash.png">
+    <img id="slide"  width="95%"  src="screenshots/D1.jpg">
     </div>
     
     <div id="thumbs">

@@ -2,11 +2,9 @@
 #
 #     MediaCours (Windows audio/video client and 'standalone' version)
 #
-#    (c) ULP Multimedia 2006 - 2007 
-#     Developer : francois.schnell [AT ulpmm.u-strasbg.fr]
-#     Warning: App. very stable but code needs refactoring... 
+#    (c) ULP Multimedia - 2008 
+#     Dev : francois.schnell [AT ulpmm.u-strasbg.fr]  
 #---
-#
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation; either version 2 of the License, or
@@ -22,32 +20,38 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #*******************************************************************************
-from reportlab.platypus.doctemplate import FrameBreak
+# Note (francois): App. stable but needs refactoring...
+#*******************************************************************************
 
-## Import modules
-import wx, wx.lib.colourdb,zipfile
-import wx.lib.hyperlink as hl
-import gettext
-import sys,os,time,datetime,tarfile,ConfigParser,threading, shutil
-import socket
-import msvcrt,Image,ImageGrab,pythoncom,pyHook,serial,subprocess
-# Static imports from PIL for py2exe
-from PIL import GifImagePlugin
-from PIL import JpegImagePlugin
-import pymedia.audio.sound as sound
-import pymedia.audio.acodec as acodec
-import pymedia.muxer as muxer
+## Python import (base Python 2.4)
+import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
+import subprocess, socket
 from thread import start_new_thread, exit
 from urllib2 import urlopen
-from PIL import Image
 from os import chdir
 from ftplib import FTP
-from pywinauto import *
-from pywinauto import application
-from FMEcmd import *
-import htmlBits
 
-## Default global variables before config file reading
+## External Python libs import
+import wx, wx.lib.colourdb # GUI
+import wx.lib.hyperlink as hl
+import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
+from PIL import GifImagePlugin  # Python Imaging Lib
+from PIL import JpegImagePlugin # Static imports from PIL for py2exe
+from PIL import Image, ImageGrab# used for screenshots
+import pymedia.audio.sound as sound # for mp3 or ogg encoding
+import pymedia.audio.acodec as acodec
+import pymedia.muxer as muxer
+from pywinauto import * # used to put app. back on foreground
+from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
+
+## Local imports 
+from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
+import htmlBits      # HTML chuncks for html format output
+
+#----------------------------------------------------------------------------------------
+
+## Some default global variables in case no configuration file is found
+
 univr_order=False #If the order comes from Univr?
 standalone=False
 # Publishing form variables
@@ -145,6 +149,7 @@ language="French"
 ftpLogin=""
 ftpPass=""
 videoinput="0"
+audioinput="0"
 flashServerIP="130.79.188.196"
 formFormation="" # a default entry for "formation" in the publishing form
 lastGlobalEvent=time.time()
@@ -154,19 +159,21 @@ if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
  
-##------ i18n settings -------
+#------- i18n settings ------------------------------------------------------------------
 gettext.install("mediacours","locale")
-
-#------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 
 def readConfFile():
-    """ Reads the config file and get those values """
-    print "> Search configuration file and use the values if they exist :\n"
+    """ 
+    Read the config file and get those values as global vars 
+    """
+    print "Search and read configuration (if it exist):"
+    
     global id,urlserver,samplingFrequency,createMp3,stopKey,portNumber,pathData\
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,videoDeviceName,audioDeviceName,flashServerIP\
+    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
     ,formFormation, audioVideoChoice
     
     section="mediacours"
@@ -210,15 +217,14 @@ def readConfFile():
         if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
         if config.has_option(section,"live") == True: liveCheckBox=readParam("live")
         if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
-        if config.has_option(section,"videoDeviceName") == True: videoDeviceName=readParam("videoDeviceName")
-        if config.has_option(section,"audioDeviceName") == True: audioDeviceName=readParam("audioDeviceName")
+        if config.has_option(section,"audioinput") == True: videoinput=readParam("audioinput")
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
-        print "\n"; fconf.close()
+        fconf.close()
         writeInLogs("\n")
     except:
-        print "Something went wrong while reading the configuration file\n"
+        print "Something went wrong while reading the configuration file..."
          
 def stopFromKBhook():
     """
@@ -229,28 +235,18 @@ def stopFromKBhook():
     if recording==False and tryFocus==False:
         windowBack(frameBegin)
     if recording==True and tryFocus==False:
-        print ">>> id:",id
+        print "id:",id
         if id=="":
-            print ">>>> Asking ending frame to come back"
+            print "Trying to put Ending frame back foreground..."
+            screenshot()
             windowBack(frameEnd)
-            screenshot()#Added recently to check
             recordStop()
         else:
             recordStop()
             print "Not showing usual publishing form"
             start_new_thread(confirmPublish,())
-            """
-            caption="Message Univ-R"
-            text="Enregistrement transmis vers Univ-R" 
-            dialog=wx.MessageDialog(None,message=text,caption=caption,
-            style=wx.OK|wx.ICON_INFORMATION)
-            print "ask window back"
-            windowBack(dialog,windowTitle="Message Univ-R")
-            print "after windowBack"
-            dialog.ShowModal()"""
             frameUnivr.Show()
             
-        
 def OnKeyboardEvent(event):
     """
     Catching keyboard events from the hook and deciding what to do
@@ -262,7 +258,7 @@ def OnKeyboardEvent(event):
     if (stopKey!="") and (event.Key== stopKey)and (tryFocus==False):
         print "from hook stopKey= :", stopKey
         global recording, fen1
-        print "Escape Key pressed from the hook ...\n"
+        print "Escape Key pressed from the hook ..."
         start_new_thread(stopFromKBhook,())
     if event.Key in screenshotKeys and( (time.time()-lastEvent)>eventDelay):
        start_new_thread(screenshot,()) 
@@ -315,13 +311,12 @@ def recordNow():
     global recording, diaId, timecodeFile, t0, dateTime0, dirName, workDirectory
     global snd,ac,cparams, nameRecord,usage,smil,pathData
     usage=frameBegin.usage
-    print "///////////////////////////// usage", usage
     recording= True
     tbicon.SetIcon(icon2, "Enregistrement en cours")
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
     dateTime0 = datetime.datetime.now()
-    print "- Begin recording now ! ...(We're in recordNow function) \n"
+    print "- Recording now ! ... ( from recordNow() )"
     dirName = str(dateTime0)
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
     if pathData=="" or pathData=="None":
@@ -354,7 +349,7 @@ def recordNow():
                 #print "*",
             if recording == False:
                 snd.stop()
-                print "-- stopped recording --"
+                print "-- stopped recording now --"
         
     def windowsMediaEncoderRecord():
         """
@@ -372,8 +367,8 @@ def recordNow():
         MaximumRecordingLength=str(maxRecordingLength)
         fileVideo=workDirectory+ '\\enregistrement-video.rm'
         if live==False:
-            print ">>> videoinput port = ",videoinput
-            os.system(('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -d %s')%(videoinput,videoinput,fileVideo,MaximumRecordingLength))
+            print "Videoinput and audio port = ",videoinput,audioinput
+            os.system(('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -d %s')%(videoinput,audioinput,fileVideo,MaximumRecordingLength))
         elif live==True:
             #todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
             page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
@@ -381,7 +376,7 @@ def recordNow():
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
-            todoLiveReal=('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -sp 130.79.188.5/%s.rm')%(videoinput,videoinput,fileVideo,recordingPlace)
+            todoLiveReal=('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -sp 130.79.188.5/%s.rm')%(videoinput,audioinput,fileVideo,recordingPlace)
             print todoLiveReal
             os.system(todoLiveReal)
             
@@ -389,10 +384,10 @@ def recordNow():
         """
         Record video with Flash Media Encoder
         """
-        print ">>> In flashMediaEncoderRecord()"
+        print "In flashMediaEncoderRecord()"
         global flv,flashServer
         if live==True:
-            print ">>> Going for live==True"
+            print "Going for live==True"
             liveParams="""<rtmp>
             <url>rtmp://"""+flashServerIP+"""/live</url>
             <backup_url></backup_url>
@@ -406,12 +401,10 @@ def recordNow():
             print serverAnswer
         else:
             liveParams=""
-        print ">>> videoDeviceName = ",videoDeviceName
-        print ">>> audioDeviceName = ",audioDeviceName
         flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
         flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
         print flvPath
-        flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath,liveParams)
+        flv=FMEcmd(videoinput,audioinput,flvPath,liveParams)
         flv.record()
             
     def liveStream():
@@ -448,7 +441,7 @@ def recordNow():
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
-    print "------------------ Usage is", usage
+    print "Usage is > ", usage
     if usage=="video" and videoEncoder=="wmv":
         print "searching Windows Media Encoder ..."   
         start_new_thread(windowsMediaEncoderRecord,())
@@ -498,7 +491,7 @@ def recordStop():
     Stop recording the audio input now
     """
     global recording,timecodeFile
-    print ">>> In recordStop"
+    print "In recordStop() now..."
     if live==True:
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
         "recordingPlace="+recordingPlace+"&status="+"end")
@@ -509,8 +502,7 @@ def recordStop():
     lastEvent=time.time()
     recording= False
     tbicon.SetIcon(icon1, usage+"cours en attente")
-    print "from recordStop, recording= ", recording 
-    print "Received order to stop recording => stopping recording \n"
+    print "Recording is now = ", recording 
     #timecodeFile.close()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
@@ -537,7 +529,14 @@ def recordStop():
         smil.smilEvent(timeStamp,diaId+1)
         diaId+=1
     smil.smilEnd(usage,videoEncoder)
-    htmlGen()
+    ## Generate html format and thirdparty forlder
+    if True: # catch all exceptions if True (give False for debug)
+        try:
+            htmlGen()
+        except:
+            writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
+    else:
+        htmlGen() # mainly for debug if False above
         
 def playAudio():
     """
@@ -674,7 +673,7 @@ def LaunchSocketServer():
                     windowBack(frameBegin)
                 if recording==True:
                     channel.send ( 'Received ID' + str(id)+" !!! already recording !!!")
-                    print ">>> Already recording"
+                    print "Already recording"
                 if 0:
                     caption="Message Univ-R Debut"
                     text="Veulliez appuyer sur le bouton audiovideocours\
@@ -703,7 +702,7 @@ def windowBack(frame,windowTitle="Attention"):
     Show the frame back in wiew
     """
     global tryFocus, recording
-    print ">>> windowTitle= ", windowTitle
+    print "windowTitle target= ", windowTitle
     tryFocus=True
     frame.Show()
     #time.sleep(0.5)
@@ -751,14 +750,14 @@ def kill_if_double():
     Kill an eventual running instance of mediacours.exe
     """
     try:
-        print ">>> Trying to kill an eventual running instance of mediacours.exe."
+        print "Trying to kill an eventual running instance of mediacours.exe."
         PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'r')
         PID=PID_f.readline()
         #print "PID of mediacours is ",PID
         #print "Killing PID ",PID
         os.popen("tskill "+PID)
     except:
-        print ">>> Passed kill_if_double"
+        print "Passed kill_if_double"
 
 def shutdownPC_if_noactivity():
     """ 
@@ -791,7 +790,7 @@ def htmlGen():
         media="enregistrement-micro.mp3"
         playerHeight="20"
     else:
-        media="enregistrement-video.flv"
+        media="../enregistrement-video.flv"
         playerHeight="200"
     title=workDirectory.split("\\")[-1]
     
@@ -813,7 +812,7 @@ def htmlGen():
     shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
     shutil.copyfile("thirdparty\\README.txt",workDirectory+"\\thirdparty\\README.txt")
                   
-##############################################
+#################################################################################################################
 
 class SerialHook:
     """
@@ -846,22 +845,13 @@ class SerialHook:
                 self.kb1=False
                 print "kb1 False"
                 if recording== True:
-                    print ">>> id:",id
+                    print "id:",id,"(optional id for this recording)"
                     if id=="":
                         windowBack(frameEnd)
                         recordStop()
                     else:
                         recordStop()
-                        """
-                        print "Not showing form"
-                        start_new_thread(confirmPublish,())
-                        caption="Fin enregistrement via Univ-R"
-                        text="Enregistrement transmis."
-                        dialog=wx.MessageDialog(None,message=text,caption=caption,
-                        style=wx.OK|wx.ICON_INFORMATION)
-                        dialog.ShowModal()"""
                         frameUnivr.Show()
-                    
                 if recording==False:
                     frameBegin.Hide()
             if (self.ser.getDSR()!=self.kb2) and (self.ser.getDSR()==True):
@@ -1020,7 +1010,8 @@ class BeginFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         global liveFeed
-        self.usage="audio"
+        #self.usage="audio"
+        self.usage=usage
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(500, 370),
@@ -1046,6 +1037,10 @@ class BeginFrame(wx.Frame):
         if audioVideoChoice==True:
             radio1=wx.RadioButton(panel,-1,"audio")
             radio2=wx.RadioButton(panel,-1,"video")
+            if usage=="video":
+                radio2.SetValue(True)
+            if usage=="audio":
+                radio1.SetValue(True)
             def onRadio(evt):
                 radioSelected=evt.GetEventObject()
                 self.usage=radioSelected.GetLabel()
@@ -1145,7 +1140,6 @@ class BeginFrame(wx.Frame):
         global live
         if  liveCheckBox==True:
             live=liveFeed.GetValue()
-        print  "Live ordered ?  ",live
         if tryFocus==False:
             start_new_thread(recordNow,())
             self.Hide()
@@ -1298,8 +1292,7 @@ class EndingFrame(wx.Frame):
             print "name: ",name
             print "ue: ",ue
             print "prenom: ",firstname
-            start_new_thread(confirmPublish,(folder,))
-            
+            start_new_thread(confirmPublish,(folder,))     
         entry1.SetValue("")
         entry2.SetValue("")
         entryNom.SetValue("")
@@ -1384,15 +1377,14 @@ class univrEndFrame(wx.Frame):
 if __name__=="__main__":
 
     # Start-up message
-    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ...\n"
-    writeInLogs("\n\n>>> AudioVideoCours client launched at "+ \
-    str(datetime.datetime.now())+"\n")
+    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
+    writeInLogs("\nAudioVideoCours client launched at "+ \
+    str(datetime.datetime.now()))
     # Check if another instance is already launched and kill it if it exist
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
     # Read configuration file
     readConfFile()
-    print ">>> pathData before if",pathData#,len(pathData)
     if pathData == None:
         #pathData=os.getcwd()
         pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
