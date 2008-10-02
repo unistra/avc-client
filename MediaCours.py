@@ -217,7 +217,7 @@ def readConfFile():
         if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
         if config.has_option(section,"live") == True: liveCheckBox=readParam("live")
         if config.has_option(section,"videoinput") == True: videoinput=readParam("videoinput")
-        if config.has_option(section,"audioinput") == True: videoinput=readParam("audioinput")
+        if config.has_option(section,"audioinput") == True: audioinput=readParam("audioinput")
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
@@ -403,9 +403,17 @@ def recordNow():
             liveParams=""
         flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
         flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
-        print flvPath
-        flv=FMEcmd(videoinput,audioinput,flvPath,liveParams)
-        flv.record()
+        print flvPath  
+        print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
+        if os.path.isfile("startup.xml")==True:
+            print "Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
+            #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
+            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=True)
+            flv.record()
+        else:
+            print "FME: using configuration file parameters"
+            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=False)
+            flv.record()
             
     def liveStream():
         """ Control VLC for *audio* live stream """
@@ -791,7 +799,7 @@ def htmlGen():
         playerHeight="20"
     else:
         media="../enregistrement-video.flv"
-        playerHeight="200"
+        playerHeight="250"
     title=workDirectory.split("\\")[-1]
     
     htmlVars="// --- Variable generated from script\n// timecode of slides for this recording\n"\

@@ -8,20 +8,23 @@
 # The script will generate its own profile file "flv_startup.xml" in the same
 # folder
 #
-#  Limitation:  FMEcmd needs the full name of the video and audio device
-# (it's not possible to give the input number as seen by Windows)
+# Note: Since version 2.5 of Flash Media Encoder, videoDeviceName,audioDeviceName
+#       can be the full name or the input number
 # 
 # Flash Media Ecoder URL
 # http://www.adobe.com/products/flashmediaserver/flashmediaencoder/
 ###############################################################################
 
-import os,subprocess
+import os,subprocess, codecs
 
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
     
-    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams):
-        self.profile=u"""
+    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams,externalProfile):
+        print "in FMEcmd, received videoDeviceName",videoDeviceName,"audioDeviceName",audioDeviceName
+        print "externalProfile=",externalProfile
+        
+        self.profileHead=u"""
 <?xml version="1.0" encoding="UTF-16"?>
 <flashmediaencoder_profile>
 <preset>
@@ -71,14 +74,16 @@ class FMEcmd(object):
 <reconnectinterval>
 <attempts></attempts>
 <interval></interval>
-</reconnectinterval>
-<output>
+</reconnectinterval>"""
+
+        self.profileOutput=u"""<output>
 """+liveParams+"""
 <file>
 <path>"""+flvPath+u"""</path>
 </file>
-</output>
-<metadata>
+</output>"""
+
+        self.profileTail=u"""<metadata>
 <entry>
 <key>author</key>
 <value></value>
@@ -122,9 +127,21 @@ class FMEcmd(object):
 </flashmediaencoder_profile>
 """
 
-        #print repr(self.profile)
+        # check if an external profile exist and take profileHead in this case
+        if externalProfile== True:
+            print "Reading external profile"
+            fP=codecs.open("startup.xml",encoding="utf-16-le")
+            #fP=open("startup.xml","r")
+            exProfile=u""
+            for line in fP:
+                exProfile+=line
+            #print repr(exProfile)
+            self.profileHead=exProfile.split(u"<output>")[0]
+            #print self.profileHead
+            fP.close()
+        self.profile=self.profileHead+self.profileOutput+self.profileTail
         fileOut=open("flv_startup.xml","wb")
-        fileOut.write(self.profile.encode("utf-16"))
+        fileOut.write(self.profile.encode("UTF-16"))
         fileOut.close
 
     def record(self):
@@ -147,7 +164,7 @@ if __name__=="__main__":
     flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
     
     # Example: record a 30 seconds video
-    flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath)
+    flv=FMEcmd(videoDeviceName,audioDeviceName,flvPath,liveParams="",externalProfile=False)
     flv.record()
     time.sleep(30)
     flv.stop()
