@@ -385,7 +385,7 @@ def recordNow():
         Record video with Flash Media Encoder
         """
         print "In flashMediaEncoderRecord()"
-        global flv,flashServer
+        global flv,flashServer,FMEpid
         if live==True:
             print "Going for live==True"
             liveParams="""<rtmp>
@@ -410,10 +410,16 @@ def recordNow():
             #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=True)
             flv.record()
+            #FMEprocess=flv.record()
+            #FMEpid=FMEprocess.pid
+            FMEpid=flvPath # FME use the full path of the flv not the pid...
         else:
             print "FME: using configuration file parameters"
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=False)
             flv.record()
+            #FMEprocess=flv.record()
+            #FMEpid=FMEprocess.pid
+            FMEpid=flvPath # FME use the full path of the flv not the pid...
             
     def liveStream():
         """ Control VLC for *audio* live stream """
@@ -498,7 +504,7 @@ def recordStop():
     """
     Stop recording the audio input now
     """
-    global recording,timecodeFile
+    global recording,timecodeFile,FMEpid
     print "In recordStop() now..."
     if live==True:
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
@@ -517,7 +523,7 @@ def recordStop():
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if usage=="video" and videoEncoder=="flash":
-        flv.stop()
+        flv.stop(FMEpid)
     if live==True and usage=="audio":
         os.system('tskill vlc')
         try:

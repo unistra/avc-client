@@ -147,10 +147,12 @@ class FMEcmd(object):
     def record(self):
         """Record the flv video using the FMEcmd.exe"""
         subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
-    
-    def stop(self):
+        
+    def stop(self,FMEpid):
         """Kill the FlashMediaEncoder"""
-        os.popen("taskkill /F /IM FMEcmd.exe")
+        #os.popen("taskkill /F /IM FMEcmd.exe")
+        print 'Ordering: FMEcmd.exe /s "%s" ' % FMEpid
+        os.popen('FMEcmd.exe /s "%s"' % FMEpid)
 
 if __name__=="__main__":
     
