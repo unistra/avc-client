@@ -246,6 +246,14 @@ def stopFromKBhook():
             print "Not showing usual publishing form"
             start_new_thread(confirmPublish,())
             frameUnivr.Show()
+    # make sure buttons "publish" and "cancel" are enabled for user input
+    try:
+        if frameEnd.btnPublish.IsEnabled()==False:
+            frameEnd.btnPublish.Enable(True)
+        if frameEnd.btnCancel.IsEnabled()==False:
+            frameEnd.btnCancel.Enable(True)
+    except:
+        print "warning! tried to check if buttons 'publish' and 'cancel' were enabled but had problems" 
             
 def OnKeyboardEvent(event):
     """
@@ -577,34 +585,37 @@ def playAudio():
               time.sleep( .01 ) 
     while sndOut.isPlaying(): time.sleep( 0.05 )
     sndOut.stop()
+    
+def createZip():
+    """ zip all recording data in a .zip folder """
+    frameEnd.statusBar.SetStatusText("Creating zip file, please wait ...")
+    zip = zipfile.ZipFile(pathData+"\\"+dirName+".zip", 'w')
+    for fileName in os.listdir ( workDirectory ):
+        if os.path.isfile (workDirectory+"\\"+fileName):
+            zip.write(workDirectory+"\\"+fileName,
+            dirName+"/"+fileName,zipfile.ZIP_DEFLATED)
+    for fileName in os.listdir ( workDirectory+"\\screenshots"):
+        zip.write(workDirectory+"\\screenshots\\"+fileName,
+            dirName+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
+    zip.close()     
 
 def confirmPublish(folder=''):
     """
     Publish the recording when hitting the 'publish' button 
     """
-    global id,entry1,entry2,entry25,entry3,entry4
+    global id,entryTitle,entryDescription,entryTraining
     idtosend=id
     id="" # if confirmPublsih fails id is back to ""
-    #print "description = ", description
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
     if dirName =="":
         frameEnd.statusBar.SetStatusText("Rien a publier ...")
-    if dirName != "":
-        zip = zipfile.ZipFile(pathData+"\\"+dirName+".zip", 'w')
-        for fileName in os.listdir ( workDirectory ):
-            if os.path.isfile (workDirectory+"\\"+fileName ):
-                zip.write(workDirectory+"\\"+fileName,
-                dirName+"/"+fileName,zipfile.ZIP_DEFLATED)
-        for fileName in os.listdir ( workDirectory+"\\screenshots"):
-            zip.write(workDirectory+"\\screenshots\\"+fileName,
-                dirName+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
-        zip.close()                    
+    if dirName != "":    
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
         #if 1:
         try:
-            print "------ tar ordered------"
+            
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
@@ -643,11 +654,11 @@ def confirmPublish(folder=''):
         # set the id variable to id="" again
         idtosend= ""
         print "setting entry fields back to empty"
-        entry1.SetValue("")
-        entry2.SetValue("")
-        entryNom.SetValue("")
-        entryPrenom.SetValue("")
-        if formFormation=="": entry4.SetValue("")
+        entryTitle.SetValue("")
+        entryDescription.SetValue("")
+        entryLastname.SetValue("")
+        entryFirstname.SetValue("")
+        if formFormation=="": entryTraining.SetValue("")
         frameEnd.statusBar.SetStatusText("---")
     else:
         print "Pas de publication: pas d'enregistrement effectue"
@@ -1082,7 +1093,7 @@ class BeginFrame(wx.Frame):
             print fontList
         if  liveCheckBox==True:
             liveFeed=wx.CheckBox(panel,-1,_("Live streaming"),)
-        btn = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
+        btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
         if standalone == True:
             btnNext = wx.Button(parent=panel, id=-1, label=_("Other choices"),size=(100,50))
             btnQuit = wx.Button(parent=panel, id=-1, label=_("Quit"),size=(100,50))
@@ -1098,14 +1109,14 @@ class BeginFrame(wx.Frame):
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
         sizerV.Add(sizerH, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        sizerH.Add(btn, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        sizerH.Add(btnRecord, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         if standalone == True:
             sizerH.Add(btnNext, 0, wx.ALIGN_CENTER|wx.ALL, 10)
             sizerH.Add(btnQuit, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         panel.SetSizer(sizerV)
         panel.Layout() 
         # bind the button events to handlers
-        self.Bind(wx.EVT_BUTTON, self.engageRecording, btn)
+        self.Bind(wx.EVT_BUTTON, self.engageRecording, btnRecord)
         if standalone == True:
             self.Bind(wx.EVT_BUTTON, self.SkiptoEndingFrame, btnNext)
             self.Bind(wx.EVT_BUTTON, self.exitApp, btnQuit)
@@ -1164,7 +1175,7 @@ class EndingFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         """Create the ending frame"""
-        global entry1,entry2,entry25,entry3,entry4,entryNom,entryPrenom,entryCode
+        global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname,entryCode,btnPublish,btnCancel
         windowXsize=500
         fieldSize=420
         if standalone==True:
@@ -1180,37 +1191,37 @@ class EndingFrame(wx.Frame):
         self.statusBar.SetStatusText(_("Status bar"))
         panel=wx.Panel(self)
         panel.SetBackgroundColour((244,180,56))
-        im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        textTitre = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
-        entry1 = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
+        logos = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        textTitle = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryTitle = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
         textDescription = wx.StaticText(panel, -1, _("Eventual description:"),
         size=(400,-1),style=wx.ALIGN_CENTER)
-        entry2 = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
-        textNom= wx.StaticText(panel, -1, _("Name:"),size=(400,-1),style=wx.ALIGN_CENTER)
-        entryNom = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
-        textPrenom= wx.StaticText(panel, -1, _("First name:"),size=(400,-1),style=wx.ALIGN_CENTER)
-        entryPrenom = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
-        text4 = wx.StaticText(panel, -1, _("Degree:"),size=(400,-1),style=wx.ALIGN_CENTER)
-        entry4 = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
-        entry4.SetValue(formFormation)
+        entryDescription = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
+        textLastname= wx.StaticText(panel, -1, _("Name:"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryLastname = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
+        textFirstname= wx.StaticText(panel, -1, _("First name:"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryFirstname = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
+        textTraining = wx.StaticText(panel, -1, _("Degree:"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryTraining = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
+        entryTraining.SetValue(formFormation)
         textCode=wx.StaticText(panel,-1, _("Access Code if you wish to set a limited access:"),
         size=(400,-1),style=wx.ALIGN_CENTER)
         entryCode = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
-        text0=hl.HyperLinkCtrl(panel, wx.ID_ANY, (_("Access to")+" audiovideocours.u-strasbg.fr"),
+        linkWebsite=hl.HyperLinkCtrl(panel, wx.ID_ANY, (_("Access to")+" audiovideocours.u-strasbg.fr"),
         URL="http://audiovideocours.u-strasbg.fr/",size=(300,-1),style=wx.ALIGN_CENTER)
-        text0.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
-        text0.SetForegroundColour("white")
-        text0.SetColours("white", "white", "white")
+        linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
+        linkWebsite.SetForegroundColour("white")
+        linkWebsite.SetColours("white", "white", "white")
             
-        for label in [textTitre,textDescription,textNom,textPrenom,text4,textCode]:
+        for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode]:
             label.SetForegroundColour("white")
             label.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.BOLD, False,"MS Sans Serif"))
-        for entry in [entry1,entry2,entryNom,entryPrenom,entry4,entryCode]:
+        for entry in [entryTitle,entryDescription,entryLastname,entryFirstname,entryTraining,entryCode]:
             #entry.SetBackgroundColour((254,236,170))
             #entry.SetBackgroundColour("light blue")
             pass
         
-        btn = wx.Button(panel, -1, _("Publish!"),size=(130,50))
+        btnPublish = wx.Button(panel, -1, _("Publish!"),size=(130,50))
         btnCancel=wx.Button(panel, -1, _("Cancel"),size=(70,50))
         
         if standalone==True :
@@ -1219,7 +1230,7 @@ class EndingFrame(wx.Frame):
             btnOpen=wx.Button(panel,-1,_("Open"),size=(70,50))
             
         hbox=wx.BoxSizer()
-        hbox.Add(btn,proportion=0,flag=wx.RIGHT,border=5)
+        hbox.Add(btnPublish,proportion=0,flag=wx.RIGHT,border=5)
         hbox.Add(btnCancel,proportion=0,flag=wx.RIGHT,border=5)
         
         if standalone==True :
@@ -1228,26 +1239,26 @@ class EndingFrame(wx.Frame):
             hbox.Add(btnQuit,proportion=0,flag=wx.RIGHT,border=5)
         pad1=4    
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(wx.StaticBitmap(panel, -1, im1, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
-        sizer.Add(textTitre, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entry1, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(wx.StaticBitmap(panel, -1, logos, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
+        sizer.Add(textTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(textDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entry2, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textNom, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryNom, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textPrenom, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryPrenom, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(text4, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entry4, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(textLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(textFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(textTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(textCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(entryCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(hbox, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        sizer.Add(text0, 0, wx.ALIGN_CENTER|wx.ALL, 4)
+        sizer.Add(linkWebsite, 0, wx.ALIGN_CENTER|wx.ALL, 4)
         panel.SetSizer(sizer)
         panel.Layout() # what for ?
         
         # bind the button events to handlers
-        self.Bind(wx.EVT_BUTTON, self.publish, btn)
+        self.Bind(wx.EVT_BUTTON, self.publish, btnPublish)
         self.Bind(wx.EVT_BUTTON, self.exitPublish, btnCancel)
         
         if standalone==True :
@@ -1292,13 +1303,13 @@ class EndingFrame(wx.Frame):
             if standalone == True:
                 frameBegin.Show()
         if standalone==False:
-            global entry1,entry2,entry25,entry3,entry4,entryNom,entryPrenom
+            global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname
             global title,description,firstname,name,ue,login
-            title= entry1.GetValue()
-            description=entry2.GetValue()
-            name=entryNom.GetValue()
-            firstname=entryPrenom.GetValue()
-            ue=entry4.GetValue()
+            title= entryTitle.GetValue()
+            description=entryDescription.GetValue()
+            name=entryLastname.GetValue()
+            firstname=entryFirstname.GetValue()
+            ue=entryTraining.GetValue()
             genre=entryCode.GetValue()
             #login=entry3.GetValue()
             print "tile: ",title
@@ -1306,12 +1317,16 @@ class EndingFrame(wx.Frame):
             print "name: ",name
             print "ue: ",ue
             print "prenom: ",firstname
-            start_new_thread(confirmPublish,(folder,))     
-        entry1.SetValue("")
-        entry2.SetValue("")
-        entryNom.SetValue("")
-        entryPrenom.SetValue("")
-        if formFormation=="": entry4.SetValue("")
+            print "Creating .zip file..."
+            createZip()      
+            print "Zip file created" 
+            start_new_thread(confirmPublish,(folder,))
+            
+        entryTitle.SetValue("")
+        entryDescription.SetValue("")
+        entryLastname.SetValue("")
+        entryFirstname.SetValue("")
+        if formFormation=="": entryTraining.SetValue("")
 
     def readPreview(self,evt):
         """Read the smil 'recording' file (audio or video + screenshots)"""
@@ -1341,23 +1356,33 @@ class EndingFrame(wx.Frame):
         str(datetime.datetime.now())+"\n")
         if tryFocus==False:
             global title,description,name,firstname, ue,genre
-            title= entry1.GetValue()
-            description=entry2.GetValue()
-            name=entryNom.GetValue()
-            firstname=entryPrenom.GetValue()
-            ue=entry4.GetValue()
+            title= entryTitle.GetValue()
+            description=entryDescription.GetValue()
+            name=entryLastname.GetValue()
+            firstname=entryFirstname.GetValue()
+            ue=entryTraining.GetValue()
             genre=entryCode.GetValue()
             print "tile : ",title
             print "description: ",description
             print "name: ",name
             print "prenom: ",firstname
             print "ue: ",ue
-            entry1.SetValue("")
-            entry2.SetValue("")
-            entryNom.SetValue("")
-            entryPrenom.SetValue("")
+            entryTitle.SetValue("")
+            entryDescription.SetValue("")
+            entryLastname.SetValue("")
+            entryFirstname.SetValue("")
             entryCode.SetValue("")
-            if formFormation=="": entry4.SetValue("")
+            if formFormation=="": entryTraining.SetValue("")
+            print "Creating .zip file..."
+            btnPublish.Enable(False)
+            btnCancel.Enable(False)
+            try:
+                createZip()
+            except:
+                print "Warning! couldn't create zip file!"      
+            print "If no above warning, Zip file created" 
+            btnPublish.Enable(True)
+            btnCancel.Enable(True)
             if standalone !=True:
                 self.Hide()
             start_new_thread(confirmPublish,())
