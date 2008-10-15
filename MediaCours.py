@@ -247,11 +247,12 @@ def stopFromKBhook():
             start_new_thread(confirmPublish,())
             frameUnivr.Show()
     # make sure buttons "publish" and "cancel" are enabled for user input
+    #if 1:
     try:
-        if frameEnd.btnPublish.IsEnabled()==False:
-            frameEnd.btnPublish.Enable(True)
-        if frameEnd.btnCancel.IsEnabled()==False:
-            frameEnd.btnCancel.Enable(True)
+        if btnPublish.IsEnabled()==False:
+            btnPublish.Enable(True)
+        if btnCancel.IsEnabled()==False:
+            btnCancel.Enable(True)
     except:
         print "warning! tried to check if buttons 'publish' and 'cancel' were enabled but had problems" 
             
@@ -588,7 +589,8 @@ def playAudio():
     
 def createZip():
     """ zip all recording data in a .zip folder """
-    frameEnd.statusBar.SetStatusText("Creating zip file, please wait ...")
+    frameEnd.statusBar.SetStatusText("Please wait ...(creating archive) ...")
+    #frameEnd.statusBar.w
     zip = zipfile.ZipFile(pathData+"\\"+dirName+".zip", 'w')
     for fileName in os.listdir ( workDirectory ):
         if os.path.isfile (workDirectory+"\\"+fileName):
@@ -607,34 +609,36 @@ def confirmPublish(folder=''):
     idtosend=id
     id="" # if confirmPublsih fails id is back to ""
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
-    if dirName =="":
+    # !!!!  Test: changing dirName and workDirectory to dirNameToPublish and workDirectoryToPublish
+    # to avoid conflicts when publishing and recording a new file straight away
+    if dirNameToPublish =="":
         frameEnd.statusBar.SetStatusText("Rien a publier ...")
-    if dirName != "":    
+    if dirNameToPublish != "":    
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
-        dirName+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        #if 1:
-        try:
+        dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
+        if 1:
+        #try:
             
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
             ftp.login(ftpLogin, ftpPass)
             print "debut de ftp"
-            f = open(workDirectory+".zip",'rb')# file to send 
+            f = open(workDirectoryToPublish+".zip",'rb')# file to send 
             if folder=="canceled":
                 print "Trying to open cancel forlder"
                 ftp.cwd("canceled") 
-            ftp.storbinary('STOR '+ dirName+".zip", f) # Send the file
+            ftp.storbinary('STOR '+ dirNameToPublish+".zip", f) # Send the file
             f.close() # Close file and FTP
             ftp.quit()
             print "fin de ftp"
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        #if 1:  
-        except:
-            print "!!! Something went wrong while sending the Tar to the server !!!"
+        if 0:  
+        #except:
+            print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
@@ -643,8 +647,8 @@ def confirmPublish(folder=''):
             try:
                 #Send data to the AudioCours server (submit form)
                 page = urlopen(urlserver,\
-                "fichier="+dirName+".zip"+"&id="+idtosend+"&title="+title+"&description="+description+\
-                "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirName+".zip")
+                "fichier="+dirNameToPublish+".zip"+"&id="+idtosend+"&title="+title+"&description="+description+\
+                "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirNameToPublish+".zip")
                 print "------ Response from Audiocours : -----"
                 serverAnswer= page.read() # Read/Check the result
                 print serverAnswer
@@ -1125,7 +1129,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.05 \n\n"\
+        text="AudioVideoCours version 1.05 - beta1 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
@@ -1288,6 +1292,7 @@ class EndingFrame(wx.Frame):
             self.readPreview(self)
         print workDirectory
         
+        
     def exitApp(self,evt):
         """A function to quit the app"""
         print "exit"
@@ -1295,6 +1300,7 @@ class EndingFrame(wx.Frame):
         
     def exitPublish(self,evt):
         """Don't publich the recordings on the webserver"""
+        global dirNameToPublish, workDirectoryToPublish
         writeInLogs("- 'Cancel' button pressed at"+ \
         str(datetime.datetime.now())+"\n")
         folder="canceled"
@@ -1320,6 +1326,9 @@ class EndingFrame(wx.Frame):
             print "Creating .zip file..."
             createZip()      
             print "Zip file created" 
+            
+            workDirectoryToPublish=workDirectory
+            dirNameToPublish=dirName
             start_new_thread(confirmPublish,(folder,))
             
         entryTitle.SetValue("")
@@ -1352,8 +1361,11 @@ class EndingFrame(wx.Frame):
         
     def publish(self,evt):
         """Publish the recording on the website"""
+        global workDirectoryToPublish, dirNameToPublish
         writeInLogs("- 'Publish' button pressed at"+ \
         str(datetime.datetime.now())+"\n")
+        workDirectoryToPublish=workDirectory
+        dirNameToPublish=dirName
         if tryFocus==False:
             global title,description,name,firstname, ue,genre
             title= entryTitle.GetValue()

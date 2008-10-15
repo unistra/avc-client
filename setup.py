@@ -3,6 +3,9 @@
 # for audiovideocours projects.
 #
 # Usage: python setup.py py2exe
+# 
+# !!! This setup file works well with py2exe 0.6.6 (not 0.8.8) !!!
+#
 ################################################################################
 
 from distutils.core import setup

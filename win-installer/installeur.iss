@@ -72,8 +72,13 @@ Source: ..\dist\vcodec.pyd; DestDir:{app}
 Source: ..\dist\w9xpopen.exe; DestDir:{app}
 Source: ..\dist\win32event.pyd; DestDir:{app}
 Source: ..\dist\win32file.pyd; DestDir:{app}
-Source: ..\dist\wxmsw26h_vc.dll; DestDir:{app}
 Source: ..\dist\zlib.pyd; DestDir:{app}
+;Source: ..\dist\wxmsw26h_vc.dll; DestDir:{app}
+Source: ..\dist\wxbase28h_net_vc.dll; DestDir:{app}
+Source: ..\dist\wxbase28h_vc.dll; DestDir:{app}
+Source: ..\dist\wxmsw28h_adv_vc.dll; DestDir:{app}
+Source: ..\dist\wxmsw28h_core_vc.dll; DestDir:{app}
+Source: ..\dist\wxmsw28h_html_vc.dll; DestDir:{app}
 
 ; Translations
 Source: ..\mediacours.pot; DestDir:{app}
