@@ -20,18 +20,16 @@ import os,subprocess, codecs
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
     
-    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams,externalProfile):
+    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams,externalProfile,usage="video",live=False):
         print "in FMEcmd, received videoDeviceName",videoDeviceName,"audioDeviceName",audioDeviceName
         print "externalProfile=",externalProfile
+        print "### flvPath is ", flvPath
+        self.flvPath=flvPath
+        self.usage=usage
         
-        self.profileHead=u"""
-<?xml version="1.0" encoding="UTF-16"?>
-<flashmediaencoder_profile>
-<preset>
-<name>Medium Bandwidth (300 Kbps)</name>
-<description></description>
-</preset>
-<capture>
+        if usage=="video":
+            
+            videoSource=u"""
 <video>
 <device>"""+videoDeviceName+u"""</device>
 <crossbar_input>0</crossbar_input>
@@ -40,16 +38,9 @@ class FMEcmd(object):
 <width>320</width>
 <height>240</height>
 </size>
-</video>
-<audio>
-<device>""" +audioDeviceName+u"""</device>
-<crossbar_input>0</crossbar_input>
-<sample_rate>22050</sample_rate>
-<channels>1</channels>
-<input_volume>75</input_volume>
-</audio>
-</capture>
-<encode>
+</video>"""
+
+            videoEncode=u"""
 <video>
 <codec>VP6</codec>
 <datarate>200</datarate>
@@ -60,7 +51,39 @@ class FMEcmd(object):
 <datarate_window>Medium</datarate_window>
 <cpu_usage>Dedicated</cpu_usage>
 </advanced>
-</video>
+</video>"""
+            
+        elif usage=="audio":           
+            videoSource=""
+            videoEncode=""
+        
+        if live==True and usage=="audio":
+            outputFile=""
+        else:
+            outputFile="""<file>
+<path>"""+flvPath+u"""</path>
+</file>"""
+            
+        self.profileHead=u"""
+<?xml version="1.0" encoding="UTF-16"?>
+<flashmediaencoder_profile>
+<preset>
+<name>Medium Bandwidth (300 Kbps)</name>
+<description></description>
+</preset>
+<capture>"""+\
+videoSource+"""
+<audio>
+<device>""" +audioDeviceName+u"""</device>
+<crossbar_input>0</crossbar_input>
+<sample_rate>22050</sample_rate>
+<channels>1</channels>
+<input_volume>75</input_volume>
+</audio>
+</capture>
+<encode>"""\
++videoEncode +\
+"""
 <audio>
 <format>Mp3</format>
 <datarate>48</datarate>
@@ -77,10 +100,7 @@ class FMEcmd(object):
 </reconnectinterval>"""
 
         self.profileOutput=u"""<output>
-"""+liveParams+"""
-<file>
-<path>"""+flvPath+u"""</path>
-</file>
+"""+liveParams+outputFile+"""
 </output>"""
 
         self.profileTail=u"""<metadata>
@@ -153,6 +173,13 @@ class FMEcmd(object):
         #os.popen("taskkill /F /IM FMEcmd.exe")
         print 'Ordering: FMEcmd.exe /s "%s" ' % FMEpid
         os.popen('FMEcmd.exe /s "%s"' % FMEpid)
+        if 0:
+            # Checking for an artefact "enregistrement-micro.flv" file to erase in live audio mode
+            artefact=self.flvPath.split(".mp3")[0]+".flv"
+            print "Trying to delete ", artefact
+            if self.usage=="audio" and os.path.isfile(artefact):
+                os.system('del "%s"' % artefact)
+
 
 if __name__=="__main__":
     

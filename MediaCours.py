@@ -238,7 +238,8 @@ def stopFromKBhook():
         print "id:",id
         if id=="":
             print "Trying to put Ending frame back foreground..."
-            screenshot()
+            if live==False:
+                screenshot()
             windowBack(frameEnd)
             recordStop()
         else:
@@ -405,26 +406,33 @@ def recordNow():
             #Send the information that live is ON
             page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
             "recordingPlace="+recordingPlace+"&status="+"begin")
-            print "------ Response from Audiocours : -----"
-            serverAnswer= page.read() # Read/Check the result
-            print serverAnswer
+            if 0:
+                print "------ Response from Audiocours : -----"
+                serverAnswer= page.read() # Read/Check the result
+                print serverAnswer
         else:
             liveParams=""
-        flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
-        flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
+        #flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
+        if usage=="video":
+            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
+        elif usage=="audio":
+            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-micro.mp3'
+            
         print flvPath  
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
         if os.path.isfile("startup.xml")==True:
             print "Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
             #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
-            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=True)
+            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
+                       flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live)
             flv.record()
             #FMEprocess=flv.record()
             #FMEpid=FMEprocess.pid
             FMEpid=flvPath # FME use the full path of the flv not the pid...
         else:
             print "FME: using configuration file parameters"
-            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,flvPath=flvPath,liveParams=liveParams,externalProfile=False)
+            flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
+                       flvPath=flvPath,liveParams=liveParams,externalProfile=False,usage=usage,live=live)
             flv.record()
             #FMEprocess=flv.record()
             #FMEpid=FMEprocess.pid
@@ -455,8 +463,14 @@ def recordNow():
     # Check for usage and engage recording
     if usage=="audio":
         start_new_thread(record,())
+        
+    if live==True:
+        start_new_thread(liveScreenshotStart,())
+    
     if live==True and usage=="audio":
-        start_new_thread(liveStream,())
+        #start_new_thread(liveStream,())
+        start_new_thread(flashMediaEncoderRecord,())
+    
         #Send the information that live is ON
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
         "recordingPlace="+recordingPlace+"&status="+"begin")
@@ -465,16 +479,17 @@ def recordNow():
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
     print "Usage is > ", usage
+    
+    if usage=="video" and videoEncoder=="flash":
+        print "searching Flash Media Encoder"    
+        start_new_thread(flashMediaEncoderRecord,())
     if usage=="video" and videoEncoder=="wmv":
         print "searching Windows Media Encoder ..."   
         start_new_thread(windowsMediaEncoderRecord,())
     if usage=="video" and videoEncoder=="real":
         print "searching Real media encoder"    
         start_new_thread(realProducerRecord,())
-    if usage=="video" and videoEncoder=="flash":
-        print "searching Flash Media Encoder"    
-        start_new_thread(flashMediaEncoderRecord,())
-                       
+                        
 def screenshot():
     """
     Take a screenshot and thumbnails of the screen
@@ -496,18 +511,41 @@ def screenshot():
         + str(diaId)+'.jpg"/> </a>\n')"""
         myscreen.thumbnail((256,192))
         myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
-        if live==True:
+        if live==True and ftpHandleReady:
+            time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
             try:
-                ftp = FTP(ftpUrl)
-                ftp.login(ftpLogin, ftpPass)
-                ftp.cwd("live")
-                print "ftp screenshot live"
-                f = open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg','rb') 
-                ftp.storbinary('STOR '+recordingPlace+'.jpg', f) 
+                livescreen= ImageGrab.grab()
+                livescreen.save(workDirectory+"/screenshots/Dlive.jpg")
+                print "[FTP] sending live screenshot"
+                f = open(workDirectory+"/screenshots/Dlive.jpg",'rb') 
+                ftpHandle.storbinary('STOR '+recordingPlace+'.jpg', f) 
                 f.close() 
-                ftp.quit() 
             except:
                 print "Couldn't send live screenshot to FTP port"
+
+def liveScreenshotStream():
+    """ send screenshot at regular interval in live mode"""
+    # Function not currently used
+    while live==True and recording==True:
+        time.sleep(5) # in live mode add a tempo to have the current dia (after an eventual transition)
+        f = open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg','rb') 
+        ftp.storbinary('STOR '+recordingPlace+'.jpg', f) 
+        f.close() 
+                
+def liveScreenshotStart():
+    """ Open ftpLiveHandle for live screenshots capabilities """
+    global ftpHandle, ftpHandleReady
+    ftpHandleReady=False
+    ftpHandle = FTP(ftpUrl)
+    ftpHandle.login(ftpLogin, ftpPass)
+    ftpHandle.cwd("live")
+    print "[FTP] Opened ftpLiveHandle for live screenshots capabilities "
+    ftpHandleReady=True
+
+def liveScreenshotStop():
+    """ Close ftpLiveHandle """
+    global ftpHandle
+    ftpHandle.quit()
 
 def recordStop():
     """
@@ -515,11 +553,17 @@ def recordStop():
     """
     global recording,timecodeFile,FMEpid
     print "In recordStop() now..."
+    
+    if live==True:
+        flv.stop(FMEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
+        liveScreenshotStop()
+        #start_new_thread(liveScreenshotStop,())
+        
     if live==True:
         page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
         "recordingPlace="+recordingPlace+"&status="+"end")
-        print "------ Response from Audiocours : -----"
         if 0:#For debug
+            print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
     lastEvent=time.time()
@@ -533,6 +577,11 @@ def recordStop():
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if usage=="video" and videoEncoder=="flash":
         flv.stop(FMEpid)
+
+    if live==True:
+        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI
+        
+    """
     if live==True and usage=="audio":
         os.system('tskill vlc')
         try:
@@ -540,8 +589,8 @@ def recordStop():
             subprocess.Popen(['tskill','trayit!'])
         except:
             pass
-    if live==True:
-        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI
+    """
+    
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     ## Create a second smil at the end
     smil=SmilGen(usage,workDirectory)
@@ -617,8 +666,8 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        if 1:
-        #try:
+        #if 1:
+        try:
             
             # Send by ftp
             print "Sending an FTP version..."
@@ -636,8 +685,8 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        if 0:  
-        #except:
+        #if 0:  
+        except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
@@ -1129,7 +1178,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.05 - beta1 \n\n"\
+        text="AudioVideoCours version 1.05 - beta2 \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"
