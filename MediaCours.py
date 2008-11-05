@@ -112,6 +112,8 @@ ftpUrl="larsen.u-strasbg.fr"
 "FTP URL server for online publication"
 urlserver= "http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/UploadClient"
 "Default URL of the audiovideocours server containing the submit form"
+urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
+"URL of the live form status"
 eventDelay=1.5
 "Number of seconds before allowing a new screenshot"
 recordingPlace= "not given"
@@ -155,6 +157,7 @@ formFormation="" # a default entry for "formation" in the publishing form
 lastGlobalEvent=time.time()
 liveCheckBox=False
 audioVideoChoice=False # give the possibility to choose between an audio or video recording
+ftpHandleReady=False
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     ftpPass=""
@@ -174,16 +177,16 @@ def readConfFile():
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice
+    ,formFormation, audioVideoChoice,urlLiveState
     
     section="mediacours"
     
     def readParam(param):
         param=str(param)
         paramValue= config.get(section,param)
-        if param != "ftpPass" or "ftpLogin":
+        if (param != "ftpPass") and (param != "ftpLogin"):
             print "... "+param+" = ", paramValue
-            writeInLogs("\n\t:"+param+"+= "+paramValue)
+            writeInLogs("\n\t:"+param+"= "+paramValue)
         if paramValue=="True" or paramValue=="False":
             paramValue=eval(paramValue)
         return paramValue
@@ -221,6 +224,7 @@ def readConfFile():
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
+        if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
         fconf.close()
         writeInLogs("\n")
     except:
@@ -322,6 +326,7 @@ def recordNow():
     global snd,ac,cparams, nameRecord,usage,smil,pathData
     usage=frameBegin.usage
     recording= True
+    ftpHandleReady=False
     tbicon.SetIcon(icon2, "Enregistrement en cours")
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
@@ -381,7 +386,7 @@ def recordNow():
             os.system(('producer.exe -vc %s -ac %s -pid pid.txt -o "%s" -d %s')%(videoinput,audioinput,fileVideo,MaximumRecordingLength))
         elif live==True:
             #todoLiveReal=r'producer.exe -vc '+videoinput+' -ac '+videoinput+' -pid pid.txt -o '+fileVideo+" -sp 130.79.188.5/"+recordingPlace+".rm"
-            page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+            page = urlopen(urlLiveState,\
             "recordingPlace="+recordingPlace+"&status="+"begin")
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
@@ -395,7 +400,7 @@ def recordNow():
         Record video with Flash Media Encoder
         """
         print "In flashMediaEncoderRecord()"
-        global flv,flashServer,FMEpid
+        global flv,flashServer,FMEpid,urlLiveState
         if live==True:
             print "Going for live==True"
             liveParams="""<rtmp>
@@ -404,7 +409,8 @@ def recordNow():
             <stream>"""+recordingPlace+"""</stream>
             </rtmp>"""
             #Send the information that live is ON
-            page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+            #urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
+            page = urlopen(urlLiveState,\
             "recordingPlace="+recordingPlace+"&status="+"begin")
             if 0:
                 print "------ Response from Audiocours : -----"
@@ -472,7 +478,7 @@ def recordNow():
         start_new_thread(flashMediaEncoderRecord,())
     
         #Send the information that live is ON
-        page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+        page = urlopen(urlLiveState,\
         "recordingPlace="+recordingPlace+"&status="+"begin")
         if 0:#For Degub
             print "------ Response from Audiocours : -----"
@@ -496,7 +502,7 @@ def screenshot():
     """
     global recording, diaId, t0, timecodeFile
     time.sleep(tempo)
-    if recording == True or False :
+    if recording == True: #or False?
         myscreen= ImageGrab.grab() #print "screenshot from mouse"
         t = time.time()
         diaId += 1
@@ -513,6 +519,7 @@ def screenshot():
         myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
         if live==True and ftpHandleReady:
             time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
+            #if 1:
             try:
                 livescreen= ImageGrab.grab()
                 livescreen.save(workDirectory+"/screenshots/Dlive.jpg")
@@ -520,9 +527,16 @@ def screenshot():
                 f = open(workDirectory+"/screenshots/Dlive.jpg",'rb') 
                 ftpHandle.storbinary('STOR '+recordingPlace+'.jpg', f) 
                 f.close() 
+            #if 0:
             except:
                 print "Couldn't send live screenshot to FTP port"
-
+                if recording==True:
+                    try:
+                        print "trying to open a new FTP handle..."
+                        liveScreenshotStart()
+                    except:
+                        print "Couldn't retry FTP send"
+                    
 def liveScreenshotStream():
     """ send screenshot at regular interval in live mode"""
     # Function not currently used
@@ -535,17 +549,21 @@ def liveScreenshotStream():
 def liveScreenshotStart():
     """ Open ftpLiveHandle for live screenshots capabilities """
     global ftpHandle, ftpHandleReady
-    ftpHandleReady=False
-    ftpHandle = FTP(ftpUrl)
-    ftpHandle.login(ftpLogin, ftpPass)
-    ftpHandle.cwd("live")
-    print "[FTP] Opened ftpLiveHandle for live screenshots capabilities "
-    ftpHandleReady=True
+    #ftpHandleReady=False
+    try:
+        ftpHandle = FTP(ftpUrl)
+        ftpHandle.login(ftpLogin, ftpPass)
+        ftpHandle.cwd("live")
+        print "[FTP] Opened ftpLiveHandle for live screenshots capabilities "
+        ftpHandleReady=True
+    except:
+        print "couldn't open ftpHandle"
 
 def liveScreenshotStop():
     """ Close ftpLiveHandle """
     global ftpHandle
     ftpHandle.quit()
+    ftpHandleReady=False
 
 def recordStop():
     """
@@ -553,23 +571,25 @@ def recordStop():
     """
     global recording,timecodeFile,FMEpid
     print "In recordStop() now..."
-    
+    recording= False
+    print "Recording is now = ", recording
+    tbicon.SetIcon(icon1, usage+"cours en attente")
     if live==True:
         flv.stop(FMEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
-        liveScreenshotStop()
-        #start_new_thread(liveScreenshotStop,())
-        
+        #if 1:
+        try:
+            liveScreenshotStop()
+        #if 0:
+        except:
+            print "problem with FTP connection"
     if live==True:
-        page = urlopen("http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState",\
+        page = urlopen(urlLiveState,\
         "recordingPlace="+recordingPlace+"&status="+"end")
         if 0:#For debug
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
-    lastEvent=time.time()
-    recording= False
-    tbicon.SetIcon(icon1, usage+"cours en attente")
-    print "Recording is now = ", recording 
+    lastEvent=time.time()     
     #timecodeFile.close()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
@@ -577,10 +597,8 @@ def recordStop():
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if usage=="video" and videoEncoder=="flash":
         flv.stop(FMEpid)
-
     if live==True:
-        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI
-        
+        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
     """
     if live==True and usage=="audio":
         os.system('tskill vlc')
@@ -590,7 +608,6 @@ def recordStop():
         except:
             pass
     """
-    
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     ## Create a second smil at the end
     smil=SmilGen(usage,workDirectory)
@@ -666,9 +683,8 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        #if 1:
-        try:
-            
+        if 1:
+        #try:
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
@@ -685,8 +701,8 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        #if 0:  
-        except:
+        if 0:  
+        #except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
@@ -1178,7 +1194,7 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.05 - beta2 \n\n"\
+        text="AudioVideoCours version 1.06  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
         +"(c) ULP Multimedia 2007"

@@ -15,7 +15,7 @@
 # http://www.adobe.com/products/flashmediaserver/flashmediaencoder/
 ###############################################################################
 
-import os,subprocess, codecs
+import os,subprocess, codecs, wx
 
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
@@ -160,27 +160,44 @@ videoSource+"""
             #print self.profileHead
             fP.close()
         self.profile=self.profileHead+self.profileOutput+self.profileTail
-        fileOut=open("flv_startup.xml","wb")
+        #fileOut=open("flv_startup.xml","wb")
+        fileOut=open(os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml","wb")
         fileOut.write(self.profile.encode("UTF-16"))
         fileOut.close
 
     def record(self):
-        """Record the flv video using the FMEcmd.exe"""
-        subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
+        """ Launch FMEcmd.exe with the given profile. """
+        #subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
+        #subprocess.Popen(["FMEcmd.exe", "/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+        FME='C:/Program Files/Adobe/Flash Media Encoder 2.5/FMEcmd.exe'
+        try:
+            subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+        except:
+            print "Couldn't find C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe"
+            caption="Audiovideocours Error Message"
+            text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe exists?"+\
+            "\n If not install Flash Media Encoder 2.5" 
+            dialog=wx.MessageDialog(None,message=text,caption=caption,
+            style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
         
     def stop(self,FMEpid):
         """Kill the FlashMediaEncoder"""
         #os.popen("taskkill /F /IM FMEcmd.exe")
         print 'Ordering: FMEcmd.exe /s "%s" ' % FMEpid
-        os.popen('FMEcmd.exe /s "%s"' % FMEpid)
-        if 0:
-            # Checking for an artefact "enregistrement-micro.flv" file to erase in live audio mode
-            artefact=self.flvPath.split(".mp3")[0]+".flv"
-            print "Trying to delete ", artefact
-            if self.usage=="audio" and os.path.isfile(artefact):
-                os.system('del "%s"' % artefact)
-
-
+        #os.popen('FMEcmd.exe /s "%s"' % FMEpid)
+        FME='C:/Program Files/Adobe/Flash Media Encoder 2.5/FMEcmd.exe'
+        #os.popen("%s"%FME+' /s "%s"' % FMEpid)
+        try:
+            subprocess.Popen(["%s"%FME,"/s","%s" % FMEpid])
+        except:
+            print "Problem while stopping Flash Media Encoder"
+            caption="Audiovideocours Error Message"
+            text="Problem while stopping Flash Media Encoder.\n\nYou may have to stop 'FMEcmd' process manually."
+            dialog=wx.MessageDialog(None,message=text,caption=caption,
+            style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+     
 if __name__=="__main__":
     
     import time
