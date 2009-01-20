@@ -23,6 +23,8 @@
 # Note (francois): App. stable but needs refactoring...
 #*******************************************************************************
 
+__version__="1.10"
+
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
 import subprocess, socket
@@ -146,6 +148,8 @@ smilBegin=""" <?xml version="1.0"?>
 "Smil template"
 login=""
 genre=""
+loginENT="initial"
+emailENT="initial"
 live=False
 language="French"
 ftpLogin=""
@@ -671,8 +675,17 @@ def confirmPublish(folder=''):
     """
     Publish the recording when hitting the 'publish' button 
     """
-    global id,entryTitle,entryDescription,entryTraining
+    global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT,emailENT
     idtosend=id
+    print "sockedEnabled ?", socketEnabled, "id ?",id
+    if socketEnabled==True and id != "": # useful for remote order only (doesn't go through publish())
+        print "=> Creating Zip file (no publishing form, distant order)"
+        workDirectoryToPublish=workDirectory
+        dirNameToPublish=dirName
+        try:
+                createZip()
+        except:
+            print "Warning! couldn't create zip file!" 
     id="" # if confirmPublsih fails id is back to ""
     frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
     # !!!!  Test: changing dirName and workDirectory to dirNameToPublish and workDirectoryToPublish
@@ -683,8 +696,8 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        if 1:
-        #try:
+        #if 1:
+        try:
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
@@ -701,8 +714,8 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        if 0:  
-        #except:
+        #if 0:  
+        except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
@@ -710,14 +723,19 @@ def confirmPublish(folder=''):
             
         if folder=="":
             try:
+            #if 1:
                 #Send data to the AudioCours server (submit form)
-                page = urlopen(urlserver,\
-                "fichier="+dirNameToPublish+".zip"+"&id="+idtosend+"&title="+title+"&description="+description+\
-                "&name="+name+"&firstname="+firstname+"&login="+login+"&genre="+genre+"&ue="+ue+"&mediapath="+dirNameToPublish+".zip")
+                print "login ENT, emailENT  >>>>>>>>> " ,loginENT, emailENT
+                urlParams="id="+idtosend+"&title="+title+"&description="+description+\
+                "&name="+name+"&firstname="+firstname+"&login="+loginENT+"&email="+emailENT+"&genre="+genre+"&ue="+ue+"&mediapath="+\
+                dirNameToPublish+".zip"
+                page = urlopen(urlserver,urlParams)
+                print "urlParams",urlParams
                 print "------ Response from Audiocours : -----"
                 serverAnswer= page.read() # Read/Check the result
                 print serverAnswer
             except:
+            #if 0:
                 print "Had problem while submitting the form"
             
         # set the id variable to id="" again
@@ -753,6 +771,8 @@ def LaunchSocketServer():
                 frameBegin.Show()
             if received=="SHUTDOWN_PC" and recording==False:
                 os.system("shutdown -s -f")
+            if received=="VERSION": 
+                channel.send ('v ' + __version__)
             # search for an (id:xxxxx) pattern
             iDbegin1= received.find("(id:")
             iDbegin2= received.find("(title:")
@@ -1005,15 +1025,20 @@ class Videoprojector:
      """
     def __init__(self):
         """ Open the serial port of the videoprojector"""
-        print "Opening serial port of the videoprojector"
-        self.ser = serial.Serial(videoprojectorPort)
+        print "Initiating videoprojector object..."
+        #print "Opening serial port of the videoprojector"
+        #self.ser = serial.Serial(videoprojectorPort)
     def projOn(self):
         """Send the 'switch on' command to the videoprojector"""
+        self.ser = serial.Serial(videoprojectorPort)
         self.ser.write(videoProjON)
+        self.ser.close()
         print "- sending "+videoProjON+" to port com "+str(videoprojectorPort)
     def projOff(self):
         """Send the 'switch off' command to the videoprojector"""
+        self.ser = serial.Serial(videoprojectorPort)
         self.ser.write(videoProjOFF)
+        self.ser.close()
         print "- sending "+videoProjOFF+" to port com "+str(videoprojectorPort)
 
 class SmilGen:
@@ -1194,10 +1219,10 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version 1.06  \n\n"\
+        text="AudioVideoCours version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
-        +"(c) ULP Multimedia 2007"
+        +"(c) UDS 2007-2008"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
@@ -1244,14 +1269,15 @@ class EndingFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         """Create the ending frame"""
-        global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname,entryCode,btnPublish,btnCancel
+        global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname,entryCode,btnPublish\
+        ,btnCancel,loginENT,emailENT,entryLoginENT,entryLoginENT,entryEmail
         windowXsize=500
         fieldSize=420
         if standalone==True:
             windowXsize=500
             fieldSize=420           
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(windowXsize, 560),
+                          pos=(150, 150), size=(windowXsize, 650),
             style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))            
         favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
         wx.Frame.SetIcon(self, favicon)
@@ -1273,6 +1299,10 @@ class EndingFrame(wx.Frame):
         textTraining = wx.StaticText(panel, -1, _("Degree:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entryTraining = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
         entryTraining.SetValue(formFormation)
+        textLoginENT=wx.StaticText(panel,-1, _("Identifiant ENT UDS:"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryLoginENT = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
+        textEmail=wx.StaticText(panel,-1, _("Email :"),size=(400,-1),style=wx.ALIGN_CENTER)
+        entryEmail = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
         textCode=wx.StaticText(panel,-1, _("Access Code if you wish to set a limited access:"),
         size=(400,-1),style=wx.ALIGN_CENTER)
         entryCode = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
@@ -1282,7 +1312,8 @@ class EndingFrame(wx.Frame):
         linkWebsite.SetForegroundColour("white")
         linkWebsite.SetColours("white", "white", "white")
             
-        for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode]:
+        for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode,
+                      textLoginENT,textEmail]:
             label.SetForegroundColour("white")
             label.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.BOLD, False,"MS Sans Serif"))
         for entry in [entryTitle,entryDescription,entryLastname,entryFirstname,entryTraining,entryCode]:
@@ -1321,6 +1352,10 @@ class EndingFrame(wx.Frame):
         sizer.Add(entryTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(textCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(entryCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(textLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(textEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        sizer.Add(entryEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
         sizer.Add(hbox, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         sizer.Add(linkWebsite, 0, wx.ALIGN_CENTER|wx.ALL, 4)
         panel.SetSizer(sizer)
@@ -1357,7 +1392,6 @@ class EndingFrame(wx.Frame):
             self.readPreview(self)
         print workDirectory
         
-        
     def exitApp(self,evt):
         """A function to quit the app"""
         print "exit"
@@ -1375,13 +1409,15 @@ class EndingFrame(wx.Frame):
                 frameBegin.Show()
         if standalone==False:
             global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname
-            global title,description,firstname,name,ue,login
+            global title,description,firstname,name,ue,login,loginENT,emailENT
             title= entryTitle.GetValue()
             description=entryDescription.GetValue()
             name=entryLastname.GetValue()
             firstname=entryFirstname.GetValue()
             ue=entryTraining.GetValue()
             genre=entryCode.GetValue()
+            loginENT=entryLoginENT.GetValue()
+            emailENT=entryEmail.GetValue()
             #login=entry3.GetValue()
             print "tile: ",title
             print "description: ",description
@@ -1400,6 +1436,8 @@ class EndingFrame(wx.Frame):
         entryDescription.SetValue("")
         entryLastname.SetValue("")
         entryFirstname.SetValue("")
+        entryLoginENT.SetValue("")
+        entryEmail.SetValue("")
         if formFormation=="": entryTraining.SetValue("")
 
     def readPreview(self,evt):
@@ -1426,11 +1464,13 @@ class EndingFrame(wx.Frame):
         
     def publish(self,evt):
         """Publish the recording on the website"""
-        global workDirectoryToPublish, dirNameToPublish
+        global workDirectoryToPublish, dirNameToPublish,loginENT,emailENT
         writeInLogs("- 'Publish' button pressed at"+ \
         str(datetime.datetime.now())+"\n")
         workDirectoryToPublish=workDirectory
         dirNameToPublish=dirName
+        print "dirNameToPublish =",dirNameToPublish
+        print "workDirectoryToPublish =",workDirectoryToPublish
         if tryFocus==False:
             global title,description,name,firstname, ue,genre
             title= entryTitle.GetValue()
@@ -1439,16 +1479,22 @@ class EndingFrame(wx.Frame):
             firstname=entryFirstname.GetValue()
             ue=entryTraining.GetValue()
             genre=entryCode.GetValue()
+            loginENT=entryLoginENT.GetValue()
+            emailENT=entryEmail.GetValue()
             print "tile : ",title
             print "description: ",description
             print "name: ",name
             print "prenom: ",firstname
             print "ue: ",ue
+            print "login ENT",loginENT
+            print "email ENT",emailENT
             entryTitle.SetValue("")
             entryDescription.SetValue("")
             entryLastname.SetValue("")
             entryFirstname.SetValue("")
             entryCode.SetValue("")
+            entryLoginENT.SetValue("")
+            entryEmail.SetValue("")
             if formFormation=="": entryTraining.SetValue("")
             print "Creating .zip file..."
             btnPublish.Enable(False)
@@ -1470,11 +1516,10 @@ class univrEndFrame(wx.Frame):
     """
     def __init__(self, parent, title):
         global liveFeed
-        """Create the warning window"""
+        """Create the warning window"""        
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(300,110),
         style=wx.DEFAULT_FRAME_STYLE)
-
         panel=wx.Panel(self)
         #panel.SetBackgroundColour("white") 
         text = wx.StaticText(panel, -1, "Enregistrement transmis pour Univ-r\net audiovideocours.u-strasbg.fr")  
@@ -1484,10 +1529,17 @@ class univrEndFrame(wx.Frame):
         vbox.Add(text,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=5)
         vbox.Add(okButton,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=5) 
         panel.SetSizer(vbox) 
-    
+        
     def hideNow(self,evt):
         self.Hide()
-        
+    
+def onEndSession(evt):
+    #writeInLogs("!!!!!!!!!!!!!!!!!!!!!")
+    import winsound
+    winsound.PlaySound("waves\\exit.wav",winsound.SND_FILENAME)
+    writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
+    
+    
         
 ## Start app
 if __name__=="__main__":
@@ -1532,10 +1584,13 @@ if __name__=="__main__":
     frameUnivr=univrEndFrame(None,title="Message Univ-R")
     #frameUnivr.Show()   
     frameBegin=BeginFrame(None,title="Attention")
+    #frameBegin.Bind(wx.EVT_END_SESSION,onEndSession)
+
     #frameBegin.Show() # For debug
     frameBegin.Show()
     if standalone != True: frameBegin.Hide()
     frameEnd=EndingFrame(None,title="Attention")
+    #frameEnd.Bind(wx.EVT_END_SESSION,onEndSession)
     frameEnd.Show()
     frameEnd.Hide()
     #frameEnd.Show() # For debug

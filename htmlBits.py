@@ -23,6 +23,10 @@ head= """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
         a { color: #360; }
         h3 { padding-top: 20px; }
         ol { margin:5px 0 15px 16px; padding:0; list-style-type:square; }
+        div#title
+          {
+          align:center;
+          }
         div#media
           {
           position:absolute;
@@ -38,21 +42,21 @@ head= """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
           {
           position:absolute;
           top:50px;
-          left:400px;
+          left:30%;
+          height:70%;
           }
         div#thumbs
           {
           position:absolute;
-          bottom:30px;
-          }
-        
+          bottom:10px;
+          width:97%;
+          height:100px;
+          overflow:scroll;
+          }        
     </style>
 
 <!-- Load swfobject, necessary for JW Player--> 
 <script type="text/javascript" src="thirdparty/swfobject.js"></script>
-<script type="text/javascript" src="thirdparty/JSFX_ImageZoom.js"></script>
-<!--<script type="text/javascript" src="http://www.jeroenwijering.com/embed/swfobject.js"></script> -->
-<!--<script type="text/javascript" src="http://www.javascript-fx.com/navigation/buttongroup/javascript/JSFX_ImageZoom.js"></script>-->
 
 <script>    
 """
@@ -67,11 +71,12 @@ tail="""
       document.getElementById("slide").src="screenshots/D1.jpg";
       var thumbsCode=""
       for (var i = 1; i < timecode.length+1; i++) {
-        thumbsCode += "<img src='screenshots/D"+i+"-thumb.jpg' width='100' onclick='goToSlide("+i+")' onMouseOver='JSFX.zoomIn(this),slideTooltip("+i+")'  onMouseOut='JSFX.zoomOut(this),slideTooltipOff()' >"
+        thumbsCode += "<img src='screenshots/D"+i+"-thumb.jpg' width='100' onclick='goToSlide("+i+")' onMouseOver='slideTooltip("+i+")'  onMouseOut='JSFX.zoomOut(this),slideTooltipOff()' >"
         
         }
       document.getElementById("thumbs").innerHTML=thumbsCode;
       document.getElementById("thumbInfo").innerHTML=title;
+      document.getElementById("title").innerHTML=title;
       }
     
     // will be called when the playe is ready and give us a reference to var player

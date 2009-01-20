@@ -173,13 +173,16 @@ videoSource+"""
         try:
             subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
         except:
-            print "Couldn't find C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe"
-            caption="Audiovideocours Error Message"
-            text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe exists?"+\
-            "\n If not install Flash Media Encoder 2.5" 
-            dialog=wx.MessageDialog(None,message=text,caption=caption,
-            style=wx.OK|wx.ICON_INFORMATION)
-            dialog.ShowModal()
+            try:
+                subprocess.Popen(["FMEcmd.exe","/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+            except:
+                print "Couldn't find C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe"
+                caption="Audiovideocours Error Message"
+                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe exists?"+\
+                "\n If not install Flash Media Encoder 2.5" 
+                dialog=wx.MessageDialog(None,message=text,caption=caption,
+                style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
         
     def stop(self,FMEpid):
         """Kill the FlashMediaEncoder"""
@@ -191,12 +194,15 @@ videoSource+"""
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMEpid])
         except:
-            print "Problem while stopping Flash Media Encoder"
-            caption="Audiovideocours Error Message"
-            text="Problem while stopping Flash Media Encoder.\n\nYou may have to stop 'FMEcmd' process manually."
-            dialog=wx.MessageDialog(None,message=text,caption=caption,
-            style=wx.OK|wx.ICON_INFORMATION)
-            dialog.ShowModal()
+            try:
+                subprocess.Popen(["FMEcmd.exe","/s","%s" % FMEpid])
+            except:
+                print "Problem while stopping Flash Media Encoder"
+                caption="Audiovideocours Error Message"
+                text="Problem while stopping Flash Media Encoder.\n\nYou may have to stop 'FMEcmd' process manually."
+                dialog=wx.MessageDialog(None,message=text,caption=caption,
+                style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
      
 if __name__=="__main__":
     

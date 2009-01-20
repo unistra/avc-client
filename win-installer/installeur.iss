@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 1.05
-AppVersion=1.05
+AppVerName=audiovideocours 1.10
+AppVersion=1.10
 AppPublisher=(C) ULP Multimedia 2008-2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
@@ -42,6 +42,7 @@ Source: ..\Aide_AudioCours_StandAlone.url; DestDir:{%USERPROFILE}\audiovideocour
 Source: ..\AudioVideoCours.url; DestDir:{app}
 
 ; Import files from py2exe build
+Source: ..\dist\avc-win-shutdown.exe; DestDir:{app}
 Source: ..\dist\_controls_.pyd; DestDir:{app}
 Source: ..\dist\_core_.pyd; DestDir:{app}
 Source: ..\dist\_cpyHook.pyd; DestDir:{app}
@@ -89,7 +90,7 @@ Source: ..\locale\fr\LC_MESSAGES\mediacours.po; DestDir:{app}\locale\fr\LC_MESSA
 Source: ..\thirdparty\player.swf; DestDir:{app}\thirdparty
 Source: ..\thirdparty\swfobject.js; DestDir:{app}\thirdparty
 Source: ..\thirdparty\README.txt; DestDir:{app}\thirdparty
-Source: ..\thirdparty\JSFX_ImageZoom.js; DestDir:{app}\thirdparty
+;Source: ..\thirdparty\JSFX_ImageZoom.js; DestDir:{app}\thirdparty
 
 [Run]
 
