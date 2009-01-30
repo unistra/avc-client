@@ -15,7 +15,9 @@
 # http://www.adobe.com/products/flashmediaserver/flashmediaencoder/
 ###############################################################################
 
-import os,subprocess, codecs, wx
+import os,subprocess, codecs, time,wx
+import  winsound #for tests
+from pywinauto import application,findwindows
 
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
@@ -169,12 +171,16 @@ videoSource+"""
         """ Launch FMEcmd.exe with the given profile. """
         #subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
         #subprocess.Popen(["FMEcmd.exe", "/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+        
+        winsound.Beep(500,1000)
         FME='C:/Program Files/Adobe/Flash Media Encoder 2.5/FMEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+            print "!!! after record first Try !!!"
         except:
             try:
                 subprocess.Popen(["FMEcmd.exe","/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+                print "!!! after record second Try !!!"
             except:
                 print "Couldn't find C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe"
                 caption="Audiovideocours Error Message"
@@ -183,6 +189,17 @@ videoSource+"""
                 dialog=wx.MessageDialog(None,message=text,caption=caption,
                 style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
+        time.sleep(2)
+        print "trying to minimize FMEcmd.exe DOS window in task bar"
+        try:
+            appA = application.Application()
+            appA.connect_(title_re = r".*FMEcmd.exe")
+            appA.window_(title_re = r".*FMEcmd.exe").Minimize()
+        except:
+            for i in range(3):
+                winsound.Beep(500,100)
+                time.sleep(0.2)
+            print "Couldn't find and minimize DOS window"
         
     def stop(self,FMEpid):
         """Kill the FlashMediaEncoder"""

@@ -27,7 +27,7 @@ __version__="1.10"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
-import subprocess, socket
+import subprocess, socket, winsound
 from thread import start_new_thread, exit
 from urllib2 import urlopen
 from os import chdir
@@ -331,7 +331,10 @@ def recordNow():
     usage=frameBegin.usage
     recording= True
     ftpHandleReady=False
+    # Visual cue to confim recording state
     tbicon.SetIcon(icon2, "Enregistrement en cours")
+    # Audio cue to confirm recording state
+    winsound.Beep(800,100)
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
     dateTime0 = datetime.datetime.now()
@@ -577,7 +580,12 @@ def recordStop():
     print "In recordStop() now..."
     recording= False
     print "Recording is now = ", recording
+    # Visual cue to confirm recording state
     tbicon.SetIcon(icon1, usage+"cours en attente")
+    # Audio cue to confirming recording state (2 bis when recording stopped)
+    winsound.Beep(800,100)
+    time.sleep(0.2)
+    winsound.Beep(800,100)
     if live==True:
         flv.stop(FMEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
         #if 1:
