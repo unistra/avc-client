@@ -23,7 +23,7 @@
 # Note (francois): App. stable but needs refactoring...
 #*******************************************************************************
 
-__version__="1.10"
+__version__="1.11"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -190,11 +190,12 @@ def readConfFile():
         paramValue= config.get(section,param)
         if (param != "ftpPass") and (param != "ftpLogin"):
             print "... "+param+" = ", paramValue
-            writeInLogs("\n\t:"+param+"= "+paramValue)
+            #writeInLogs("\n\t:"+param+"= "+paramValue)
         if paramValue=="True" or paramValue=="False":
             paramValue=eval(paramValue)
         return paramValue
     try:
+    #if 1:
         fconf=open("mediacours.conf","r")
         config= ConfigParser.ConfigParser()
         config.readfp(fconf)
@@ -232,8 +233,17 @@ def readConfFile():
         fconf.close()
         writeInLogs("\n")
     except:
+    #if 0:
         print "Something went wrong while reading the configuration file..."
-         
+
+def showVuMeter():
+    """ if available in installation folder show VUMeter.exe
+    http://www.vuplayer.com/files/vumeter.zip """
+    try:
+        subprocess.Popen(["VUMeter.exe"])
+    except:
+        print "Couldn't find VUMeter.exe"    
+             
 def stopFromKBhook():
     """
     Start/stop recording when asked from the PC keyboard 'stopKey'
@@ -242,6 +252,9 @@ def stopFromKBhook():
     #screenshot()#gives a delay too long in case of live recording here
     if recording==False and tryFocus==False:
         windowBack(frameBegin)
+        showVuMeter()
+        # try to show a vumeter here
+        #showVuMeter()
     if recording==True and tryFocus==False:
         print "id:",id
         if id=="":
@@ -341,9 +354,6 @@ def recordNow():
     print "- Recording now ! ... ( from recordNow() )"
     dirName = str(dateTime0)
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
-    if pathData=="" or pathData=="None":
-        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
-        print pathData
     workDirectory=pathData+"\\"+dirName
     print "workDirectory= ",workDirectory
     os.mkdir(workDirectory)
@@ -407,7 +417,7 @@ def recordNow():
         Record video with Flash Media Encoder
         """
         print "In flashMediaEncoderRecord()"
-        global flv,flashServer,FMEpid,urlLiveState
+        global flv,flashServer,FMLEpid,urlLiveState
         if live==True:
             print "Going for live==True"
             liveParams="""<rtmp>
@@ -440,16 +450,16 @@ def recordNow():
                        flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live)
             flv.record()
             #FMEprocess=flv.record()
-            #FMEpid=FMEprocess.pid
-            FMEpid=flvPath # FME use the full path of the flv not the pid...
+            #FMLEpid=FMEprocess.pid
+            FMLEpid=flvPath # FME use the full path of the flv not the pid...
         else:
             print "FME: using configuration file parameters"
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
                        flvPath=flvPath,liveParams=liveParams,externalProfile=False,usage=usage,live=live)
             flv.record()
             #FMEprocess=flv.record()
-            #FMEpid=FMEprocess.pid
-            FMEpid=flvPath # FME use the full path of the flv not the pid...
+            #FMLEpid=FMEprocess.pid
+            FMLEpid=flvPath # FME use the full path of the flv not the pid...
             
     def liveStream():
         """ Control VLC for *audio* live stream """
@@ -576,7 +586,7 @@ def recordStop():
     """
     Stop recording the audio input now
     """
-    global recording,timecodeFile,FMEpid
+    global recording,timecodeFile,FMLEpid
     print "In recordStop() now..."
     recording= False
     print "Recording is now = ", recording
@@ -587,7 +597,7 @@ def recordStop():
     time.sleep(0.2)
     winsound.Beep(800,100)
     if live==True:
-        flv.stop(FMEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
+        flv.stop(FMLEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
         #if 1:
         try:
             liveScreenshotStop()
@@ -608,7 +618,7 @@ def recordStop():
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if usage=="video" and videoEncoder=="flash":
-        flv.stop(FMEpid)
+        flv.stop(FMLEpid)
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
     """
@@ -635,7 +645,8 @@ def recordStop():
         try:
             htmlGen()
         except:
-            writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
+            pass
+            #writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
     else:
         htmlGen() # mainly for debug if False above
         
@@ -683,12 +694,12 @@ def confirmPublish(folder=''):
     """
     Publish the recording when hitting the 'publish' button 
     """
-    global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT,emailENT
+    global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT,emailENT,pathData
     idtosend=id
-    print "sockedEnabled ?", socketEnabled, "id ?",id
+    print "sockedEnabled: ", socketEnabled, "id: ",id
     if socketEnabled==True and id != "": # useful for remote order only (doesn't go through publish())
         print "=> Creating Zip file (no publishing form, distant order)"
-        workDirectoryToPublish=workDirectory
+        workDirectoryToPublish=workDirectory # pathData + dirName
         dirNameToPublish=dirName
         try:
                 createZip()
@@ -700,18 +711,20 @@ def confirmPublish(folder=''):
     # to avoid conflicts when publishing and recording a new file straight away
     if dirNameToPublish =="":
         frameEnd.statusBar.SetStatusText("Rien a publier ...")
-    if dirNameToPublish != "":    
+    
+    if dirNameToPublish != "":   
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        #if 1:
-        try:
+        if 1:
+        #try:
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
             ftp.login(ftpLogin, ftpPass)
             print "debut de ftp"
             f = open(workDirectoryToPublish+".zip",'rb')# file to send 
+            #f = open(pathData+"\\"+dirName+".zip",'rb')# file to send 
             if folder=="canceled":
                 print "Trying to open cancel forlder"
                 ftp.cwd("canceled") 
@@ -722,8 +735,8 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        #if 0:  
-        except:
+        if 0:  
+        #except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
@@ -859,11 +872,12 @@ def writeInLogs(what):
     """
     Write events in a configuration file (one per month)
     """
-    global logFile
+    global logFile,pathData
     yearMonth=str(datetime.datetime.now())
     yearMonth=yearMonth[:7]
     #logFile = open ("log-"+yearMonth+".txt","a")
-    logFile = open (os.environ["USERPROFILE"]+"/audiovideocours/log-audiovideocours-"+yearMonth+".txt","a")
+    logFile = open (pathData+"/log-audiovideocours-"+yearMonth+".txt","a")
+    #logFile = open (os.environ["USERPROFILE"]+"/audiovideocours/log-audiovideocours-"+yearMonth+".txt","a")
     logFile.write(what)
     logFile.close()
 
@@ -1230,18 +1244,20 @@ class BeginFrame(wx.Frame):
         text="AudioVideoCours version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
-        +"(c) UDS 2007-2008"
+        +"(c) UDS 2007-2009"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
         
     def help(self,evt):
         """ A function to provide help on how to use the software"""
+        global pathData
         def launch():
             print "I'm in launch in help"
             try:
                 #os.popen(os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url")
                 subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
+                #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',pathData+"/Aide_AudioCours_StandAlone.url"])
             except:
                 print "Couldn't open or find Aide_AudioCours_StandAlone.url"
         start_new_thread(launch,())
@@ -1552,25 +1568,28 @@ def onEndSession(evt):
 ## Start app
 if __name__=="__main__":
 
-    # Start-up message
-    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
-    writeInLogs("\nAudioVideoCours client launched at "+ \
-    str(datetime.datetime.now()))
     # Check if another instance is already launched and kill it if it exist
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
-    # Read configuration file
-    readConfFile()
-    if pathData == None:
-        #pathData=os.getcwd()
-        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
-        print "pathData=None => PathData is now ", pathData
     # Set-up language
     if language=="French":
         print "Setting French language..."
         langFr = gettext.translation('mediacours', "locale",languages=['fr'])
         langFr.install()
         
+    # Read configuration file
+    readConfFile()
+    
+    if pathData == None or pathData=="":
+        #pathData=os.getcwd()
+        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
+        print "pathData=None => PathData is now ", pathData
+    # Start-up message
+    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
+    writeInLogs("\nAudioVideoCours client launched at "+ \
+    str(datetime.datetime.now()))
+    writeInLogs("\npathData is "+pathData)
+   
     # Set-up hooks
     setupHooks()
     # Set-up videoprojector
@@ -1622,5 +1641,7 @@ if __name__=="__main__":
         icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "VideoCours en attente")
+    
+    showVuMeter()
         
     app.MainLoop()

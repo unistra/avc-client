@@ -44,15 +44,28 @@ class FMEcmd(object):
 
             videoEncode=u"""
 <video>
-<codec>VP6</codec>
-<datarate>200</datarate>
+<format>VP6</format>
+<datarate>500;</datarate>
+<outputsize>320x240;</outputsize>
 <advanced>
-<keyframe_frequency>5 seconds</keyframe_frequency>
-<quality>Good Quality - Good Framerate</quality>
-<noise_reduction>None</noise_reduction>
-<datarate_window>Medium</datarate_window>
-<cpu_usage>Dedicated</cpu_usage>
+    <keyframe_frequency>5 Seconds</keyframe_frequency>
+    <quality>Good Quality - Good Framerate</quality>
+    <noise_reduction>None</noise_reduction>
+    <datarate_window>Medium</datarate_window>
+    <cpu_usage>Dedicated</cpu_usage>
 </advanced>
+<autoadjust>
+    <enable>false</enable>
+    <maxbuffersize>1</maxbuffersize>
+    <dropframes>
+    <enable>false</enable>
+    </dropframes>
+    <degradequality>
+    <enable>false</enable>
+    <minvideobitrate></minvideobitrate>
+    <preservepfq>false</preservepfq>
+    </degradequality>
+</autoadjust>
 </video>"""
             
         elif usage=="audio":           
@@ -163,7 +176,8 @@ videoSource+"""
             fP.close()
         self.profile=self.profileHead+self.profileOutput+self.profileTail
         #fileOut=open("flv_startup.xml","wb")
-        fileOut=open(os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml","wb")
+        #fileOut=open(os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml","wb")
+        fileOut=open(os.environ["USERPROFILE"]+"/flv_startup.xml","wb")
         fileOut.write(self.profile.encode("UTF-16"))
         fileOut.close
 
@@ -172,47 +186,47 @@ videoSource+"""
         #subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
         #subprocess.Popen(["FMEcmd.exe", "/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
         
-        winsound.Beep(500,1000)
-        FME='C:/Program Files/Adobe/Flash Media Encoder 2.5/FMEcmd.exe'
+        winsound.Beep(500,50)
+        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3/FMLEcmd.exe'
         try:
-            subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+            subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
             print "!!! after record first Try !!!"
         except:
             try:
-                subprocess.Popen(["FMEcmd.exe","/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
+                subprocess.Popen(["FMLEcmd.exe","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
                 print "!!! after record second Try !!!"
             except:
-                print "Couldn't find C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe"
+                print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3\FMLEcmd.exe"
                 caption="Audiovideocours Error Message"
-                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Encoder 2.5\FMEcmd.exe exists?"+\
-                "\n If not install Flash Media Encoder 2.5" 
+                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3\FMLEcmd.exe exists?"+\
+                "\n If not install Flash Media Live Encoder 3" 
                 dialog=wx.MessageDialog(None,message=text,caption=caption,
                 style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
-        time.sleep(2)
-        print "trying to minimize FMEcmd.exe DOS window in task bar"
+        time.sleep(4)
+        print "trying to minimize FMLEcmd.exe DOS window in task bar"
         try:
             appA = application.Application()
-            appA.connect_(title_re = r".*FMEcmd.exe")
-            appA.window_(title_re = r".*FMEcmd.exe").Minimize()
+            appA.connect_(title_re = r".*FMLEcmd.exe")
+            appA.window_(title_re = r".*FMLEcmd.exe").Minimize()
         except:
             for i in range(3):
                 winsound.Beep(500,100)
                 time.sleep(0.2)
             print "Couldn't find and minimize DOS window"
         
-    def stop(self,FMEpid):
+    def stop(self,FMLEpid):
         """Kill the FlashMediaEncoder"""
         #os.popen("taskkill /F /IM FMEcmd.exe")
-        print 'Ordering: FMEcmd.exe /s "%s" ' % FMEpid
-        #os.popen('FMEcmd.exe /s "%s"' % FMEpid)
-        FME='C:/Program Files/Adobe/Flash Media Encoder 2.5/FMEcmd.exe'
-        #os.popen("%s"%FME+' /s "%s"' % FMEpid)
+        print 'Ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
+        #os.popen('FMEcmd.exe /s "%s"' % FMLEpid)
+        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3/FMLEcmd.exe'
+        #os.popen("%s"%FME+' /s "%s"' % FMLEpid)
         try:
-            subprocess.Popen(["%s"%FME,"/s","%s" % FMEpid])
+            subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
         except:
             try:
-                subprocess.Popen(["FMEcmd.exe","/s","%s" % FMEpid])
+                subprocess.Popen(["FMLEcmd.exe","/s","%s" % FMLEpid])
             except:
                 print "Problem while stopping Flash Media Encoder"
                 caption="Audiovideocours Error Message"

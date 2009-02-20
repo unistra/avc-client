@@ -6,7 +6,7 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 1.10
+AppVerName=audiovideocours 1.11
 AppVersion=1.10
 AppPublisher=(C) ULP Multimedia 2008-2007
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
@@ -81,6 +81,8 @@ Source: ..\dist\wxbase28h_vc.dll; DestDir:{app}
 Source: ..\dist\wxmsw28h_adv_vc.dll; DestDir:{app}
 Source: ..\dist\wxmsw28h_core_vc.dll; DestDir:{app}
 Source: ..\dist\wxmsw28h_html_vc.dll; DestDir:{app}
+; asked from herve and eric to include msvcp71.dll
+Source: ..\dist\msvcp71.dll; DestDir:{app}
 
 ; Translations
 Source: ..\mediacours.pot; DestDir:{app}
