@@ -23,7 +23,7 @@
 # Note (francois): App. stable but needs refactoring...
 #*******************************************************************************
 
-__version__="1.11"
+__version__="1.12"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -220,7 +220,6 @@ def readConfFile():
         if config.has_option(section,"ftpUrl") == True: ftpUrl=readParam("ftpUrl")
         if config.has_option(section,"eventDelay") == True: eventDelay=float(readParam("eventDelay"))
         if config.has_option(section,"maxRecordingLength") == True: maxRecordingLength=float(readParam("maxRecordingLength"))
-        if config.has_option(section,"recordingPlace") == True: recordingPlace=readParam("recordingPlace")
         if config.has_option(section,"ftpLogin") == True: ftpLogin=readParam("ftpLogin")
         if config.has_option(section,"ftpPass") == True: ftpPass=readParam("ftpPass")
         if config.has_option(section,"live") == True: liveCheckBox=readParam("live")
@@ -231,7 +230,6 @@ def readConfFile():
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
         if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
         fconf.close()
-        writeInLogs("\n")
     except:
     #if 0:
         print "Something went wrong while reading the configuration file..."
@@ -1580,6 +1578,10 @@ if __name__=="__main__":
     # Read configuration file
     readConfFile()
     
+    # Automatically detect IP of the recoriding place
+    recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
+    print "... recordingPlace = ", recordingPlace
+    
     if pathData == None or pathData=="":
         #pathData=os.getcwd()
         pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
@@ -1642,6 +1644,7 @@ if __name__=="__main__":
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "VideoCours en attente")
     
-    showVuMeter()
+    if standalone==True:
+        showVuMeter()
         
     app.MainLoop()

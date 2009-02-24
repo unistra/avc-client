@@ -155,10 +155,6 @@ videoSource+"""
 </video>
 <audio></audio>
 </preview>
-<log>
-<level>100</level>
-<directory>C:\</directory>
-</log>
 </flashmediaencoder_profile>
 """
 
