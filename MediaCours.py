@@ -54,27 +54,33 @@ import htmlBits      # HTML chuncks for html format output
 
 ## Some default global variables in case no configuration file is found
 
-univr_order=False #If the order comes from Univr?
 standalone=False
+"GUI design, False=amphi (always running in background, minimal choices), True= individual PC"
 # Publishing form variables
 title=""
+"Recording's title"
 description=""
+"Recording's description"
 name=""
+"Author's name"
 firstname=""
+"Author's firstname"
 login=""
+"Author's login"
 genre=""
+"Eventual access code"
 ue=""
 " To use the app without a  webserver to publish to"
 recording = False
-" To know if we are recording now" 
+" Recording Status : to know if we are recording now" 
 workDirectory="" 
 "The working/current directory"
 dirName=""
 "The data directory"
 pathData=None
-"Name of the last recording folder"
+"Path/name of the folder containing the recordings"
 id= ""
-"An id which could be received and send from the socket"
+"An id which can be received and send from the socket (for external control or monitoring)"
 samplingFrequency= 48000
 "Default sampling frequency for audio recording"
 stopKey= "F8" 
@@ -93,7 +99,7 @@ cparams= { 'id': acodec.getCodecID( 'mp3' ),
 nameRecord="enregistrement-micro.mp3"
 "Dafault name of the audio recording"        
 tryFocus=False
-"A boolean var to inform when the app is trying to get focus back on a frame"
+"A boolean variable to inform when the app is trying to get focus back on a frame"
 serialKeyboard=False
 "To indicate if the special keyboard must be used"
 keyboardPort=0
@@ -124,7 +130,6 @@ maxRecordingLength=18000
 "Maximum recording length in seconds(1h=3600s,5h=18000s)"
 usage="audio"
 "Usage ='audio' for audio and 'video' for video recording "
-genre=""
 "A generic access code"
 videoEncoder="wmv"
 """Choice of the videoencoder to use if usage=video
@@ -146,25 +151,35 @@ smilBegin=""" <?xml version="1.0"?>
 <par>
 """
 "Smil template"
-login=""
-genre=""
 loginENT="initial"
+"Login"
 emailENT="initial"
+"Email"
 live=False
+"Live choice enable or not in GUI"
 language="French"
-ftpLogin=""
-ftpPass=""
+"Current language in the GUI"
 videoinput="0"
+"Video input"
 audioinput="0"
+"Audio input"
 flashServerIP="130.79.188.196"
+"Flash Server IP for live sessions"
 formFormation="" # a default entry for "formation" in the publishing form
+"Automatically fills the formation field with this value"
 lastGlobalEvent=time.time()
+"Indicates last keyboard or mouse activity"
 liveCheckBox=False
+"Indicates if user wants(checked) a live session from the GUI"
 audioVideoChoice=False # give the possibility to choose between an audio or video recording
+"Show in the GUI the choice between a video or audio recording"
 ftpHandleReady=False
+"For live session: indicates if we have an open FTP connection to send live screenshots"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
+    "FTP login for publishing and live screenshots"
     ftpPass=""
+    "FTP password for publishing and live screenshots"
  
 #------- i18n settings ------------------------------------------------------------------
 gettext.install("mediacours","locale")
@@ -950,7 +965,7 @@ def htmlGen():
 
 class SerialHook:
     """
-     A soft hook to a special RS-232 keyboard used for amphi automation
+     A driver (soft hook) to an optional RS-232 keyboard used for amphi automation
     """
     def __init__(self):
         """ Open the serial port and initialize the serial keyboard"""
@@ -968,7 +983,7 @@ class SerialHook:
         print "Initial kb4= ",self.kb4
         
     def listen(self,delta=0.001):
-        """ Read the state of the Kb at each delta """
+        """ Reads the state of the Kb at each delta """
         print "Entering listen loop ..."
         while 1:
             if (self.ser.getCD()!=self.kb1) and (self.ser.getCD()==True):
@@ -1015,13 +1030,14 @@ class SerialHook:
             time.sleep(delta)
 class AMX:
     """ 
-    A class to read the capture ON/OFF orders from the AMX
-    in ULP main amphitheatres and control the recording
+    A class to read the optional 'capture ON/OFF' orders from the AMX
+    keyboard in many UDS amphitheatres and start the recording through it.
     """
     def __init__(self):
         self.ser = serial.Serial(int(keyboardPort))
         print "AMX keyboard init"
     def listen(self,frameEnd, frameBegin, tryFocus):
+        """ Listen to the AMX keyboard and decide what to do."""
         while 1:
             time.sleep(0.3)
             inWaiting= self.ser.inWaiting()
@@ -1534,7 +1550,7 @@ class EndingFrame(wx.Frame):
 
 class univrEndFrame(wx.Frame):
     """
-    A message from univr
+    Optional: used when receiving an external order to stop a recording (from server)
     """
     def __init__(self, parent, title):
         global liveFeed
@@ -1553,6 +1569,7 @@ class univrEndFrame(wx.Frame):
         panel.SetSizer(vbox) 
         
     def hideNow(self,evt):
+        """ Hide window"""
         self.Hide()
     
 def onEndSession(evt):

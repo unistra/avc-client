@@ -7,6 +7,9 @@
 #     Developer : francois.schnell [AT ulpmm.u-strasbg.fr]
 #
 #*************************************************************
+"""
+Nothing special. HTML chunks used in generating recordings.html in particular. 
+"""
 
 head= """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html xmlns="http://www.w3.org/1999/xhtml">
