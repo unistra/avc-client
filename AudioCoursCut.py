@@ -3,8 +3,11 @@
 # AudioCours Cut tool - ULP Multimedia
 # Developer: francois schnell (@ulpmm.us-strasbg.fr)
 #
-# A tool to cut exiting auduiocours recordings in smaller parts 
-# (for if you have more than one presentations in one recording)
+# A small tool to cut exiting AudioCours recordings into smaller parts
+# 
+# Possible usages:
+#    - have more than one presentations in a recording
+#    - want to get rid off the begin or end of a recording
 #
 # You need to download first the "mp3splt.exe" free utility:
 # mp3splt.sourceforge.net
@@ -15,13 +18,26 @@
 #
 ########################################################################################
 
-import wx, os
+# Python import
+import os
+
+# External libs iimport
+import wx
 
 class mainFrame(wx.Frame):
     """
-    Main GUI frame for AV cu
+    Main GUI frame for AV cut.
+    A small tool to cut exiting AudioCours recordings into smaller parts.
+    Possible usages:
+    - have more than one presentations in a recording
+    - want to get rid off the begin or end of a recording
+    Folder named "px" will be created (where x is the part number: 1,2,...)
     """
+    
     def __init__(self, parent, title):
+        """
+        Constructor, GUI setting up.
+        """
         wx.Frame.__init__(self, parent, -1, title,
                           pos=(150, 150), size=(600, 300),
                           style=wx.DEFAULT_FRAME_STYLE)  
@@ -179,12 +195,13 @@ class mainFrame(wx.Frame):
         print "Finished processing!"
                                
     def time_in_seconds(self,time="00.00.00"):
+        """ Returns integer seconds from hh:mm:ss format"""
         t=time.split(".")
         seconds= int(t[0])*3600+ int(t[1])*60+int(t[2])
         return seconds
     
     def time_in_ms(self,time=0.0):
-        """ Where inpuut time is in seconds and returns time as mm.ss for mp3split"""
+        """ Where input time is in seconds and returns time as mm.ss for mp3split"""
         hh=int(time//3600)
         time_left=time%3600
         mm=int(time_left//60)
