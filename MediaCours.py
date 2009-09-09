@@ -23,7 +23,7 @@
 # Note (francois): App. stable but needs refactoring...
 #*******************************************************************************
 
-__version__="1.12"
+__version__="1.13"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -57,6 +57,9 @@ import htmlBits      # HTML chuncks for html format output
 standalone=False
 "GUI design, False=amphi (always running in background, minimal choices), True= individual PC"
 # Publishing form variables
+
+publishingForm=False
+"Indicates there's no publishing form on the client and everything is done on the website"
 title=""
 "Recording's title"
 description=""
@@ -118,7 +121,7 @@ videoProjOFF='PWR OFF\x0D'
 "Video proj protocol : OFF (EPSON here)"
 ftpUrl="larsen.u-strasbg.fr"
 "FTP URL server for online publication"
-urlserver= "http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/UploadClient"
+urlserver= "https://audiovideocours.u-strasbg.fr/avc/publication"
 "Default URL of the audiovideocours server containing the submit form"
 urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
 "URL of the live form status"
@@ -176,9 +179,9 @@ audioVideoChoice=False # give the possibility to choose between an audio or vide
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 if 1:# in case no server informations found in the configuration file
-    ftpLogin=""
+    ftpLogin="ftpuser"
     "FTP login for publishing and live screenshots"
-    ftpPass=""
+    ftpPass="$ulpmmeric1"
     "FTP password for publishing and live screenshots"
  
 #------- i18n settings ------------------------------------------------------------------
@@ -196,7 +199,7 @@ def readConfFile():
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm
     
     section="mediacours"
     
@@ -244,6 +247,7 @@ def readConfFile():
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
         if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
+        if config.has_option(section,"publishingForm") == True: publishingForm=readParam("publishingForm")
         fconf.close()
     except:
     #if 0:
@@ -366,7 +370,7 @@ def recordNow():
     dateTime0 = datetime.datetime.now()
     print "- Recording now ! ... ( from recordNow() )"
     dirName = str(dateTime0)
-    dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"#+ "-"+ dirName[20:22]
+    dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"+"-"+recordingPlace#+ "-"+ dirName[20:22]
     workDirectory=pathData+"\\"+dirName
     print "workDirectory= ",workDirectory
     os.mkdir(workDirectory)
@@ -756,20 +760,30 @@ def confirmPublish(folder=''):
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
             
         if folder=="":
-            try:
-            #if 1:
+            #try:
+            if 1:
                 #Send data to the AudioCours server (submit form)
                 print "login ENT, emailENT  >>>>>>>>> " ,loginENT, emailENT
-                urlParams="id="+idtosend+"&title="+title+"&description="+description+\
-                "&name="+name+"&firstname="+firstname+"&login="+loginENT+"&email="+emailENT+"&genre="+genre+"&ue="+ue+"&mediapath="+\
-                dirNameToPublish+".zip"
-                page = urlopen(urlserver,urlParams)
-                print "urlParams",urlParams
-                print "------ Response from Audiocours : -----"
-                serverAnswer= page.read() # Read/Check the result
-                print serverAnswer
-            except:
-            #if 0:
+                if publishingForm==True:
+                    urlParams="id="+idtosend+"&title="+title+"&description="+description+\
+                    "&name="+name+"&firstname="+firstname+"&login="+loginENT+"&email="+emailENT+"&genre="+genre+"&ue="+ue+"&mediapath="+\
+                    dirNameToPublish+".zip"
+                    page = urlopen(urlserver,urlParams)
+                    print "urlParams",urlParams
+                    print "------ Response from Audiocours : -----"
+                    serverAnswer= page.read() # Read/Check the result
+                    print serverAnswer
+                if publishingForm==False:
+                    if idtosend=="": idtosend="none"
+                    urlParams="mediapath="+dirNameToPublish+".zip"+"&id="+idtosend
+                    def launch():
+                        command='"c:\program files\internet explorer\iexplore" '+urlserver+'?'+urlParams
+                        print "commande URL= ", command
+                        os.system(command)
+                    start_new_thread(launch,())
+    
+            #except:
+            if 0:
                 print "Had problem while submitting the form"
             
         # set the id variable to id="" again
@@ -1308,14 +1322,17 @@ class EndingFrame(wx.Frame):
     def __init__(self, parent, title):
         """Create the ending frame"""
         global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname,entryCode,btnPublish\
-        ,btnCancel,loginENT,emailENT,entryLoginENT,entryLoginENT,entryEmail
+        ,btnCancel,loginENT,emailENT,entryLoginENT,entryLoginENT,entryEmail,textWeb
         windowXsize=500
+        windowYsize=650
         fieldSize=420
         if standalone==True:
             windowXsize=500
-            fieldSize=420           
+            fieldSize=420  
+        if publishingForm==False:
+            windowYsize=250    
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(windowXsize, 650),
+                          pos=(150, 150), size=(windowXsize, windowYsize),
             style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))            
         favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
         wx.Frame.SetIcon(self, favicon)
@@ -1349,16 +1366,19 @@ class EndingFrame(wx.Frame):
         linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
         linkWebsite.SetForegroundColour("white")
         linkWebsite.SetColours("white", "white", "white")
+        textWeb=wx.StaticText(panel,-1, _("Pour publier, cliquez sur 'Publier' et remplissez le forumlaire \n dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
+        textWeb.SetForegroundColour("white")
             
         for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode,
                       textLoginENT,textEmail]:
             label.SetForegroundColour("white")
             label.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.BOLD, False,"MS Sans Serif"))
+        """
         for entry in [entryTitle,entryDescription,entryLastname,entryFirstname,entryTraining,entryCode]:
             #entry.SetBackgroundColour((254,236,170))
             #entry.SetBackgroundColour("light blue")
             pass
-        
+        """
         btnPublish = wx.Button(panel, -1, _("Publish!"),size=(130,50))
         btnCancel=wx.Button(panel, -1, _("Cancel"),size=(70,50))
         
@@ -1378,24 +1398,33 @@ class EndingFrame(wx.Frame):
         pad1=4    
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(wx.StaticBitmap(panel, -1, logos, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
-        sizer.Add(textTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(textEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
-        sizer.Add(entryEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        
+        if publishingForm==True:
+            sizer.Add(textTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryTitle, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryDescription, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryLastname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryFirstname, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryTraining, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryCode, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryLoginENT, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(textEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+            sizer.Add(entryEmail, 0, wx.ALIGN_CENTER|wx.ALL, pad1)
+        if publishingForm==False:
+            for entry in [entryTitle,entryDescription,entryLastname,entryFirstname,entryTraining,entryCode,entryLoginENT,entryEmail]:
+                entry.Hide()    
         sizer.Add(hbox, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        sizer.Add(linkWebsite, 0, wx.ALIGN_CENTER|wx.ALL, 4)
+        if publishingForm==True:
+            sizer.Add(linkWebsite, 0, wx.ALIGN_CENTER|wx.ALL, 4)
+        if publishingForm==False:
+            sizer.Add(textWeb, 0, wx.ALIGN_CENTER|wx.ALL, 4)
+        
         panel.SetSizer(sizer)
         panel.Layout() # what for ?
         
