@@ -179,9 +179,9 @@ audioVideoChoice=False # give the possibility to choose between an audio or vide
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 if 1:# in case no server informations found in the configuration file
-    ftpLogin="ftpuser"
+    ftpLogin=""
     "FTP login for publishing and live screenshots"
-    ftpPass="$ulpmmeric1"
+    ftpPass=""
     "FTP password for publishing and live screenshots"
  
 #------- i18n settings ------------------------------------------------------------------
