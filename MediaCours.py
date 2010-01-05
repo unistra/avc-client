@@ -1,9 +1,9 @@
 #*****************************************************************************
 #
-#     MediaCours (Windows audio/video client and 'standalone' version)
+#     MediaCours (Windows AudioVideoCours client and 'standalone' version)
 #
-#    (c) Université de Strasbourg  2006-2009 
-#     Dev : francois.schnell [AT] unistra.fr  
+#    (c) Universite de Strasbourg  2006-2010
+#     Conception and development : francois.schnell [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #
 #*******************************************************************************
 
-__version__="1.13"
+__version__="1.14"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1604,15 +1604,21 @@ def onEndSession(evt):
     import winsound
     winsound.PlaySound("waves\\exit.wav",winsound.SND_FILENAME)
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
-    
-    
-        
+            
 ## Start app
 if __name__=="__main__":
 
     # Check if another instance is already launched and kill it if it exist
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
+    
+    # create a default data audiovideocours folder if it doesn't exists
+    if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
+        print "Default user data exists at USERPROFILE\\audiovideocours : OK"
+    else: 
+        print "Creating default data folter in USERPROFILE\\audiovideocours"
+        os.mkdir(os.environ["USERPROFILE"]+"\\audiovideocours")
+            
     # Set-up language
     if language=="French":
         print "Setting French language..."
