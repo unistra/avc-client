@@ -21,8 +21,8 @@
 #
 #*******************************************************************************
 
-# First commit test since source is located at https://subversion.cru.fr/audiovideocours
-__version__="1.14"
+
+__version__="1.15-alpha1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -732,8 +732,8 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        if 1:
-        #try:
+        #if 1:
+        try:
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
@@ -751,12 +751,18 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        if 0:  
-        #except:
+        except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
+            # Information DialogBox
+            caption=_("!!! Publication ERROR !!!")
+            text=_("IMPOSSIBLE TO PUBLISH\
+            \nIs there an internet connection?\nIs the FTP port opened?")
+            dialog=wx.MessageDialog(None,message=text,caption=caption,
+            style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
             
         if folder=="":
             #try:
