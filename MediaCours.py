@@ -21,6 +21,7 @@
 #
 #*******************************************************************************
 
+# First commit test since source is located at https://subversion.cru.fr/audiovideocours
 __version__="1.14"
 
 ## Python import (base Python 2.4)
@@ -181,7 +182,7 @@ if 1:# in case no server informations found in the configuration file
     "FTP login for publishing and live screenshots"
     ftpPass=""
     "FTP password for publishing and live screenshots"
- 
+    
 #------- i18n settings ------------------------------------------------------------------
 gettext.install("mediacours","locale")
 #----------------------------------------------------------------------------------------
