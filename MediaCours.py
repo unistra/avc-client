@@ -459,11 +459,12 @@ def recordNow():
             
         print flvPath  
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
+        print "Current directory is", os.getcwd()
         if os.path.isfile("startup.xml")==True:
             print "Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
             #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
-                       flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live)
+                       flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live,pathData=pathData)
             flv.record()
             #FMEprocess=flv.record()
             #FMLEpid=FMEprocess.pid
@@ -471,7 +472,7 @@ def recordNow():
         else:
             print "FME: using configuration file parameters"
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
-                       flvPath=flvPath,liveParams=liveParams,externalProfile=False,usage=usage,live=live)
+                       flvPath=flvPath,liveParams=liveParams,externalProfile=False,usage=usage,live=live,pathData=pathData)
             flv.record()
             #FMEprocess=flv.record()
             #FMLEpid=FMEprocess.pid

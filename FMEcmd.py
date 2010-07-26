@@ -22,12 +22,15 @@ from pywinauto import application,findwindows
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
     
-    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams,externalProfile,usage="video",live=False):
-        print "in FMEcmd, received videoDeviceName",videoDeviceName,"audioDeviceName",audioDeviceName
-        print "externalProfile=",externalProfile
-        print "### flvPath is ", flvPath
+    def __init__(self,videoDeviceName,audioDeviceName,flvPath,liveParams,externalProfile,usage="video",live=False,pathData="C:\\"):
+        print "### Now in FMEcmd\nreceived videoDeviceName",videoDeviceName,"audioDeviceName",audioDeviceName
+        print "externalProfile is ",externalProfile
+        print "flvPath is ", flvPath
         self.flvPath=flvPath
         self.usage=usage
+        #self.logsDir=os.environ["USERPROFILE"]+"\\audiovideocours"
+        self.logsDir=pathData
+        print "Flash Media Live Encoder logs will be here: ", self.logsDir
         
         if usage=="video":
             
@@ -79,9 +82,8 @@ class FMEcmd(object):
 <path>"""+flvPath+u"""</path>
 </file>"""
             
-        self.profileHead=u"""
-<?xml version="1.0" encoding="UTF-16"?>
-<flashmediaencoder_profile>
+        self.profileHead=u"""<?xml version="1.0" encoding="UTF-16"?>
+<flashmedialiveencoder_profile>
 <preset>
 <name>Medium Bandwidth (300 Kbps)</name>
 <description></description>
@@ -155,7 +157,11 @@ videoSource+"""
 </video>
 <audio></audio>
 </preview>
-</flashmediaencoder_profile>
+<log>
+<level>100</level>
+<directory>"""+self.logsDir+"""</directory>
+</log>
+</flashmedialiveencoder_profile>
 """
 
         # check if an external profile exist and take profileHead in this case
@@ -183,13 +189,13 @@ videoSource+"""
         #subprocess.Popen(["FMEcmd.exe", "/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
         
         winsound.Beep(500,50)
-        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3/FMLEcmd.exe'
+        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         try:
-            subprocess.Popen(["%s"%FME,"/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
+            subprocess.Popen(["%s"%FME,"/d","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
             print "!!! after record first Try !!!"
         except:
             try:
-                subprocess.Popen(["FMLEcmd.exe","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
+                subprocess.Popen(["FMLEcmd.exe","/d","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
                 print "!!! after record second Try !!!"
             except:
                 print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3\FMLEcmd.exe"
@@ -216,7 +222,7 @@ videoSource+"""
         #os.popen("taskkill /F /IM FMEcmd.exe")
         print 'Ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
         #os.popen('FMEcmd.exe /s "%s"' % FMLEpid)
-        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3/FMLEcmd.exe'
+        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         #os.popen("%s"%FME+' /s "%s"' % FMLEpid)
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
