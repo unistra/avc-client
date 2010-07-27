@@ -29,6 +29,7 @@ class FMEcmd(object):
         self.flvPath=flvPath
         self.usage=usage
         #self.logsDir=os.environ["USERPROFILE"]+"\\audiovideocours"
+        self.pathData=pathData
         self.logsDir=pathData
         print "Flash Media Live Encoder logs will be here: ", self.logsDir
         
@@ -177,31 +178,27 @@ videoSource+"""
             #print self.profileHead
             fP.close()
         self.profile=self.profileHead+self.profileOutput+self.profileTail
-        #fileOut=open("flv_startup.xml","wb")
-        #fileOut=open(os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml","wb")
-        fileOut=open(os.environ["USERPROFILE"]+"/flv_startup.xml","wb")
+        fileOut=open(self.pathData+"/flv_startup.xml","wb")
         fileOut.write(self.profile.encode("UTF-16"))
         fileOut.close
 
     def record(self):
         """ Launch FMEcmd.exe with the given profile. """
-        #subprocess.Popen(["FMEcmd.exe", "/P","flv_startup.xml"])
-        #subprocess.Popen(["FMEcmd.exe", "/P",os.environ["USERPROFILE"]+"/audiovideocours/flv_startup.xml"])
         
         winsound.Beep(500,50)
         FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         try:
-            subprocess.Popen(["%s"%FME,"/d","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
-            print "!!! after record first Try !!!"
+            subprocess.Popen(["%s"%FME,"/d","/P",self.pathData+"/flv_startup.xml"])
+            print "Ordered sent to FMLE to begin recording"
         except:
             try:
-                subprocess.Popen(["FMLEcmd.exe","/d","/P",os.environ["USERPROFILE"]+"/flv_startup.xml"])
+                subprocess.Popen(["FMLEcmd.exe","/d","/P",self.pathData+"/flv_startup.xml"])
                 print "!!! after record second Try !!!"
             except:
-                print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3\FMLEcmd.exe"
+                print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe"
                 caption="Audiovideocours Error Message"
-                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3\FMLEcmd.exe exists?"+\
-                "\n If not install Flash Media Live Encoder 3" 
+                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe exists?"+\
+                "\n If not install Flash Media Live Encoder 3.1" 
                 dialog=wx.MessageDialog(None,message=text,caption=caption,
                 style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
@@ -219,11 +216,8 @@ videoSource+"""
         
     def stop(self,FMLEpid):
         """Kill the FlashMediaEncoder"""
-        #os.popen("taskkill /F /IM FMEcmd.exe")
         print 'Ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
-        #os.popen('FMEcmd.exe /s "%s"' % FMLEpid)
         FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
-        #os.popen("%s"%FME+' /s "%s"' % FMLEpid)
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
         except:

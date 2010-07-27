@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.15-alpha1"
+__version__="1.15"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1189,10 +1189,13 @@ class BeginFrame(wx.Frame):
         self.usage=usage
         """Create the warning window"""
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(500, 370),
+                          pos=(150, 150), size=(500, 400),
         style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
         
         favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
+        statusMessage= " AudioVideoCours Version "+__version__
+        self.statusBar=self.CreateStatusBar()
+        self.statusBar.SetStatusText(statusMessage)
         wx.Frame.SetIcon(self, favicon)
 
         panel=wx.Panel(self)
@@ -1278,7 +1281,7 @@ class BeginFrame(wx.Frame):
         text="AudioVideoCours version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
-        +"(c) UDS 2007-2009"
+        +"(c) UDS 2007-2010"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
