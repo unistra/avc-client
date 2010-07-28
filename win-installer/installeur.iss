@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 1.14
-AppVersion=1.14
+AppVerName=audiovideocours 1.16
+AppVersion=1.16
 AppPublisher=(C) ULP Multimedia 2006-2010
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
@@ -25,12 +25,13 @@ Name: {app}\locale
 Name: {app}\locale\fr
 Name: {app}\locale\fr\LC_MESSAGES
 Name: {%USERPROFILE}\audiovideocours
+Name: {%ALLUSERSPROFILE}\audiovideocours ; Permissions: everyone-modify
 Name: {app}\thirdparty
 
 [Files]
 ;Source: ..\mediacours.conf.default; DestDir:{%USERPROFILE}
 ;Source: ..\mediacours.conf; DestDir:{%USERPROFILE}
-Source: ..\mediacours.conf; DestDir:{app}
+Source: ..\mediacours.conf; DestDir:{%ALLUSERSPROFILE}\audiovideocours ; Permissions: everyone-modify
 Source: ..\images\audiocours1.ico; DestDir:{app}\images
 Source: ..\images\audiocours2.ico; DestDir:{app}\images
 Source: ..\images\videocours1.ico; DestDir:{app}\images

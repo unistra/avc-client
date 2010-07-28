@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.15"
+__version__="1.16"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -53,7 +53,7 @@ import htmlBits      # HTML chuncks for html format output
 
 ## Some default global variables in case no configuration file is found
 
-standalone=False
+standalone=True
 "GUI design, False=amphi (always running in background, minimal choices), True= individual PC"
 # Publishing form variables
 
@@ -187,9 +187,9 @@ if 1:# in case no server informations found in the configuration file
 gettext.install("mediacours","locale")
 #----------------------------------------------------------------------------------------
 
-def readConfFile():
+def readConfFile(confFile="mediacours.conf"):
     """ 
-    Read the config file and get those values as global vars 
+    Read the configuration file and get those values as global vars 
     """
     print "Search and read configuration (if it exist):"
     
@@ -213,7 +213,7 @@ def readConfFile():
         return paramValue
     try:
     #if 1:
-        fconf=open("mediacours.conf","r")
+        fconf=open(confFile,"r")
         config= ConfigParser.ConfigParser()
         config.readfp(fconf)
         if config.has_option(section,"language") == True: language=readParam("language")
@@ -1292,7 +1292,6 @@ class BeginFrame(wx.Frame):
         def launch():
             print "I'm in launch in help"
             try:
-                #os.popen(os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url")
                 subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
                 #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',pathData+"/Aide_AudioCours_StandAlone.url"])
             except:
@@ -1302,7 +1301,8 @@ class BeginFrame(wx.Frame):
     def configuration(self,evt):
         """ A fucntion to open the configuration file"""
         def launch():
-            subprocess.Popen([r'C:\Windows\System32\notepad.exe', "mediacours.conf"])
+            subprocess.Popen([r'C:\Windows\System32\notepad.exe',
+                              os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"])
         start_new_thread(launch,())
         
     def exitApp(self,evt):
@@ -1619,9 +1619,13 @@ def onEndSession(evt):
 ## Start app
 if __name__=="__main__":
 
+    
     # Check if another instance is already launched and kill it if it exist
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
+    
+    ## GUI Define
+    app=wx.App(redirect=False)
     
     # create a default data audiovideocours folder if it doesn't exists
     if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
@@ -1636,8 +1640,19 @@ if __name__=="__main__":
         langFr = gettext.translation('mediacours', "locale",languages=['fr'])
         langFr.install()
         
-    # Read configuration file
-    readConfFile()
+    # Check if a configuration file exist in USERPROFILE
+    # otherwise search for one in ALLUSERPROFILE
+    if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+        print "Found and using configuration file in USERPROFILE\\audiovideocours"
+        readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
+    elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+        print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
+        readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
+    else:
+        print "No configuration file found"
+        dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
+                                caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+        dialog.ShowModal()
     
     # Automatically detect IP of the recoriding place
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
@@ -1670,7 +1685,7 @@ if __name__=="__main__":
     PID_f.close()
     
     ## GUI launch
-    app=wx.App(redirect=False)
+    #app=wx.App(redirect=False)
     frameUnivr=univrEndFrame(None,title="Message Univ-R")
     #frameUnivr.Show()   
     frameBegin=BeginFrame(None,title="Attention")
