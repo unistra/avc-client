@@ -193,23 +193,27 @@ def readConfFile(confFile="mediacours.conf"):
     """
     print "Search and read configuration (if it exist):"
     
-    global id,urlserver,samplingFrequency,createMp3,stopKey,portNumber,pathData\
+    global confFileReport,id,urlserver,samplingFrequency,createMp3,stopKey,portNumber,pathData\
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
     ,formFormation, audioVideoChoice,urlLiveState,publishingForm
     
+    confFileReport=""
+    
     section="mediacours"
     
     def readParam(param):
+        global confFileReport
         param=str(param)
         paramValue= config.get(section,param)
+        if paramValue=="True" or paramValue=="False":
+            paramValue=eval(paramValue)
         if (param != "ftpPass") and (param != "ftpLogin"):
             print "... "+param+" = ", paramValue
             #writeInLogs("\n\t:"+param+"= "+paramValue)
-        if paramValue=="True" or paramValue=="False":
-            paramValue=eval(paramValue)
+            confFileReport += "\n\t:"+str(param)+"= "+str(paramValue)
         return paramValue
     try:
     #if 1:
@@ -809,8 +813,8 @@ def LaunchSocketServer():
     Launch a socket server, listen to eventual orders
     and decide what to do 
     """
-    global id,recording
-    print "Client is listening for socket order ..."
+    global id,recording,mySocket
+    print "Client is listening for socket order on port",str(portNumber)
     mySocket = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
     mySocket.bind ( ( '', portNumber ) )
     mySocket.listen ( 1 )
@@ -1308,6 +1312,11 @@ class BeginFrame(wx.Frame):
     def exitApp(self,evt):
         """A function to quit the app"""
         print "exit"
+        print "trying to close an eventual opened socket"
+        try:
+            mySocket.close()
+        except:
+            pass
         sys.exit()
         
     def SkiptoEndingFrame(self,evt):
@@ -1619,7 +1628,6 @@ def onEndSession(evt):
 ## Start app
 if __name__=="__main__":
 
-    
     # Check if another instance is already launched and kill it if it exist
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
@@ -1640,6 +1648,7 @@ if __name__=="__main__":
         langFr = gettext.translation('mediacours', "locale",languages=['fr'])
         langFr.install()
         
+    confFileReport=""    
     # Check if a configuration file exist in USERPROFILE
     # otherwise search for one in ALLUSERPROFILE
     if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
@@ -1656,12 +1665,15 @@ if __name__=="__main__":
     
     # Automatically detect IP of the recoriding place
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
+    #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
     print "... recordingPlace = ", recordingPlace
     
     if pathData == None or pathData=="":
         #pathData=os.getcwd()
         pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
         print "pathData=None => PathData is now ", pathData
+    writeInLogs(confFileReport)
+    
     # Start-up message
     print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
     writeInLogs("\nAudioVideoCours client launched at "+ \
