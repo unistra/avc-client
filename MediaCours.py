@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.16"
+__version__="1.17-alpha1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -44,6 +44,7 @@ import pymedia.audio.acodec as acodec
 import pymedia.muxer as muxer
 from pywinauto import * # used to put app. back on foreground
 from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
+import cherrypy
 
 ## Local imports 
 from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
@@ -1625,6 +1626,81 @@ def onEndSession(evt):
     winsound.PlaySound("waves\\exit.wav",winsound.SND_FILENAME)
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
             
+class AVCremote:
+    global welcome, pathData
+    welcome="<p> ((( AudioVideoCours Client - Web Interface ))) </p>"
+
+    def index(self):
+        # Ask for an order
+        return welcome+'''
+            <form action="getOrder" method="GET">
+            What is your order?
+            <input type="text" name="order" />
+            <input type="submit" />
+            </form>'''
+    index.exposed = True
+    
+    def getOrder(self, order = None):
+
+        if order:
+            print "received order:", order   
+            if order=="list":
+                print "trying to retrieve list for pathData", pathData
+                return fileList(folderPath=pathData)
+            else:
+                return welcome+"You have order: %s " % order
+        
+        else:
+            if order is None:
+                # No name was specified
+                return 'Please enter your order <a href="./">here</a>.'
+            else:
+                return 'No, really, enter your order <a href="./">here</a>.'
+    getOrder.exposed = True
+
+def goAVCremote():
+    "Create an instance of AVCremote"
+    print "Launch AVCremote thread"
+    cherrypy.config.update({'server.socket_host': '0.0.0.0',
+                        'server.socket_port': 8080, 
+                       })
+    cherrypy.quickstart(AVCremote())
+    #'log.screen': False,
+    # 'environment': 'production' 
+
+def fileList(folderPath="."):
+    "return a list of the files in the data folder"
+    print "In def fileList folderPath=", folderPath
+    def get_dir_size(folder):
+        size = 0
+        for path, dirs, files in os.walk(folder):
+            for f in files:
+                size +=  os.path.getsize( os.path.join( path, f ) )
+        return str(   round((float(size)/(1024*1024)),2)   )+" Mo"
+    content= os.listdir(folderPath)
+    #print "Content list", content
+    files_list =[]
+    dirs_list=[]
+    for i in content:
+        if os.path.isfile(folderPath+"/"+i) == True:
+            files_list.append(i)
+            print os.path.getsize(folderPath+"/"+i)
+        elif os.path.isdir(folderPath+"/"+i) == True:
+            dirs_list.append(i)    
+            print os.path.getsize(folderPath+"/"+i)
+    answer="<p>Listing of files and folders in "+folderPath+" </p>"
+    answer+="<p>Files:</p>"
+    print "Files list",files_list
+    print "Folders list", dirs_list
+    for index,name in enumerate(files_list):
+        size=os.path.getsize(folderPath+"/"+name)
+        answer+=str(index)+" - "+name+" - "+str(round(float(size)/1024,2))+" Ko <br>"
+    answer+="<p>Folders:</p>"    
+    for index,name in enumerate(dirs_list):
+        answer+=str(index)+" - "+name+" - "+get_dir_size(folderPath+"/"+name)+"<br>"
+    print answer
+    return answer
+         
 ## Start app
 if __name__=="__main__":
 
@@ -1695,7 +1771,7 @@ if __name__=="__main__":
     PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'w')
     PID_f.write(str(os.getpid()))
     PID_f.close()
-    
+        
     ## GUI launch
     #app=wx.App(redirect=False)
     frameUnivr=univrEndFrame(None,title="Message Univ-R")
@@ -1734,5 +1810,8 @@ if __name__=="__main__":
     
     if standalone==True:
         showVuMeter()
+    
+    if standalone==True or standalone==False:
+        start_new_thread(goAVCremote,())
         
     app.MainLoop()

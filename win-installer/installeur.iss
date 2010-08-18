@@ -1,13 +1,13 @@
 ; Install file for audiovideocours (mediacours.py)
-; (C) ULP Multimedia (University Louis-Pasteur)
+; (C) Universtiy of Strasbourg - UDS
 ;  Developer : francois schnell
 
 
 [Setup]
 AppName=audiovideocours
 AppId=audiovideocours
-AppVerName=audiovideocours 1.16
-AppVersion=1.16
+AppVerName=audiovideocours 1.17
+AppVersion=1.17
 AppPublisher=(C) ULP Multimedia 2006-2010
 AppPublisherURL=http://audiovideocours.u-strasbg.fr/
 AppSupportURL=http://audiovideocours.u-strasbg.fr/
