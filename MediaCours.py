@@ -54,10 +54,13 @@ import htmlBits      # HTML chuncks for html format output
 
 ## Some default global variables in case no configuration file is found
 
+remoteControl=False
+"If True the client will also act as a mini server for maintenance purposes. Go to http://your-PC:port"
+remotePort="8080"
+"Remote access port"
 standalone=True
 "GUI design, False=amphi (always running in background, minimal choices), True= individual PC"
 # Publishing form variables
-
 publishingForm=False
 "Indicates there's no publishing form on the client and everything is done on the website"
 title=""
@@ -76,6 +79,16 @@ ue=""
 " To use the app without a  webserver to publish to"
 recording = False
 " Recording Status : to know if we are recording now" 
+last_session_recording_start="None"
+" Date/time of the last recording start since the app. is running"
+last_session_recording_stop="None"
+" Date/time of the last recording stop since the app. is running"
+app_startup_date="None"
+"Date/time when the app. has been launched"
+last_session_publish_order="None"
+"Date/time when the app. has been launched"
+last_session_publish_problem="None"
+"Date/time when the app. encountered an error while publishing "
 workDirectory="" 
 "The working/current directory"
 dirName=""
@@ -199,7 +212,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl
     
     confFileReport=""
     
@@ -252,6 +265,8 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
         if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
         if config.has_option(section,"publishingForm") == True: publishingForm=readParam("publishingForm")
+        if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
+        if config.has_option(section,"remotePort") == True: remotePort=readParam("remotePort")
         fconf.close()
     except:
     #if 0:
@@ -361,9 +376,10 @@ def recordNow():
     Record the audio input now with pymedia or video via an external encoder 
     """
     global recording, diaId, timecodeFile, t0, dateTime0, dirName, workDirectory
-    global snd,ac,cparams, nameRecord,usage,smil,pathData
+    global snd,ac,cparams, nameRecord,usage,smil,pathData, last_session_recording_start
     usage=frameBegin.usage
     recording= True
+    last_session_recording_start=getTime()
     ftpHandleReady=False
     # Visual cue to confim recording state
     tbicon.SetIcon(icon2, "Enregistrement en cours")
@@ -608,9 +624,10 @@ def recordStop():
     """
     Stop recording the audio input now
     """
-    global recording,timecodeFile,FMLEpid
+    global recording,timecodeFile,FMLEpid, last_session_recording_stop
     print "In recordStop() now..."
     recording= False
+    last_session_recording_stop=getTime()
     print "Recording is now = ", recording
     # Visual cue to confirm recording state
     tbicon.SetIcon(icon1, usage+"cours en attente")
@@ -716,9 +733,11 @@ def confirmPublish(folder=''):
     """
     Publish the recording when hitting the 'publish' button 
     """
-    global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT,emailENT,pathData
+    global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT
+    global emailENT,pathData, last_session_publish_order, last_session_publish_problem
     idtosend=id
     print "sockedEnabled: ", socketEnabled, "id: ",id
+    last_session_publish_order=getTime()
     if socketEnabled==True and id != "": # useful for remote order only (doesn't go through publish())
         print "=> Creating Zip file (no publishing form, distant order)"
         workDirectoryToPublish=workDirectory # pathData + dirName
@@ -759,6 +778,7 @@ def confirmPublish(folder=''):
                 frameBegin.Show() 
         except:
             print "!!! Something went wrong while sending the archive to the server !!!"
+            last_session_publish_problem=getTime()
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
@@ -1627,15 +1647,25 @@ def onEndSession(evt):
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
             
 class AVCremote:
-    global welcome, pathData
-    welcome="<p> ((( AudioVideoCours Client - Web Interface ))) </p>"
+    global welcome, pathData,recording, pathData
 
     def index(self):
+        global welcome
+        welcome="<p> ((( AudioVideoCours Client - Web Interface ))) </p> "
+        welcome+="Recording now: "+str(recording)+" <br><br>"
+        welcome+= "> client version : "+__version__+"</br>"
+        welcome+= "> app_startup_date : "+app_startup_date+"</br>"
+        welcome+= "> last_session_recording_start : "+last_session_recording_start+"</br>"
+        welcome+= "> last_session_recording_stop : "+last_session_recording_stop+"</br>"
+        welcome+= "> last_session_publish_order : "+last_session_publish_order+"</br>"
+        welcome+= "> last_session_publish_problem : "+last_session_publish_problem+"</br>"
+        welcome+= "> session data folder : "+pathData+"</br>"
+        welcome+="<br><br><br>"
         # Ask for an order
         return welcome+'''
             <form action="getOrder" method="GET">
-            What is your order?
-            <input type="text" name="order" />
+            Command : 
+            <input type="text" name="order" size="50" />
             <input type="submit" />
             </form>'''
     index.exposed = True
@@ -1646,10 +1676,23 @@ class AVCremote:
             print "received order:", order   
             if order=="list":
                 print "trying to retrieve list for pathData", pathData
-                return fileList(folderPath=pathData)
+                return fileList(folderPath=pathData)[0]
+            elif order=="help":
+                helpList="""
+                <p>Current availale commands:</p>
+                 
+                list : returns a list of folders and files in your current data folder.<br> 
+                """
+                return helpList
+            elif order.find("recover:")>=0:
+                print "Attempting to recover an old recording folder..."
+                fileOrFolder=order.split("recover:")[1].strip()
+                recoverFeedback=recoverFileOrFolder(name=fileOrFolder, pathData=pathData, ftpUrl=ftpUrl, ftpLogin=ftpLogin, ftpPass=ftpPass)
+                return recoverFeedback
+            elif order.find("recover-f:")==True:
+                print "will do later"
             else:
                 return welcome+"You have order: %s " % order
-        
         else:
             if order is None:
                 # No name was specified
@@ -1658,11 +1701,11 @@ class AVCremote:
                 return 'No, really, enter your order <a href="./">here</a>.'
     getOrder.exposed = True
 
-def goAVCremote():
+def goAVCremote(remotePort=8080):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
     cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                        'server.socket_port': 8080, 
+                        'server.socket_port': remotePort, 
                        })
     cherrypy.quickstart(AVCremote())
     #'log.screen': False,
@@ -1699,8 +1742,53 @@ def fileList(folderPath="."):
     for index,name in enumerate(dirs_list):
         answer+=str(index)+" - "+name+" - "+get_dir_size(folderPath+"/"+name)+"<br>"
     print answer
-    return answer
-         
+    return [answer,files_list,dirs_list]
+
+def getTime():
+    "Returns current date/time in an appropriate string format"
+    time= str(datetime.datetime.now())[:-7]
+    return time 
+
+def recoverFileOrFolder(name,pathData, ftpUrl,ftpLogin,ftpPass):
+    "Recovering an folder back to the FTP server usualy following a remote order"
+    
+    if os.path.isdir(pathData+"/"+name):
+        print "Creating Zip file of ...",name
+        workDirectory=pathData+"/"+name
+        zip = zipfile.ZipFile(pathData+"\\"+name+".zip", 'w')
+        for fileName in os.listdir ( workDirectory ):
+            if os.path.isfile (workDirectory+"\\"+fileName):
+                zip.write(workDirectory+"\\"+fileName,
+                name+"/"+fileName,zipfile.ZIP_DEFLATED)
+        for fileName in os.listdir ( workDirectory+"\\screenshots"):
+            zip.write(workDirectory+"\\screenshots\\"+fileName,
+                name+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
+        zip.close()
+        #writeInLogs("In recoverFolder, counldn't create ZIP file") 
+        print "Opening FTP connection..."
+        ftp = FTP(ftpUrl)
+        ftp.login(ftpLogin, ftpPass)
+        f = open(workDirectory+".zip",'rb') 
+        ftp.storbinary('STOR '+ name+".zip", f)
+        f.close() 
+        ftp.quit()
+        print "FTP closed."    
+        result="Folder "+name+" zipped and transfered through FTP to the FTP server."
+        return result 
+    elif os.path.isfile(pathData+"/"+name):
+        ftp = FTP(ftpUrl)
+        ftp.login(ftpLogin, ftpPass)
+        f = open(pathData+"/"+name,'rb') 
+        ftp.storbinary('STOR '+ name, f)
+        f.close() 
+        ftp.quit()
+        print "FTP closed."    
+        result="File "+name+" transfered through FTP to the FTP server."
+        return result 
+    else:
+        result=name+ " is is not a folder or a file. No action taken."
+        return result
+          
 ## Start app
 if __name__=="__main__":
 
@@ -1708,6 +1796,7 @@ if __name__=="__main__":
     kill_if_double()
     time.sleep(1)#delay to be sure serial port is free if just killed a double?
     
+    app_startup_date=getTime()
     ## GUI Define
     app=wx.App(redirect=False)
     
@@ -1811,7 +1900,11 @@ if __name__=="__main__":
     if standalone==True:
         showVuMeter()
     
-    if standalone==True or standalone==False:
+    print "remoteControl",remoteControl
+    if remoteControl==True:
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   yes"
+    if (standalone==False) or (remoteControl==True):
+        print "goooooooooooooooo"
         start_new_thread(goAVCremote,())
         
     app.MainLoop()
