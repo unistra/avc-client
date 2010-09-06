@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.17-alpha1"
+__version__="1.17-alpha2"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -43,7 +43,7 @@ import pymedia.audio.sound as sound # for mp3 or ogg encoding
 import pymedia.audio.acodec as acodec
 import pymedia.muxer as muxer
 from pywinauto import * # used to put app. back on foreground
-from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
+#from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
 import cherrypy
 
 ## Local imports 
@@ -482,7 +482,7 @@ def recordNow():
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
         print "Current directory is", os.getcwd()
         if os.path.isfile("startup.xml")==True:
-            print "Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
+            print ">>>   Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
             #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
                        flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live,pathData=pathData)
@@ -1641,7 +1641,6 @@ class univrEndFrame(wx.Frame):
         self.Hide()
     
 def onEndSession(evt):
-    #writeInLogs("!!!!!!!!!!!!!!!!!!!!!")
     import winsound
     winsound.PlaySound("waves\\exit.wav",winsound.SND_FILENAME)
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
@@ -1902,9 +1901,8 @@ if __name__=="__main__":
     
     print "remoteControl",remoteControl
     if remoteControl==True:
-        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   yes"
+        print "remote Control: Yes"
     if (standalone==False) or (remoteControl==True):
-        print "goooooooooooooooo"
         start_new_thread(goAVCremote,())
         
     app.MainLoop()
