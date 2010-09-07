@@ -184,24 +184,28 @@ videoSource+"""
 
     def record(self):
         """ Launch FMEcmd.exe with the given profile. """
-        
         winsound.Beep(500,50)
         FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/d","/P",self.pathData+"/flv_startup.xml"])
-            print "Ordered sent to FMLE to begin recording"
+            print "Ordered sent to FMLE to begin recording:",FME 
         except:
             try:
-                subprocess.Popen(["FMLEcmd.exe","/d","/P",self.pathData+"/flv_startup.xml"])
-                print "!!! after record second Try !!!"
+                subprocess.Popen(["%s"%FMEwin7,"/d","/P",self.pathData+"/flv_startup.xml"])
+                print "Ordered sent to FMLE to begin recording: ",FMEwin7
             except:
-                print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe"
-                caption="Audiovideocours Error Message"
-                text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe exists?"+\
-                "\n If not install Flash Media Live Encoder 3.1" 
-                dialog=wx.MessageDialog(None,message=text,caption=caption,
-                style=wx.OK|wx.ICON_INFORMATION)
-                dialog.ShowModal()
+                try:
+                    subprocess.Popen(["FMLEcmd.exe","/d","/P",self.pathData+"/flv_startup.xml"])
+                    print "!!! after record second Try !!!"
+                except:
+                    print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe"
+                    caption="Audiovideocours Error Message"
+                    text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe exists?"+\
+                    "\n If not install Flash Media Live Encoder 3.1" 
+                    dialog=wx.MessageDialog(None,message=text,caption=caption,
+                    style=wx.OK|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
         time.sleep(4)
         print "trying to minimize FMLEcmd.exe DOS window in task bar"
         try:
