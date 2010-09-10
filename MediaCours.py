@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.17-alpha2"
+__version__="1.18"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -319,6 +319,7 @@ def OnKeyboardEvent(event):
     Catching keyboard events from the hook and deciding what to do
     """
     global stopKey,lastEvent,lastGlobalEvent
+    if 0: winsound.Beep(300,50) # For testing purposes
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     screenshotKeys=["Snapshot","Space","Return","Up","Down","Right",
     "Left","Prior","Next"]
@@ -357,6 +358,7 @@ def OnMouseEvent(event):
     if  (recording == True) and (tryFocus == False)\
     and( (time.time()-lastEvent)>eventDelay):
         if (event.MessageName == "mouse left down"):
+            if 0: winsound.Beep(300,50) # For testing purposes
             start_new_thread(screenshot,())
             lastEvent=time.time()
     if 0: # For debug purpose put 0 for example
@@ -922,7 +924,8 @@ def setupHooks():
     """
     hm = pyHook.HookManager ()  # create a hook manager
     hm.KeyDown = OnKeyboardEvent # watch for keyoard events
-    hm.MouseAll = OnMouseEvent # watch for all mouse events
+    #hm.MouseAll = OnMouseEvent # watch for all mouse events
+    hm.MouseLeftDown = OnMouseEvent
     hm.HookKeyboard() # set the hook
     hm.HookMouse() # set the hook
     
@@ -1680,7 +1683,11 @@ class AVCremote:
                 helpList="""
                 <p>Current availale commands:</p>
                  
-                list : returns a list of folders and files in your current data folder.<br> 
+                help -> returns a list of available commands.<br>
+                list -> returns a list of folders and files in your current data folder.<br>
+                recover:NameOfFolder -> FTP folder to FTP server. <br>
+                start -> start recording if not already recording. COMING SOON.<br>
+                stop -> Stop recording if recording currently. COMING SOON.<br>
                 """
                 return helpList
             elif order.find("recover:")>=0:
@@ -1688,6 +1695,10 @@ class AVCremote:
                 fileOrFolder=order.split("recover:")[1].strip()
                 recoverFeedback=recoverFileOrFolder(name=fileOrFolder, pathData=pathData, ftpUrl=ftpUrl, ftpLogin=ftpLogin, ftpPass=ftpPass)
                 return recoverFeedback
+            elif order=="start":
+                print "will start recording if not already recording"
+            elif order=="stop":
+                print "will stop recording if recording currently"
             elif order.find("recover-f:")==True:
                 print "will do later"
             else:
@@ -1799,7 +1810,7 @@ if __name__=="__main__":
     ## GUI Define
     app=wx.App(redirect=False)
     
-    # create a default data audiovideocours folder if it doesn't exists
+    # Create a default data audiovideocours folder if it doesn't exists
     if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
         print "Default user data exists at USERPROFILE\\audiovideocours : OK"
     else: 
