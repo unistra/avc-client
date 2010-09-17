@@ -212,7 +212,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort
     
     confFileReport=""
     
@@ -266,7 +266,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
         if config.has_option(section,"publishingForm") == True: publishingForm=readParam("publishingForm")
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
-        if config.has_option(section,"remotePort") == True: remotePort=readParam("remotePort")
+        if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         fconf.close()
     except:
     #if 0:
@@ -1681,7 +1681,7 @@ class AVCremote:
                 return fileList(folderPath=pathData)[0]
             elif order=="help":
                 helpList="""
-                <p>Current availale commands:</p>
+                <p>Current available commands:</p>
                  
                 help -> returns a list of available commands.<br>
                 list -> returns a list of folders and files in your current data folder.<br>
@@ -1711,7 +1711,7 @@ class AVCremote:
                 return 'No, really, enter your order <a href="./">here</a>.'
     getOrder.exposed = True
 
-def goAVCremote(remotePort=8080):
+def goAVCremote(remotePort):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
     cherrypy.config.update({'server.socket_host': '0.0.0.0',
@@ -1914,6 +1914,7 @@ if __name__=="__main__":
     if remoteControl==True:
         print "remote Control: Yes"
     if (standalone==False) or (remoteControl==True):
-        start_new_thread(goAVCremote,())
+        print "Launching Server with port", remotePort, type(remotePort)
+        start_new_thread(goAVCremote,(remotePort,))
         
     app.MainLoop()

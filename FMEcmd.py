@@ -222,18 +222,22 @@ videoSource+"""
         """Kill the FlashMediaEncoder"""
         print 'Ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
         FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
         except:
             try:
-                subprocess.Popen(["FMLEcmd.exe","/s","%s" % FMLEpid])
+                subprocess.Popen(["%s"%FMEwin7,"/s","%s" % FMLEpid])
             except:
-                print "Problem while stopping Flash Media Encoder"
-                caption="Audiovideocours Error Message"
-                text="Problem while stopping Flash Media Encoder.\n\nYou may have to stop 'FMEcmd' process manually."
-                dialog=wx.MessageDialog(None,message=text,caption=caption,
-                style=wx.OK|wx.ICON_INFORMATION)
-                dialog.ShowModal()
+                try:
+                    subprocess.Popen(["FMLEcmd.exe","/s","%s" % FMLEpid])
+                except:
+                    print "Problem while stopping Flash Media Encoder"
+                    caption="Audiovideocours Error Message"
+                    text="Problem while stopping Flash Media Encoder.\n\nYou may have to stop 'FMEcmd' process manually."
+                    dialog=wx.MessageDialog(None,message=text,caption=caption,
+                    style=wx.OK|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
      
 if __name__=="__main__":
     
