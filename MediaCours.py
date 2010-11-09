@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.18"
+__version__="1.19-alpha1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -132,7 +132,7 @@ videoProjON='PWR ON\x0D'
 "Video proj protocol : ON (EPSON here)"
 videoProjOFF='PWR OFF\x0D'
 "Video proj protocol : OFF (EPSON here)"
-ftpUrl="larsen.u-strasbg.fr"
+ftpUrl="audiovideocours.u-strasbg.fr"
 "FTP URL server for online publication"
 urlserver= "https://audiovideocours.u-strasbg.fr/avc/publication"
 "Default URL of the audiovideocours server containing the submit form"
@@ -736,7 +736,7 @@ def confirmPublish(folder=''):
     Publish the recording when hitting the 'publish' button 
     """
     global id,entryTitle,entryDescription,entryTraining,workDirectoryToPublish, dirNameToPublish,loginENT
-    global emailENT,pathData, last_session_publish_order, last_session_publish_problem
+    global emailENT,pathData, last_session_publish_order, last_session_publish_problem, standalone
     idtosend=id
     print "sockedEnabled: ", socketEnabled, "id: ",id
     last_session_publish_order=getTime()
@@ -781,6 +781,8 @@ def confirmPublish(folder=''):
         except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             last_session_publish_problem=getTime()
+            if standalone == False:
+                start_new_thread(rss_warning_client_feed,())
             writeInLogs("!!! Something went wrong while sending the Tar to the server at "\
             +str(datetime.datetime.now())+" !!!\n")
             frameEnd.statusBar.SetStatusText("Impossible d'ouvrir la connexion FTP")
@@ -830,7 +832,93 @@ def confirmPublish(folder=''):
         frameEnd.statusBar.SetStatusText("---")
     else:
         print "Pas de publication: pas d'enregistrement effectue"
+
+def rss_warning_client_feed(what=""):
+    """
+    If a publication problem is encountered this code will attempt to write in an RSS feed on the server when the connection 
+    is recovered. This function must be launched in a thread; 
+    """    
+    global PathData
     
+    reporting_time_string=getTime() # time (string) at which the incident has been reported
+    reporting_time= time.time() # for seconds computation
+    t_span=172800 # total time during which to attempt server notification by RSS update (one day = 86400, 2 days= 172800)
+    t_interval=60 # time interval for each try in seconds (1 minute= 60 seconds)
+    print "Total time duration during which to attempt server notification (hours) =", str(t_span/3600.0)
+    print "Time interval for each try in seconds =",t_interval
+    
+    def report(what=what):
+        # a RSS head head not used for now cause i take the exist RSS file for now
+        if what=="": what=" Publishing problem for "+ socket.gethostname()
+        rss_head="""<?xml version="1.0"?>
+        <rss version="2.0">
+        <channel>
+        <title>Audiovideocours RSS client warnings reports</title>
+        <link></link>
+        <description>This feed is updated when an audiovideocours client encounters a problem. </description>"""
+        item_new="""<item>
+        <title>"""+reporting_time_string+", "+what+"""</title>
+        <link>"""+"http://"+socket.gethostname()+"""</link>
+        <description>"""+reporting_time_string+", "+what+" IP:"+socket.gethostbyname(socket.gethostname())+"""</description>\n</item>"""
+        rss_tail="</channel></rss>"
+        # Retrieve RSS feed
+        print "Attempting to open FTP connection to server..."
+        # Retrieve server feed
+        ftp = FTP(ftpUrl)
+        ftp.login(ftpLogin, ftpPass)
+        ftp.cwd("releases")
+        
+        # Checking if feed exists on server
+        filelist=[]
+        ftp.retrlines('LIST',filelist.append) 
+        for f in filelist:
+            if "clients-warnings.xml" in f:
+                feedExists=True
+                break
+            else:
+                feedExists=False
+        
+        if feedExists==False:
+            print "clients-warnings.xml d'ont exist on the server, creating a new feed"
+            content_new= rss_head+"\n"+item_new+"\n"+rss_tail   
+        else:
+            print "clients-warnings.xml exists on the server, updating this feed"
+            gFile=open(pathData+"/clients-warnings.xml","wb")
+            ftp.retrbinary('RETR clients-warnings.xml',gFile.write)
+            gFile.close()
+            # Write new warning item in RSS field
+            f=open(pathData+"/clients-warnings.xml","r")
+            content_old=f.read()
+            #print content_old
+            f.close()
+            content_head=content_old.split("</description>",1)[0]+"</description>"
+            content_body=content_old.split("</description>",1)[1]
+            content_new= content_head+"\n"+item_new+content_body
+            #print content_new
+        # write new file
+        f=open(pathData+"/clients-warnings.xml","w")
+        f.write(content_new)
+        f.close()
+        # send file to FTP server
+        f=open(pathData+"/clients-warnings.xml","rb")
+        ftp.storbinary('STOR '+ "clients-warnings.xml", f) # Send the file
+        f.close()
+        # Close FTP session
+        ftp.close()
+         
+    if 0: report(what)
+    if 1:
+        while (time.time()-reporting_time)<t_span:
+            try:
+                #print "time.time()-reporting_time =", time.time()-reporting_time," t_span =", t_span
+                print "Trying to update clients-warnings.xml on FTP server"
+                report(what)
+                print "Publishing should be ok, no exceptions encountered at publishing"
+                break
+            except:
+                print "Couldn't update clients-warnings.xml on FTP server, going to sleep for", str(t_interval),"seconds"
+                time.sleep(t_interval)
+                     
 def LaunchSocketServer():
     """ 
     Launch a socket server, listen to eventual orders
