@@ -778,6 +778,7 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
+        #if 0:
         except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             last_session_publish_problem=getTime()
@@ -1452,7 +1453,7 @@ class EndingFrame(wx.Frame):
     def __init__(self, parent, title):
         """Create the ending frame"""
         global entryTitle,entryDescription,entryTraining,entryLastname,entryFirstname,entryCode,btnPublish\
-        ,btnCancel,loginENT,emailENT,entryLoginENT,entryLoginENT,entryEmail,textWeb
+        ,btnCancel,loginENT,emailENT,entryLoginENT,entryLoginENT,entryEmail,textWeb,dirName,workDirectory
         windowXsize=500
         windowYsize=650
         fieldSize=420
@@ -1657,7 +1658,17 @@ class EndingFrame(wx.Frame):
                         dialog=wx.MessageDialog(None,message=text,caption=caption,
                         style=wx.OK|wx.ICON_INFORMATION)
                         dialog.ShowModal()
-        start_new_thread(readSmilNow,())
+        
+        def readLocalWebPreview():
+            """ Read a local web preview of the recording using the integrated cherrypy server"""
+            if dirName =="":
+                frameEnd.statusBar.SetStatusText(_("Nothing to read."))
+            if workDirectory!="":
+                print "Attempting to read web preview"
+                command='"c:\program files\internet explorer\iexplore" localhost/'+dirName+"/recording.html"
+                #command=os.startfile("file://"+workDirectory+"/recording.html")
+                os.system(command)                   
+        start_new_thread(readLocalWebPreview,())
         
     def publish(self,evt):
         """Publish the recording on the website"""
@@ -1799,11 +1810,14 @@ class AVCremote:
                 return 'No, really, enter your order <a href="./">here</a>.'
     getOrder.exposed = True
 
-def goAVCremote(remotePort):
+def goAVCremote(remotePort,pathData):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
     cherrypy.config.update({'server.socket_host': '0.0.0.0',
                         'server.socket_port': remotePort, 
+                        'tools.staticdir.on': True,
+                        #'tools.staticdir.dir': "C:\\",
+                        'tools.staticdir.dir': pathData,
                        })
     cherrypy.quickstart(AVCremote())
     #'log.screen': False,
@@ -2001,8 +2015,8 @@ if __name__=="__main__":
     print "remoteControl",remoteControl
     if remoteControl==True:
         print "remote Control: Yes"
-    if (standalone==False) or (remoteControl==True):
+    if remoteControl!=False:
         print "Launching Server with port", remotePort, type(remotePort)
-        start_new_thread(goAVCremote,(remotePort,))
+        start_new_thread(goAVCremote,(remotePort,pathData))
         
     app.MainLoop()
