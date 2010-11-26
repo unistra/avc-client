@@ -22,11 +22,11 @@
 #*******************************************************************************
 
 
-__version__="1.19-alpha1"
+__version__="1.20"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
-import subprocess, socket, winsound
+import subprocess, socket, winsound, traceback
 from thread import start_new_thread, exit
 from urllib2 import urlopen
 from os import chdir
@@ -191,6 +191,8 @@ audioVideoChoice=False # give the possibility to choose between an audio or vide
 "Show in the GUI the choice between a video or audio recording"
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
+previewPlayer="realplayer"
+"Standalone preview player ( realplayer or browser), used in standalone mode only"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     "FTP login for publishing and live screenshots"
@@ -212,7 +214,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer
     
     confFileReport=""
     
@@ -267,13 +269,15 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"publishingForm") == True: publishingForm=readParam("publishingForm")
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
+        if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
+        
         fconf.close()
     except:
     #if 0:
         print "Something went wrong while reading the configuration file..."
 
 def showVuMeter():
-    """ if available in installation folder show VUMeter.exe
+    """ If available in installation folder show VUMeter.exe
     http://www.vuplayer.com/files/vumeter.zip """
     try:
         subprocess.Popen(["VUMeter.exe"])
@@ -297,8 +301,10 @@ def stopFromKBhook():
             print "Trying to put Ending frame back foreground..."
             if live==False:
                 screenshot()
-            windowBack(frameEnd)
+            print "stop recording now recordStop()"    
             recordStop()
+            windowBack(frameEnd)
+            
         else:
             recordStop()
             print "Not showing usual publishing form"
@@ -357,7 +363,8 @@ def OnMouseEvent(event):
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     if  (recording == True) and (tryFocus == False)\
     and( (time.time()-lastEvent)>eventDelay):
-        if (event.MessageName == "mouse left down"):
+        if (event.MessageName == "mouse left down") or (event.Wheel==1)\
+         or (event.Wheel==-1):
             if 0: winsound.Beep(300,50) # For testing purposes
             start_new_thread(screenshot,())
             lastEvent=time.time()
@@ -628,7 +635,28 @@ def recordStop():
     """
     global recording,timecodeFile,FMLEpid, last_session_recording_stop
     print "In recordStop() now..."
+    
+    ## Create smile file
+    try:
+        smil=SmilGen(usage,workDirectory)
+        f=open(workDirectory+"/timecode.csv")
+        diaTime=f.read().split("\n")[:-2]
+        f.close()
+        diaId=1
+        for timeStamp in diaTime:
+            smil.smilEvent(timeStamp,diaId+1)
+            diaId+=1
+        smil.smilEnd(usage,videoEncoder)
+    except:
+        writeInLogs("- Problem while genration smil file... "+ str(datetime.datetime.now())+"\n") 
+    ## Create html file and thirdparty forlder
+    try:
+        htmlGen()
+    except:
+        writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
+    
     recording= False
+    
     last_session_recording_stop=getTime()
     print "Recording is now = ", recording
     # Visual cue to confirm recording state
@@ -672,25 +700,7 @@ def recordStop():
             pass
     """
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
-    ## Create a second smil at the end
-    smil=SmilGen(usage,workDirectory)
-    f=open(workDirectory+"/timecode.csv")
-    diaTime=f.read().split("\n")[:-2]
-    diaId=1
-    for timeStamp in diaTime:
-        smil.smilEvent(timeStamp,diaId+1)
-        diaId+=1
-    smil.smilEnd(usage,videoEncoder)
-    ## Generate html format and thirdparty forlder
-    if True: # catch all exceptions if True (give False for debug)
-        try:
-            htmlGen()
-        except:
-            pass
-            #writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
-    else:
-        htmlGen() # mainly for debug if False above
-        
+    
 def playAudio():
     """
     Play the sound file from the folder selected
@@ -759,8 +769,8 @@ def confirmPublish(folder=''):
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
-        #if 1:
-        try:
+        if 1:
+        #try:
             # Send by ftp
             print "Sending an FTP version..."
             ftp = FTP(ftpUrl)
@@ -778,8 +788,8 @@ def confirmPublish(folder=''):
             if standalone == True:
                 frameEnd.Hide()
                 frameBegin.Show() 
-        #if 0:
-        except:
+        if 0:
+        #except:
             print "!!! Something went wrong while sending the archive to the server !!!"
             last_session_publish_problem=getTime()
             if standalone == False:
@@ -1015,10 +1025,11 @@ def setupHooks():
     hm.KeyDown = OnKeyboardEvent # watch for keyoard events
     #hm.MouseAll = OnMouseEvent # watch for all mouse events
     hm.MouseLeftDown = OnMouseEvent
+    hm.MouseWheel= OnMouseEvent
     hm.HookKeyboard() # set the hook
     hm.HookMouse() # set the hook
     
-def writeInLogs(what):
+def writeInLogs(what):   
     """
     Write events in a configuration file (one per month)
     """
@@ -1030,7 +1041,15 @@ def writeInLogs(what):
     #logFile = open (os.environ["USERPROFILE"]+"/audiovideocours/log-audiovideocours-"+yearMonth+".txt","a")
     logFile.write(what)
     logFile.close()
-
+def writeStack():
+    """
+    Write current exception stack with date stamp in the data folder for futher analysis (file: errlog.txt)
+    """
+    f=open(pathData+"/errlog.txt","a")
+    f.write("\n"+str(datetime.datetime.now())+"\n")
+    f.close()
+    traceback.print_exc(file=open(pathData+"/errlog.txt","a"))
+    
 def kill_if_double():
     """ 
     Kill an eventual running instance of mediacours.exe
@@ -1572,18 +1591,23 @@ class EndingFrame(wx.Frame):
         """
         Open an old recording for latter playing or publishing
         """
-        global workDirectory,dirName
-        openSmil=wx.FileDialog(self)
+        global workDirectory,dirName,previewPlayer
+        selectPreview=wx.FileDialog(self)
         print "pathData=",pathData
         if pathData=="":
             pathData==os.getcwd()
-        openSmil.SetDirectory(pathData)
-        openSmil.SetWildcard("*.smil")
-        openSmil.ShowModal()
-        toPlay= openSmil.GetFilenames()
-        dirName=os.path.basename(openSmil.GetDirectory())
+        selectPreview.SetDirectory(pathData)
+        if previewPlayer=="realplayer":
+            print "Showing smil file for selection"
+            selectPreview.SetWildcard("*.smil")
+        else:
+            print "Showing html file for selection"
+            selectPreview.SetWildcard("*.html")
+        selectPreview.ShowModal()
+        toPlay= selectPreview.GetFilenames()
+        dirName=os.path.basename(selectPreview.GetDirectory())
         print "dirName=",dirName
-        workDirectory=openSmil.GetDirectory()
+        workDirectory=selectPreview.GetDirectory()
     
         frameEnd.statusBar.SetStatusText(_("Current recording ")+workDirectory)
         if len(toPlay)>0:
@@ -1658,7 +1682,6 @@ class EndingFrame(wx.Frame):
                         dialog=wx.MessageDialog(None,message=text,caption=caption,
                         style=wx.OK|wx.ICON_INFORMATION)
                         dialog.ShowModal()
-        
         def readLocalWebPreview():
             """ Read a local web preview of the recording using the integrated cherrypy server"""
             if dirName =="":
@@ -1667,8 +1690,12 @@ class EndingFrame(wx.Frame):
                 print "Attempting to read web preview"
                 command='"c:\program files\internet explorer\iexplore" localhost/'+dirName+"/recording.html"
                 #command=os.startfile("file://"+workDirectory+"/recording.html")
-                os.system(command)                   
-        start_new_thread(readLocalWebPreview,())
+                os.system(command)        
+        
+        if previewPlayer=="realplayer":
+            start_new_thread(readSmilNow,())
+        else:
+            start_new_thread(readLocalWebPreview,())
         
     def publish(self,evt):
         """Publish the recording on the website"""
@@ -1810,19 +1837,24 @@ class AVCremote:
                 return 'No, really, enter your order <a href="./">here</a>.'
     getOrder.exposed = True
 
-def goAVCremote(remotePort,pathData):
+def goAVCremote(remotePort,pathData,hosts="127.0.0.1"):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
-    cherrypy.config.update({'server.socket_host': '0.0.0.0',
+    global traceback
+
+    cherrypy.config.update({'server.socket_host': hosts,
                         'server.socket_port': remotePort, 
                         'tools.staticdir.on': True,
                         #'tools.staticdir.dir': "C:\\",
                         'tools.staticdir.dir': pathData,
                        })
-    cherrypy.quickstart(AVCremote())
-    #'log.screen': False,
-    # 'environment': 'production' 
-
+    try:
+        cherrypy.quickstart(AVCremote())
+    except:
+        print "!!! Couldn't launch integrated server !!!"
+        writeInLogs("\nCouldn't launch integrated server")      
+        writeStack()
+        
 def fileList(folderPath="."):
     "return a list of the files in the data folder"
     print "In def fileList folderPath=", folderPath
@@ -2012,11 +2044,12 @@ if __name__=="__main__":
     if standalone==True:
         showVuMeter()
     
-    print "remoteControl",remoteControl
-    if remoteControl==True:
-        print "remote Control: Yes"
-    if remoteControl!=False:
-        print "Launching Server with port", remotePort, type(remotePort)
-        start_new_thread(goAVCremote,(remotePort,pathData))
-        
+    print "remoteControl =",remoteControl
+    if remoteControl==False and standalone==True:
+        print "remote Control: False"
+        hosts="127.0.0.1"
+    else:
+        hosts="0.0.0.0"
+    print "Launching integrated server with port", remotePort, "for hosts", hosts
+    start_new_thread(goAVCremote,(remotePort,pathData,hosts))
     app.MainLoop()
