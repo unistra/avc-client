@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.20"
+__version__="1.21-1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -821,11 +821,14 @@ def confirmPublish(folder=''):
                     print serverAnswer
                 if publishingForm==False:
                     if idtosend=="": idtosend="none"
-                    urlParams="mediapath="+dirNameToPublish+".zip"+"&id="+idtosend
+                    #urlParams="mediapath="+dirNameToPublish+".zip"+"&id="+idtosend
+                    urlParams="mediapath="+dirNameToPublish+".zip"
                     def launch():
-                        command='"c:\program files\internet explorer\iexplore" '+urlserver+'?'+urlParams
-                        print "commande URL= ", command
-                        os.system(command)
+                        print "params>>"+urlserver+"?"+urlParams
+                        useBrowser(urlserver+"?"+urlParams)
+                        #command='"c:\program files\internet explorer\iexplore" '+urlserver+'?'+urlParams
+                        #print "commande URL= ", command
+                        #os.system(command)
                     start_new_thread(launch,())
     
             #except:
@@ -1117,6 +1120,18 @@ def htmlGen():
     shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
     shutil.copyfile("thirdparty\\README.txt",workDirectory+"\\thirdparty\\README.txt")
                   
+def useBrowser(what=""):
+    """ Defining the browser to use for 'what' content"""
+    print "In useBrowser function"
+    if os.path.isfile("c:/program files x86/internet explorer/iexplore.exe") == True:
+        print "useBrowser =","c:/program files x86/internet explorer/iexplore.exe"
+        useBrowser='"c:/program files x86/internet explorer/iexplore.exe"'
+    else:
+        print "useBrowser =","c:/program files/internet explorer/iexplore.exe"
+        useBrowser='"c:/program files/internet explorer/iexplore.exe"'
+    subprocess.Popen(useBrowser+" "+what) # console should be hidden    
+    #os.system(useBrowser+" "+what)
+
 #################################################################################################################
 
 class SerialHook:
@@ -1428,8 +1443,8 @@ class BeginFrame(wx.Frame):
         def launch():
             print "I'm in launch in help"
             try:
-                subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
-                #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',pathData+"/Aide_AudioCours_StandAlone.url"])
+                useBrowser(what="http://sites.google.com/site/audiovideocours/")
+                #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
             except:
                 print "Couldn't open or find Aide_AudioCours_StandAlone.url"
         start_new_thread(launch,())
@@ -1688,10 +1703,8 @@ class EndingFrame(wx.Frame):
                 frameEnd.statusBar.SetStatusText(_("Nothing to read."))
             if workDirectory!="":
                 print "Attempting to read web preview"
-                command='"c:\program files\internet explorer\iexplore" localhost/'+dirName+"/recording.html"
-                #command=os.startfile("file://"+workDirectory+"/recording.html")
-                os.system(command)        
-        
+                useBrowser("http://localhost/"+dirName+"/recording.html")
+                        
         if previewPlayer=="realplayer":
             start_new_thread(readSmilNow,())
         else:
