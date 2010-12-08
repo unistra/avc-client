@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.21-1"
+__version__="1.21-2"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1123,9 +1123,9 @@ def htmlGen():
 def useBrowser(what=""):
     """ Defining the browser to use for 'what' content"""
     print "In useBrowser function"
-    if os.path.isfile("c:/program files x86/internet explorer/iexplore.exe") == True:
-        print "useBrowser =","c:/program files x86/internet explorer/iexplore.exe"
-        useBrowser='"c:/program files x86/internet explorer/iexplore.exe"'
+    if os.path.isfile("c:/program files (x86)/internet explorer/iexplore.exe") == True:
+        print "useBrowser =","c:/program files (x86)/internet explorer/iexplore.exe"
+        useBrowser='"c:/program files (x86)/internet explorer/iexplore.exe"'
     else:
         print "useBrowser =","c:/program files/internet explorer/iexplore.exe"
         useBrowser='"c:/program files/internet explorer/iexplore.exe"'
