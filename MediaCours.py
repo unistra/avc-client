@@ -26,7 +26,7 @@ __version__="1.21-2"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
-import subprocess, socket, winsound, traceback
+import subprocess, socket, winsound, traceback, webbrowser
 from thread import start_new_thread, exit
 from urllib2 import urlopen
 from os import chdir
@@ -1123,14 +1123,17 @@ def htmlGen():
 def useBrowser(what=""):
     """ Defining the browser to use for 'what' content"""
     print "In useBrowser function"
-    if os.path.isfile("c:/program files (x86)/internet explorer/iexplore.exe") == True:
-        print "useBrowser =","c:/program files (x86)/internet explorer/iexplore.exe"
-        useBrowser='"c:/program files (x86)/internet explorer/iexplore.exe"'
-    else:
-        print "useBrowser =","c:/program files/internet explorer/iexplore.exe"
-        useBrowser='"c:/program files/internet explorer/iexplore.exe"'
-    subprocess.Popen(useBrowser+" "+what) # console should be hidden    
-    #os.system(useBrowser+" "+what)
+    if 1:
+        webbrowser.open_new(what)
+    if 0:
+        if os.path.isfile("c:/program files (x86)/internet explorer/iexplore.exe") == True:
+            print "useBrowser =","c:/program files (x86)/internet explorer/iexplore.exe"
+            useBrowser='"c:/program files (x86)/internet explorer/iexplore.exe"'
+        else:
+            print "useBrowser =","c:/program files/internet explorer/iexplore.exe"
+            useBrowser='"c:/program files/internet explorer/iexplore.exe"'
+        subprocess.Popen(useBrowser+" "+what) # console should be hidden    
+        #os.system(useBrowser+" "+what)
 
 #################################################################################################################
 
@@ -1850,13 +1853,13 @@ class AVCremote:
                 return 'No, really, enter your order <a href="./">here</a>.'
     getOrder.exposed = True
 
-def goAVCremote(remotePort,pathData,hosts="127.0.0.1"):
+def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
-    global traceback
+    global traceback,remotePort
 
     cherrypy.config.update({'server.socket_host': hosts,
-                        'server.socket_port': remotePort, 
+                        'server.socket_port': remPort, 
                         'tools.staticdir.on': True,
                         #'tools.staticdir.dir': "C:\\",
                         'tools.staticdir.dir': pathData,
@@ -1864,9 +1867,24 @@ def goAVCremote(remotePort,pathData,hosts="127.0.0.1"):
     try:
         cherrypy.quickstart(AVCremote())
     except:
-        print "!!! Couldn't launch integrated server !!!"
-        writeInLogs("\nCouldn't launch integrated server")      
+        print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"
+        writeInLogs("\nCouldn't launch integrated server at port "+str(remPort)+"!!!")      
         writeStack()
+        writeInLogs("\nAttempting to launch server on redirected port 8080 now ")
+        if 0:
+            cherrypy.config.update({'server.socket_host': hosts,
+                        'server.socket_port': 8080, 
+                        'tools.staticdir.on': True,
+                        #'tools.staticdir.dir': "C:\\",
+                        'tools.staticdir.dir': pathData,
+                       })
+            remotePort=8080
+            remPort=remotePort
+            cherrypy.quickstart(AVCremote())
+        if 0:
+            print "!!! Couldn't launch integrated server at redirected 8080 port either !!!"
+            writeInLogs("\nCouldn't launch integrated server at redirected 8080 port either")
+            writeStack()
         
 def fileList(folderPath="."):
     "return a list of the files in the data folder"
