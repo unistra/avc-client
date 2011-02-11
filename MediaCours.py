@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.21-2"
+__version__="1.21"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1508,7 +1508,8 @@ class EndingFrame(wx.Frame):
         self.statusBar=self.CreateStatusBar()
         self.statusBar.SetStatusText(_("Status bar"))
         panel=wx.Panel(self)
-        panel.SetBackgroundColour((244,180,56))
+        #panel.SetBackgroundColour((244,180,56))
+        panel.SetBackgroundColour("steel blue") 
         logos = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         textTitle = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entryTitle = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
@@ -1534,7 +1535,7 @@ class EndingFrame(wx.Frame):
         linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
         linkWebsite.SetForegroundColour("white")
         linkWebsite.SetColours("white", "white", "white")
-        textWeb=wx.StaticText(panel,-1, _("Pour publier, cliquez sur 'Publier' et remplissez le forumlaire \n dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
+        textWeb=wx.StaticText(panel,-1, _("Pour publier sur le serveur, cliquez sur 'Publier' et remplissez \nle forumlaire dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
         textWeb.SetForegroundColour("white")
             
         for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode,
