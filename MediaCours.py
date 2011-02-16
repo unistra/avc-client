@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.21"
+__version__="1.22"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1792,7 +1792,7 @@ def onEndSession(evt):
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
             
 class AVCremote:
-    global welcome, pathData,recording, pathData
+    global welcome, pathData,recording
 
     def index(self):
         global welcome
@@ -1868,25 +1868,35 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
     try:
         cherrypy.quickstart(AVCremote())
     except:
+         # My attempt to relaunch with another port number fail for now 
+        # => display a dialog box to users in the meantime
+        dialog=wx.MessageDialog(None,message="[French] Attention, le port 80 est deja occupe (Skype, serveur?), la lecture avant publication ne sera pas possible.\n\
+        Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration d'Audiovideocours.\n\n[English] Warning, port 80 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
+                                caption="Port 80 non disponible, Port 80 busy", style=wx.OK|wx.ICON_INFORMATION)
+        dialog.ShowModal()
         print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"
         writeInLogs("\nCouldn't launch integrated server at port "+str(remPort)+"!!!")      
         writeStack()
         writeInLogs("\nAttempting to launch server on redirected port 8080 now ")
-        if 0:
+       
+        """
+        if 1:
+            time.sleep(5)
+            print "Trying port 8081 now..."
             cherrypy.config.update({'server.socket_host': hosts,
-                        'server.socket_port': 8080, 
+                        'server.socket_port': 8081, 
                         'tools.staticdir.on': True,
                         #'tools.staticdir.dir': "C:\\",
                         'tools.staticdir.dir': pathData,
                        })
-            remotePort=8080
+            remotePort=8081
             remPort=remotePort
             cherrypy.quickstart(AVCremote())
         if 0:
             print "!!! Couldn't launch integrated server at redirected 8080 port either !!!"
             writeInLogs("\nCouldn't launch integrated server at redirected 8080 port either")
             writeStack()
-        
+           """ 
 def fileList(folderPath="."):
     "return a list of the files in the data folder"
     print "In def fileList folderPath=", folderPath
