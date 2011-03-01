@@ -2,7 +2,7 @@
 #
 #     MediaCours (Windows AudioVideoCours client and 'standalone' version)
 #
-#    (c) Universite de Strasbourg  2006-2010
+#    (c) Universite de Strasbourg  2006-2011
 #     Conception and development : francois.schnell [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
@@ -1097,9 +1097,11 @@ def htmlGen():
     if usage=="audio":
         media="enregistrement-micro.mp3"
         playerHeight="20"
+        delayMediaSlides=0
     else:
         media="../enregistrement-video.flv"
         playerHeight="250"
+        delayMediaSlides=-3
     title=workDirectory.split("\\")[-1]
     
     htmlVars="// --- Variable generated from script\n// timecode of slides for this recording\n"\
@@ -1110,7 +1112,7 @@ def htmlGen():
     file=open(workDirectory+"/recording.html",'w')
     file.write(htmlBits.head)
     file.write(htmlVars)
-    file.write(htmlBits.tail)
+    file.write(htmlBits.tail(delayMediaSlides=delayMediaSlides))
     file.close()
     
     ## copy third party script in a "thirdparty" folder
@@ -1435,7 +1437,7 @@ class BeginFrame(wx.Frame):
         text="AudioVideoCours version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
-        +"(c) UDS 2007-2010"
+        +"(c) UDS 2007-2011"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
