@@ -40,7 +40,6 @@ import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
 import PIL
-print "toto"
 from PIL import GifImagePlugin  # Python Imaging Lib
 from PIL import JpegImagePlugin # Static imports from PIL for py2exe
 from PIL import Image#, ImageGrab# used for screenshots
@@ -112,13 +111,12 @@ portNumber= 3737
 "Socket port to listen to for server orders (sending an eventual ID also)"
 READ_CHUNK= 512
 "Chunck size for pymedia audio reading"
-"""
-cparams= { 'id': acodec.getCodecID( 'mp3' ),
-           'bitrate': 64000,
-           'sample_rate': 48000 ,
-           'channels': 1 } 
+if sys.platform == 'win32':
+    cparams= { 'id': acodec.getCodecID( 'mp3' ),
+               'bitrate': 64000,
+               'sample_rate': 48000 ,
+               'channels': 1 } 
 "Set of parameters for the pymedia audio Encoder"
-"""
 nameRecord="enregistrement-micro.mp3"
 "Dafault name of the audio recording"        
 tryFocus=False
@@ -238,8 +236,8 @@ def readConfFile(confFile="mediacours.conf"):
             #writeInLogs("\n\t:"+param+"= "+paramValue)
             confFileReport += "\n\t:"+str(param)+"= "+str(paramValue)
         return paramValue
-    try:
-    #if 1:
+    #try:
+    if 1:
         fconf=open(confFile,"r")
         config= ConfigParser.ConfigParser()
         config.readfp(fconf)
@@ -249,8 +247,9 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"standalone") == True: standalone=readParam("standalone")
         if config.has_option(section,"videoEncoder") == True: videoEncoder=readParam("videoEncoder")
         if config.has_option(section,"urlserver") == True: urlserver=readParam("urlserver")
-        if config.has_option(section,"samplingFrequency") == True: samplingFrequency=readParam("samplingFrequency")
-        if config.has_option(section,"bitrate") == True: cparams['bitrate']=eval(readParam("bitrate"))
+        if sys.platform == 'win32':
+            if config.has_option(section,"samplingFrequency") == True: samplingFrequency=readParam("samplingFrequency")
+            if config.has_option(section,"bitrate") == True: cparams['bitrate']=eval(readParam("bitrate"))
         if config.has_option(section,"stopKey") == True: stopKey=readParam("stopKey")
         if config.has_option(section,"socketEnabled") == True: socketEnabled=readParam("socketEnabled")
         if config.has_option(section,"portNumber") == True: portNumber=int(readParam("portNumber"))
@@ -279,8 +278,8 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
         
         fconf.close()
-    except:
-    #if 0:
+    #except:
+    if 0:
         print "Something went wrong while reading the configuration file..."
 
 def showVuMeter():
@@ -2015,25 +2014,35 @@ if __name__=="__main__":
             print "Setting French language..."
             langFr = gettext.translation('mediacours', "locale",languages=['fr'])
             langFr.install()
-            
-    if 0:
-     
+        
         confFileReport=""    
         # Check if a configuration file exist in USERPROFILE
         # otherwise search for one in ALLUSERPROFILE
         print "searching for a configuration file"
-        if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-            print "Found and using configuration file in USERPROFILE\\audiovideocours"
-            readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
-        elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-            print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
-            readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
-        else:
-            print "No configuration file found"
-            dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
-                                    caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
-            dialog.ShowModal()
-        
+        if sys.platform == 'win32':
+            if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+                print "Found and using configuration file in USERPROFILE\\audiovideocours"
+                readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
+            elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+                print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
+                readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
+            else:
+                print "No configuration file found"
+                dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
+                                        caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
+        if sys.platform == 'darwin':
+            if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
+                print "Found and using configuration file in ~/audiovideocours/audiovideocours"
+                readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
+            else:
+                print "No configuration file found"
+                dialog=wx.MessageDialog(None,message="No configuration file found in ~/audiovideocours",
+                                        caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
+                
+    if 0: # needs osxification
+             
         # Automatically detect IP of the recoriding place
         recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
         #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
