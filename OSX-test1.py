@@ -1,6 +1,8 @@
 #*****************************************************************************
 #
-#     MediaCours (Windows AudioVideoCours client and 'standalone' version)
+#     THIS NOT A PRODUCTION FILE
+#     BUT HACKING TESTS (from the windows version) TO PREPARE FOR THE OS X version
+#     USING native Python 2.6 coming with Snow Leopard 
 #
 #    (c) Universite de Strasbourg  2006-2011
 #     Conception and development : francois.schnell [AT] unistra.fr  
@@ -26,7 +28,8 @@ __version__="1.22"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
-import subprocess, socket, winsound, traceback, webbrowser
+import subprocess, socket, traceback, webbrowser
+#import winsound # windows libs
 from thread import start_new_thread, exit
 from urllib2 import urlopen
 from os import chdir
@@ -35,20 +38,22 @@ from ftplib import FTP
 ## External Python libs import
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
-import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
+#import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
+import PIL
+print "toto"
 from PIL import GifImagePlugin  # Python Imaging Lib
 from PIL import JpegImagePlugin # Static imports from PIL for py2exe
-from PIL import Image, ImageGrab# used for screenshots
-import pymedia.audio.sound as sound # for mp3 or ogg encoding
-import pymedia.audio.acodec as acodec
-import pymedia.muxer as muxer
-from pywinauto import * # used to put app. back on foreground
+from PIL import Image#, ImageGrab# used for screenshots
+#import pymedia.audio.sound as sound # for mp3 or ogg encoding
+#import pymedia.audio.acodec as acodec
+#import pymedia.muxer as muxer
+#from pywinauto import * # used to put app. back on foreground
 #from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
 import cherrypy
 
 ## Local imports 
-from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
-import htmlBits      # HTML chuncks for html format output
+#from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
+#import htmlBits      # HTML chuncks for html format output
 
 #----------------------------------------------------------------------------------------
 
@@ -107,11 +112,13 @@ portNumber= 3737
 "Socket port to listen to for server orders (sending an eventual ID also)"
 READ_CHUNK= 512
 "Chunck size for pymedia audio reading"
+"""
 cparams= { 'id': acodec.getCodecID( 'mp3' ),
            'bitrate': 64000,
            'sample_rate': 48000 ,
            'channels': 1 } 
 "Set of parameters for the pymedia audio Encoder"
+"""
 nameRecord="enregistrement-micro.mp3"
 "Dafault name of the audio recording"        
 tryFocus=False
@@ -1862,12 +1869,13 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
     global traceback,remotePort
 
     cherrypy.config.update({'server.socket_host': hosts,
-                        'server.socket_port': remPort, 
+                        'server.socket_port': int(remPort), 
                         'tools.staticdir.on': True,
                         #'tools.staticdir.dir': "C:\\",
                         'tools.staticdir.dir': pathData,
                        })
     try:
+        print "trying to launch cherrypy at", hosts, remPort 
         cherrypy.quickstart(AVCremote())
     except:
          # My attempt to relaunch with another port number fail for now 
@@ -1988,66 +1996,76 @@ if __name__=="__main__":
     ## GUI Define
     app=wx.App(redirect=False)
     
-    # Create a default data audiovideocours folder if it doesn't exists
-    if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
-        print "Default user data exists at USERPROFILE\\audiovideocours : OK"
-    else: 
-        print "Creating default data folter in USERPROFILE\\audiovideocours"
-        os.mkdir(os.environ["USERPROFILE"]+"\\audiovideocours")
+     # Create a default data audiovideocours folder if it doesn't exists
+    if sys.platform == 'win32':
+        if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
+            print "Default user data exists at USERPROFILE\\audiovideocours : OK"
+        else: 
+            print "Creating default data folter in USERPROFILE\\audiovideocours"
+            os.mkdir(os.environ["USERPROFILE"]+"\\audiovideocours")
+    if sys.platform == 'darwin':
+        if os.path.isdir(os.path.expanduser("~/audiovideocours")): 
+            print "Default user data exists in ~/audiovideocours"
+        else: 
+            print "Creating default data folter in ~/audiovideocours"
+            os.mkdir(os.path.expanduser("~/audiovideocours"))
             
-    # Set-up language
-    if language=="French":
-        print "Setting French language..."
-        langFr = gettext.translation('mediacours', "locale",languages=['fr'])
-        langFr.install()
-        
-    confFileReport=""    
-    # Check if a configuration file exist in USERPROFILE
-    # otherwise search for one in ALLUSERPROFILE
-    if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-        print "Found and using configuration file in USERPROFILE\\audiovideocours"
-        readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
-    elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-        print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
-        readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
-    else:
-        print "No configuration file found"
-        dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
-                                caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
-        dialog.ShowModal()
-    
-    # Automatically detect IP of the recoriding place
-    recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
-    #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
-    print "... recordingPlace = ", recordingPlace
-    
-    if pathData == None or pathData=="":
-        #pathData=os.getcwd()
-        pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
-        print "pathData=None => PathData is now ", pathData
-    writeInLogs(confFileReport)
-    
-    # Start-up message
-    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
-    writeInLogs("\nAudioVideoCours client launched at "+ \
-    str(datetime.datetime.now()))
-    writeInLogs("\npathData is "+pathData)
-   
-    # Set-up hooks
-    setupHooks()
-    # Set-up videoprojector
-    if videoprojectorInstalled==True:
-        videoprojector=Videoprojector()
-    # Start socket server
-    if socketEnabled==True:
-        start_new_thread(LaunchSocketServer,())
-    # start shutdown PC thread if no PC activity detected
+        # Set-up language
+        if language=="French":
+            print "Setting French language..."
+            langFr = gettext.translation('mediacours', "locale",languages=['fr'])
+            langFr.install()
+            
     if 0:
-        start_new_thread(shutdownPC_if_noactivity,())
-    # Write mediacours PID in a file (for use in the automatic updater) 
-    PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'w')
-    PID_f.write(str(os.getpid()))
-    PID_f.close()
+     
+        confFileReport=""    
+        # Check if a configuration file exist in USERPROFILE
+        # otherwise search for one in ALLUSERPROFILE
+        print "searching for a configuration file"
+        if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+            print "Found and using configuration file in USERPROFILE\\audiovideocours"
+            readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
+        elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+            print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
+            readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
+        else:
+            print "No configuration file found"
+            dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
+                                    caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+        
+        # Automatically detect IP of the recoriding place
+        recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
+        #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
+        print "... recordingPlace = ", recordingPlace
+        
+        if pathData == None or pathData=="":
+            #pathData=os.getcwd()
+            pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
+            print "pathData=None => PathData is now ", pathData
+        writeInLogs(confFileReport)
+        
+        # Start-up message
+        print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
+        writeInLogs("\nAudioVideoCours client launched at "+ \
+        str(datetime.datetime.now()))
+        writeInLogs("\npathData is "+pathData)
+       
+        # Set-up hooks
+        setupHooks()
+        # Set-up videoprojector
+        if videoprojectorInstalled==True:
+            videoprojector=Videoprojector()
+        # Start socket server
+        if socketEnabled==True:
+            start_new_thread(LaunchSocketServer,())
+        # start shutdown PC thread if no PC activity detected
+        if 0:
+            start_new_thread(shutdownPC_if_noactivity,())
+        # Write mediacours PID in a file (for use in the automatic updater) 
+        PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'w')
+        PID_f.write(str(os.getpid()))
+        PID_f.close()
         
     ## GUI launch
     #app=wx.App(redirect=False)
