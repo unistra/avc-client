@@ -737,14 +737,14 @@ def createZip():
     """ zip all recording data in a .zip folder """
     frameEnd.statusBar.SetStatusText("Please wait ...(creating archive) ...")
     #frameEnd.statusBar.w
-    zip = zipfile.ZipFile(pathData+"\\"+dirName+".zip", 'w')
+    zip = zipfile.ZipFile(pathData+"/"+dirName+".zip", 'w')
     for fileName in os.listdir ( workDirectory ):
-        if os.path.isfile (workDirectory+"\\"+fileName):
-            zip.write(workDirectory+"\\"+fileName,
+        if os.path.isfile (workDirectory+"/"+fileName):
+            zip.write(workDirectory+"/"+fileName,
             dirName+"/"+fileName,zipfile.ZIP_DEFLATED)
-    for fileName in os.listdir ( workDirectory+"\\screenshots"):
-        zip.write(workDirectory+"\\screenshots\\"+fileName,
-            dirName+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
+    for fileName in os.listdir ( workDirectory+"/screenshots"):
+        zip.write(workDirectory+"/screenshots/"+fileName,
+            dirName+"/"+"screenshots/"+fileName,zipfile.ZIP_DEFLATED)
     zip.close()     
 
 def confirmPublish(folder=''):
@@ -760,21 +760,29 @@ def confirmPublish(folder=''):
         print "=> Creating Zip file (no publishing form, distant order)"
         workDirectoryToPublish=workDirectory # pathData + dirName
         dirNameToPublish=dirName
+        #if 1:
         try:
                 createZip()
+        #if 0:
         except:
             print "Warning! couldn't create zip file!" 
     id="" # if confirmPublsih fails id is back to ""
-    frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
+    
+    if sys.platform=='win32': # gives memory leak on OS X see what can be done ??
+        frameEnd.statusBar.SetStatusText(" Publication en cours, merci de patienter ...")
+    
     # !!!!  Test: changing dirName and workDirectory to dirNameToPublish and workDirectoryToPublish
     # to avoid conflicts when publishing and recording a new file straight away
     if dirNameToPublish =="":
         frameEnd.statusBar.SetStatusText("Rien a publier ...")
     
+    print ">>> before if dirNameToPublish != '' :"
     if dirNameToPublish != "":   
+        print ">>> after if dirNameToPublish != '' : and before writeInlogs"
         writeInLogs("- Asked for publishing at "+ str(datetime.datetime.now())+\
         " with id="+idtosend+" title="+title+" description="+description+" mediapath="+\
         dirNameToPublish+".zip"+" prenom "+firstname+" name="+name+" genre="+genre+" ue="+ue+ " To server ="+urlserver+"\n")
+        print ">>> after writeInLogs and before if"
         if 1:
         #try:
             # Send by ftp
@@ -791,9 +799,10 @@ def confirmPublish(folder=''):
             f.close() # Close file and FTP
             ftp.quit()
             print "fin de ftp"
-            if standalone == True:
-                frameEnd.Hide()
-                frameBegin.Show() 
+            if  sys.platform=='win32':
+                if standalone == True:
+                    frameEnd.Hide()
+                    frameBegin.Show() 
         if 0:
         #except:
             print "!!! Something went wrong while sending the archive to the server !!!"
@@ -1132,7 +1141,9 @@ def useBrowser(what=""):
     """ Defining the browser to use for 'what' content"""
     print "In useBrowser function"
     if 1:
+        print ">>> asking to open browser and publication form with what=", what
         webbrowser.open_new(what)
+        
     if 0:
         if os.path.isfile("c:/program files (x86)/internet explorer/iexplore.exe") == True:
             print "useBrowser =","c:/program files (x86)/internet explorer/iexplore.exe"
