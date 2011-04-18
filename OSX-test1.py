@@ -1800,9 +1800,12 @@ def onEndSession(evt):
     writeInLogs("!!! RED ALERT: Windows Session is ending at "+ str(datetime.datetime.now())+" launching emergency procedures...")
             
 class AVCremote:
+    """ Remote http form form informations and remote control """
     global welcome, pathData,recording
+    print "Inside AVCremote"
 
     def index(self):
+        print "Inside index in AVCremote"
         global welcome
         welcome="<p> ((( AudioVideoCours Client - Web Interface ))) </p> "
         welcome+="Recording now: "+str(recording)+" <br><br>"
@@ -1866,7 +1869,7 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
     "Create an instance of AVCremote"
     print "Launch AVCremote thread"
     global traceback,remotePort
-
+    
     cherrypy.config.update({'server.socket_host': hosts,
                         'server.socket_port': int(remPort), 
                         'tools.staticdir.on': True,
@@ -1877,13 +1880,14 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
         print "trying to launch cherrypy at", hosts, remPort 
         cherrypy.quickstart(AVCremote())
     except:
-         # My attempt to relaunch with another port number fail for now 
+        print "Hmm OS X doesn't come here in case of error?"
+        # My attempt to relaunch with another port number fail for now 
         # => display a dialog box to users in the meantime
+        print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"
         dialog=wx.MessageDialog(None,message="[French] Attention, le port 80 est deja occupe (Skype, serveur?), la lecture avant publication ne sera pas possible.\n\
         Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration d'Audiovideocours.\n\n[English] Warning, port 80 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
                                 caption="Port 80 non disponible, Port 80 busy", style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
-        print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"
         writeInLogs("\nCouldn't launch integrated server at port "+str(remPort)+"!!!")      
         writeStack()
         writeInLogs("\nAttempting to launch server on redirected port 8080 now ")
@@ -2040,34 +2044,43 @@ if __name__=="__main__":
                 dialog=wx.MessageDialog(None,message="No configuration file found in ~/audiovideocours",
                                         caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
-                
-    if 0: # needs osxification
-             
-        # Automatically detect IP of the recoriding place
-        recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
-        #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
-        print "... recordingPlace = ", recordingPlace
-        
-        if pathData == None or pathData=="":
-            #pathData=os.getcwd()
+    # Automatically detect IP of the recoriding place
+    recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
+    #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
+    print "... recordingPlace = ", recordingPlace
+                    
+    if pathData == None or pathData=="":
+        #pathData=os.getcwd()
+        if sys.platform == 'win32':
             pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
-            print "pathData=None => PathData is now ", pathData
+        if sys.platform == 'darwin':
+            pathData=os.path.expanduser("~/audiovideocours")
+        print "pathData=None => PathData is now ", pathData
         writeInLogs(confFileReport)
-        
-        # Start-up message
-        print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
-        writeInLogs("\nAudioVideoCours client launched at "+ \
-        str(datetime.datetime.now()))
-        writeInLogs("\npathData is "+pathData)
-       
+    
+    # Start-up message
+    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
+    writeInLogs("\nAudioVideoCours client launched at "+ \
+    str(datetime.datetime.now()))
+    writeInLogs("\npathData is "+pathData)
+    
+    # Start-up message
+    print "AudioVideoCours client launched at ", datetime.datetime.now(), " ..."
+    writeInLogs("\nAudioVideoCours client launched at "+ \
+    str(datetime.datetime.now()))
+    writeInLogs("\npathData is "+pathData)
+    
+    # Start socket server
+    if socketEnabled==True:
+        start_new_thread(LaunchSocketServer,())
+            
+    if 0: # needs osxification ?
+             
         # Set-up hooks
         setupHooks()
         # Set-up videoprojector
         if videoprojectorInstalled==True:
             videoprojector=Videoprojector()
-        # Start socket server
-        if socketEnabled==True:
-            start_new_thread(LaunchSocketServer,())
         # start shutdown PC thread if no PC activity detected
         if 0:
             start_new_thread(shutdownPC_if_noactivity,())
