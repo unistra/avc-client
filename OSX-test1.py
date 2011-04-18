@@ -1715,7 +1715,7 @@ class EndingFrame(wx.Frame):
                 frameEnd.statusBar.SetStatusText(_("Nothing to read."))
             if workDirectory!="":
                 print "Attempting to read web preview"
-                useBrowser("http://localhost/"+dirName+"/recording.html")
+                useBrowser("http://localhost:"+str(remotePort)+"/"+dirName+"/recording.html")
                         
         if previewPlayer=="realplayer":
             start_new_thread(readSmilNow,())
