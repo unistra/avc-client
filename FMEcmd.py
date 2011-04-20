@@ -15,9 +15,10 @@
 # http://www.adobe.com/products/flashmediaserver/flashmediaencoder/
 ###############################################################################
 
-import os,subprocess, codecs, time,wx
-import  winsound #for tests
-from pywinauto import application,findwindows
+import os,subprocess, codecs, time,wx,sys
+if sys.platform=="win32":
+    import  winsound #for tests
+    from pywinauto import application,findwindows
 
 class FMEcmd(object):
     """Command FlashMediaEncoder FMDcmd.exe from Python"""
@@ -184,9 +185,13 @@ videoSource+"""
 
     def record(self):
         """ Launch FMEcmd.exe with the given profile. """
-        winsound.Beep(500,50)
-        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        if sys.platform=="win32":
+            winsound.Beep(500,50)
+            FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        if sys.platform=="darwin": 
+            FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
         FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        
         try:
             subprocess.Popen(["%s"%FME,"/d","/P",self.pathData+"/flv_startup.xml"])
             print "Ordered sent to FMLE to begin recording:",FME 
@@ -207,21 +212,25 @@ videoSource+"""
                     style=wx.OK|wx.ICON_INFORMATION)
                     dialog.ShowModal()
         time.sleep(4)
-        print "trying to minimize FMLEcmd.exe DOS window in task bar"
-        try:
-            appA = application.Application()
-            appA.connect_(title_re = r".*FMLEcmd.exe")
-            appA.window_(title_re = r".*FMLEcmd.exe").Minimize()
-        except:
-            for i in range(3):
-                winsound.Beep(500,100)
-                time.sleep(0.2)
-            print "Couldn't find and minimize DOS window"
+        if sys.platform=="win32":
+            print "trying to minimize FMLEcmd.exe DOS window in task bar"
+            try:
+                appA = application.Application()
+                appA.connect_(title_re = r".*FMLEcmd.exe")
+                appA.window_(title_re = r".*FMLEcmd.exe").Minimize()
+            except:
+                for i in range(3):
+                    winsound.Beep(500,100)
+                    time.sleep(0.2)
+                print "Couldn't find and minimize DOS window"
         
     def stop(self,FMLEpid):
         """Kill the FlashMediaEncoder"""
-        print 'Ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
-        FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        print 'On windows rrdering: FMLEcmd.exe /s "%s" ' % FMLEpid
+        if sys.platform=="win32":
+            FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        if sys.platform=="darwin":
+            FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
         FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])

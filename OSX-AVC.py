@@ -51,8 +51,8 @@ from PIL import Image#, ImageGrab# used for screenshots
 import cherrypy
 
 ## Local imports 
-#from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
-#import htmlBits      # HTML chuncks for html format output
+from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
+import htmlBits      # HTML chuncks for html format output
 
 #----------------------------------------------------------------------------------------
 
@@ -399,7 +399,8 @@ def recordNow():
     # Visual cue to confim recording state
     tbicon.SetIcon(icon2, "Enregistrement en cours")
     # Audio cue to confirm recording state
-    winsound.Beep(800,100)
+    if sys.platform=="win32":
+        winsound.Beep(800,100)
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
     dateTime0 = datetime.datetime.now()

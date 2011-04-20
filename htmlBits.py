@@ -130,7 +130,7 @@ def tail(delayMediaSlides=0):
         }
         function slideTooltip(thumbHovered)
           {
-          <!-- document.getElementById("thumbInfo").innerHTML="N° "+ thumbHovered +" (t="+timecode[thumbHovered-1]+" s)"; -->
+          <!-- document.getElementById("thumbInfo").innerHTML="N "+ thumbHovered +" (t="+timecode[thumbHovered-1]+" s)"; -->
           }
         function slideTooltipOff()
           {
@@ -147,7 +147,7 @@ def tail(delayMediaSlides=0):
     <!-- <p>Warnning: doesn't work locally, needs a server (at least http://localhost in URL)</p> -->
     <!--  <h3 id="titre">Media (audio or video) :</h3> -->
     <p style="color:white; background-color: #CC0000; text-align:center;padding: 5px; border: 1px solid black; "> 
-    Prévisualisation des médias avant publication et mise en forme. 
+    Pr&eacute;visualisation des m&eacute;dias avant publication et mise en forme. 
     Appuyez sur le bonton "publier" du logiciel client AudioVideoCours si vous souhaitez mettre en ligne cet enregistrement.</p>
     
         <div id="media">
