@@ -42,7 +42,8 @@ import wx.lib.hyperlink as hl
 import PIL
 from PIL import GifImagePlugin  # Python Imaging Lib
 from PIL import JpegImagePlugin # Static imports from PIL for py2exe
-from PIL import Image#, ImageGrab# used for screenshots
+from PIL import Image
+#from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
 #import pymedia.audio.sound as sound # for mp3 or ogg encoding
 #import pymedia.audio.acodec as acodec
 #import pymedia.muxer as muxer
@@ -390,6 +391,7 @@ def recordNow():
     """
     Record the audio input now with pymedia or video via an external encoder 
     """
+    print "Entering recordNow() function"
     global recording, diaId, timecodeFile, t0, dateTime0, dirName, workDirectory
     global snd,ac,cparams, nameRecord,usage,smil,pathData, last_session_recording_start
     usage=frameBegin.usage
@@ -404,14 +406,14 @@ def recordNow():
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
     dateTime0 = datetime.datetime.now()
-    print "- Recording now ! ... ( from recordNow() )"
     dirName = str(dateTime0)
     dirName = dirName[0:10]+'-'+ dirName[11:13] +"h-"+dirName[14:16] +"m-" +dirName[17:19]+"s"+"-"+recordingPlace#+ "-"+ dirName[20:22]
-    workDirectory=pathData+"\\"+dirName
+    workDirectory=pathData+"/"+dirName
     print "workDirectory= ",workDirectory
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
     os.mkdir(workDirectory + "/screenshots")
+    print "launching screenshot() thread from recordNow()"
     start_new_thread(screenshot,())    
     
     def record():
@@ -490,9 +492,9 @@ def recordNow():
             liveParams=""
         #flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
         if usage=="video":
-            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
+            flvPath=pathData+'/'+ dirName+ '/enregistrement-video.flv'
         elif usage=="audio":
-            flvPath=pathData+'\\'+ dirName+ '\\enregistrement-micro.mp3'
+            flvPath=pathData+'/'+ dirName+ '/enregistrement-micro.mp3'
             
         print flvPath  
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
@@ -539,7 +541,8 @@ def recordNow():
     
     # Check for usage and engage recording
     if usage=="audio":
-        start_new_thread(record,())
+        if sys.platform=="win32":
+            start_new_thread(record,())
         
     if live==True:
         start_new_thread(liveScreenshotStart,())
@@ -573,24 +576,55 @@ def screenshot():
     """
     global recording, diaId, t0, timecodeFile
     time.sleep(tempo)
-    if recording == True: #or False?
-        myscreen= ImageGrab.grab() #print "screenshot from mouse"
-        t = time.time()
-        diaId += 1
-        myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-        timeStamp = str(round((t-t0),2))
-        print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
-        timecodeFile = open (workDirectory +'\\timecode.csv','a')
-        timecodeFile.write(timeStamp+"\n")
-        timecodeFile.close()
-        """smilFile.write('<a href="screenshots/D'+str(diaId)+'.jpg" external="true">\n'\
-        + '<img begin="'+timeStamp+'" region="Images" src="screenshots/D'\
-        + str(diaId)+'.jpg"/> </a>\n')"""
-        myscreen.thumbnail((256,192))
-        myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
+    print "In screenshot function before platform check"
+
+    if recording == True:
+        if sys.platform=="win32":
+            myscreen= ImageGrab.grab() #print "screenshot from mouse"
+            t = time.time()
+            diaId += 1
+            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+            timeStamp = str(round((t-t0),2))
+            print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+            timecodeFile = open (workDirectory +'/timecode.csv','a')
+            timecodeFile.write(timeStamp+"\n")
+            timecodeFile.close()
+            """smilFile.write('<a href="screenshots/D'+str(diaId)+'.jpg" external="true">\n'\
+            + '<img begin="'+timeStamp+'" region="Images" src="screenshots/D'\
+            + str(diaId)+'.jpg"/> </a>\n')"""
+            myscreen.thumbnail((256,192))
+            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
+            timecodeFile = open (workDirectory +'\\timecode.csv','a')
+            timecodeFile.write(timeStamp+"\n")
+            timecodeFile.close()
+            
+        if sys.platform=="darwin":
+            print "In screenshot function under under darwin"
+            print "workDirectory is", workDirectory
+            os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+            #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
+            t = time.time()
+            diaId += 1
+            timeStamp = str(round((t-t0),2))
+            print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+            timecodeFile = open (workDirectory +'/timecode.csv','a')
+            timecodeFile.write(timeStamp+"\n")
+            timecodeFile.close()
+            print "Creating thumbnail"
+            myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.jpg')
+            #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
+            myscreen.thumbnail((256,192))
+            print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
+            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
+            #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
+            timecodeFile = open (workDirectory +'\\timecode.csv','a')
+            timecodeFile.write(timeStamp+"\n")
+            timecodeFile.close()
+            
         if live==True and ftpHandleReady:
             time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
             #if 1:
+            print "sending screenshot live, note to self: code MUST BE OSXified!"
             try:
                 livescreen= ImageGrab.grab()
                 livescreen.save(workDirectory+"/screenshots/Dlive.jpg")
@@ -2126,16 +2160,23 @@ if __name__=="__main__":
             clavier=SerialHook()    
             start_new_thread(clavier.listen,())
     ## Systray  
+    
+    def onTaskbarActivate():
+        print ">>>>> yes my lord?"
+    print "setting up icons"    
     if usage=="audio":
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
+        print "setting up binding for left click event"
+        app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
         tbicon.SetIcon(icon1, "AudioCours en attente")
     if usage=="video":
         icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "VideoCours en attente")
+    
     
     if standalone==True:
         showVuMeter()
