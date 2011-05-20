@@ -598,7 +598,7 @@ def screenshot():
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
             
-        if sys.platform=="darwin":
+        if sys.platform=="darwin" or "linux2":
             print "In screenshot function under under darwin"
             print "workDirectory is", workDirectory
             os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
@@ -1443,7 +1443,7 @@ class BeginFrame(wx.Frame):
             text1=text1+"\n\n\t"+\
             _("To stop the recording press the following key:   ")+stopKey+\
             ".   "
-        text = wx.StaticText(panel, -1,  text1,size=(420,100),style=wx.LEFT)
+        text = wx.StaticText(panel, -1, text1,size=(420,100),style=wx.LEFT)
         text.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         text.SetBackgroundColour("steel blue") 
         text.SetForegroundColour("white")
@@ -2052,7 +2052,7 @@ if __name__=="__main__":
         else: 
             print "Creating default data folter in USERPROFILE\\audiovideocours"
             os.mkdir(os.environ["USERPROFILE"]+"\\audiovideocours")
-    if sys.platform == 'darwin':
+    if sys.platform == 'darwin' or 'linux2':
         if os.path.isdir(os.path.expanduser("~/audiovideocours")): 
             print "Default user data exists in ~/audiovideocours"
         else: 
@@ -2081,7 +2081,7 @@ if __name__=="__main__":
                 dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
                                         caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
-        if sys.platform == 'darwin':
+        if sys.platform == 'darwin' or 'linux2':
             if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
                 print "Found and using configuration file in ~/audiovideocours/audiovideocours"
                 readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
@@ -2099,7 +2099,7 @@ if __name__=="__main__":
         #pathData=os.getcwd()
         if sys.platform == 'win32':
             pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
-        if sys.platform == 'darwin':
+        if sys.platform == 'darwin' or 'linux2':
             pathData=os.path.expanduser("~/audiovideocours")
         print "pathData=None => PathData is now ", pathData
         writeInLogs(confFileReport)
