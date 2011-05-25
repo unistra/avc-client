@@ -601,8 +601,11 @@ def screenshot():
         if sys.platform=="darwin" or "linux2":
             print "In screenshot function under under darwin"
             print "workDirectory is", workDirectory
-            os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-            #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
+            if sys.platform=="darwin":
+                os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+                #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
+            if sys.platform=="linux2":
+                os.system("scrot "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             t = time.time()
             diaId += 1
             timeStamp = str(round((t-t0),2))
@@ -1407,7 +1410,8 @@ class BeginFrame(wx.Frame):
         wx.Frame.SetIcon(self, favicon)
 
         panel=wx.Panel(self)
-        panel.SetBackgroundColour("white") 
+        if sys.platform=="linux2":
+            panel.SetBackgroundColour("orange") 
         
         if standalone==True:
             menubar=wx.MenuBar()
@@ -1435,7 +1439,7 @@ class BeginFrame(wx.Frame):
                 self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
             
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-
+        
         text1="\n\t"+\
         _("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
         _("begin immediately and this window will disappear. ")
@@ -1444,9 +1448,16 @@ class BeginFrame(wx.Frame):
             _("To stop the recording press the following key:   ")+stopKey+\
             ".   "
         text = wx.StaticText(panel, -1, text1,size=(420,100),style=wx.LEFT)
-        text.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
-        text.SetBackgroundColour("steel blue") 
-        text.SetForegroundColour("white")
+        if sys.platform =="linux2":
+            text.SetFont(wx.Font(10, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
+        else:
+            text.SetFont(wx.Font(11, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
+        if sys.platform=="linux2":
+            text.SetBackgroundColour("orange") # warning doesn't work on linux/GTK
+            text.SetForegroundColour("white") 
+        else:
+            text.SetBackgroundColour("steel blue") 
+            text.SetForegroundColour("white")
         if 0: # for dev, what fonts are available on the system
             e=wx.FontEnumerator()
             e.EnumerateFacenames()
@@ -1455,9 +1466,12 @@ class BeginFrame(wx.Frame):
         if  liveCheckBox==True:
             liveFeed=wx.CheckBox(panel,-1,_("Live streaming"),)
         btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
+        if sys.platform=="linux2": btnRecord.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         if standalone == True:
             btnNext = wx.Button(parent=panel, id=-1, label=_("Other choices"),size=(100,50))
             btnQuit = wx.Button(parent=panel, id=-1, label=_("Quit"),size=(100,50))
+            if sys.platform=="linux2": btnNext.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
+            if sys.platform=="linux2": btnQuit.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         sizerV = wx.BoxSizer(wx.VERTICAL)
         sizerH=wx.BoxSizer()
         sizerV.Add(wx.StaticBitmap(panel, -1, im1, (5, 5)), 0, wx.ALIGN_CENTER|wx.ALL, 0)
@@ -1509,8 +1523,11 @@ class BeginFrame(wx.Frame):
     def configuration(self,evt):
         """ A fucntion to open the configuration file"""
         def launch():
-            subprocess.Popen([r'C:\Windows\System32\notepad.exe',
-                              os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"])
+            if sys.platform=="win32":
+                subprocess.Popen([r'C:\Windows\System32\notepad.exe',os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"])
+            if sys.platform=="linux2":
+                #subprocess.Popen(["gedit","~/audiovideocours/mediacours.conf"])
+                os.popen("gedit ~/audiovideocours/mediacours.conf")
         start_new_thread(launch,())
         
     def exitApp(self,evt):
@@ -1584,13 +1601,15 @@ class EndingFrame(wx.Frame):
         textCode=wx.StaticText(panel,-1, _("Access Code if you wish to set a limited access:"),
         size=(400,-1),style=wx.ALIGN_CENTER)
         entryCode = wx.TextCtrl(panel,-1,"", size=(fieldSize, -1))
-        linkWebsite=hl.HyperLinkCtrl(panel, wx.ID_ANY, (_("Access to")+" audiovideocours.u-strasbg.fr"),
-        URL="http://audiovideocours.u-strasbg.fr/",size=(300,-1),style=wx.ALIGN_CENTER)
-        linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
-        linkWebsite.SetForegroundColour("white")
-        linkWebsite.SetColours("white", "white", "white")
+        if publishingForm==True:
+            linkWebsite=hl.HyperLinkCtrl(panel, wx.ID_ANY, (_("Access to")+" audiovideocours.u-strasbg.fr"),
+            URL="http://audiovideocours.u-strasbg.fr/",size=(300,-1),style=wx.ALIGN_CENTER)
+            linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
+            linkWebsite.SetForegroundColour("white")
+            linkWebsite.SetColours("white", "white", "white")
         textWeb=wx.StaticText(panel,-1, _("Pour publier sur le serveur, cliquez sur 'Publier' et remplissez \nle forumlaire dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
         textWeb.SetForegroundColour("white")
+        if sys.platform=="linux2": textWeb.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
             
         for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode,
                       textLoginENT,textEmail]:
@@ -2058,13 +2077,7 @@ if __name__=="__main__":
         else: 
             print "Creating default data folter in ~/audiovideocours"
             os.mkdir(os.path.expanduser("~/audiovideocours"))
-            
-        # Set-up language
-        if language=="French":
-            print "Setting French language..."
-            langFr = gettext.translation('mediacours', "locale",languages=['fr'])
-            langFr.install()
-        
+                   
         confFileReport=""    
         # Check if a configuration file exist in USERPROFILE
         # otherwise search for one in ALLUSERPROFILE
@@ -2094,6 +2107,12 @@ if __name__=="__main__":
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
     #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
     print "... recordingPlace = ", recordingPlace
+    
+           # Set-up language
+    if language=="French":
+        print "Setting French language..."
+        langFr = gettext.translation('mediacours', "locale",languages=['fr'])
+        langFr.install()
                     
     if pathData == None or pathData=="":
         #pathData=os.getcwd()
@@ -2137,7 +2156,7 @@ if __name__=="__main__":
         
     ## GUI launch
     #app=wx.App(redirect=False)
-    frameUnivr=univrEndFrame(None,title="Message Univ-R")
+    #frameUnivr=univrEndFrame(None,title="Message Univ-R")
     #frameUnivr.Show()   
     frameBegin=BeginFrame(None,title="Attention")
     #frameBegin.Bind(wx.EVT_END_SESSION,onEndSession)
@@ -2147,8 +2166,8 @@ if __name__=="__main__":
     if standalone != True: frameBegin.Hide()
     frameEnd=EndingFrame(None,title="Attention")
     #frameEnd.Bind(wx.EVT_END_SESSION,onEndSession)
-    frameEnd.Show()
-    frameEnd.Hide()
+    #frameEnd.Show()
+    #frameEnd.Hide()
     #frameEnd.Show() # For debug
     
     ## Use a special serial keyboard ?
