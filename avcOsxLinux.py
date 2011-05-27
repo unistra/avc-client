@@ -55,6 +55,9 @@ import cherrypy
 from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
 import htmlBits      # HTML chuncks for html format output
 
+## Linux hook specific
+if sys.platform=="linux2": from pyxhook import *
+
 #----------------------------------------------------------------------------------------
 
 ## Some default global variables in case no configuration file is found
@@ -1075,7 +1078,7 @@ def windowBack(frame,windowTitle="Attention"):
     tryFocus=False
 def setupHooks():
     """
-    Setup hooks
+    Setup hooks for Windows OS
     """
     hm = pyHook.HookManager ()  # create a hook manager
     hm.KeyDown = OnKeyboardEvent # watch for keyoard events
@@ -1084,6 +1087,27 @@ def setupHooks():
     hm.MouseWheel= OnMouseEvent
     hm.HookKeyboard() # set the hook
     hm.HookMouse() # set the hook
+    
+def setupHooksLinux():
+    """
+    Setup hooks for Linux OS
+    """
+    print "In linux pyxhook now ..."
+    hm = HookManager()
+    hm.HookKeyboard()
+    hm.HookMouse()
+    hm.KeyDown = toto
+    #hm.KeyUp = hm.printevent
+    hm.MouseAllButtonsDown = hm.printevent
+    #hm.MouseAllButtonsUp = hm.printevent
+    hm.start()
+    #time.sleep(10)
+    #hm.cancel()
+
+def toto(event):
+    print dir(event) # what is possible
+    print event.Key
+    
     
 def writeInLogs(what):   
     """
@@ -2138,11 +2162,13 @@ if __name__=="__main__":
     # Start socket server
     if socketEnabled==True:
         start_new_thread(LaunchSocketServer,())
-            
+    
+    # Set-up hooks
+    if sys.platform=="win32": setupHooks()
+    if sys.platform=="linux2": setupHooksLinux()
+                
     if 0: # needs osxification ?
              
-        # Set-up hooks
-        setupHooks()
         # Set-up videoprojector
         if videoprojectorInstalled==True:
             videoprojector=Videoprojector()
