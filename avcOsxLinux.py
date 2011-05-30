@@ -300,9 +300,14 @@ def stopFromKBhook():
     """
     global frameEnd, frameBegin, tryFocus,id
     #screenshot()#gives a delay too long in case of live recording here
-    if recording==False and tryFocus==False:
-        windowBack(frameBegin)
-        showVuMeter()
+    print "In stopFromKBhook now..."
+    print "Closing hook now..."
+    hm.cancel()
+    #if recording==False and tryFocus==False:
+    if recording==False: # no tryFocus for Linux version?
+        print "!!!!! Trying to put frameBegin back in stopFromHook"
+        wx.CallAfter(frameEndShow)
+        if sys.platform=="win32": showVuMeter()
         # try to show a vumeter here
         #showVuMeter()
     if recording==True and tryFocus==False:
@@ -311,11 +316,15 @@ def stopFromKBhook():
             print "Trying to put Ending frame back foreground..."
             if live==False:
                 screenshot()
-            print "stop recording now recordStop()"    
-            recordStop()
-            windowBack(frameEnd)
-            
+            print "stop recording now recordStop()" 
+            if sys.platform=="win32": windowBack(frameEnd)
+            if sys.platform=="linux2":
+                print "<<<< trying frameEnd.Show() on Linux >>>>>" 
+                wx.CallAfter(frameEndShow)
+            recordStop()    
+            #frameEnd.Show()  
         else:
+            print "hello?"
             recordStop()
             print "Not showing usual publishing form"
             start_new_thread(confirmPublish,())
@@ -337,13 +346,18 @@ def OnKeyboardEvent(event):
     global stopKey,lastEvent,lastGlobalEvent
     if 0: winsound.Beep(300,50) # For testing purposes
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
-    screenshotKeys=["Snapshot","Space","Return","Up","Down","Right",
+    screenshotKeys=["Snapshot","Space","space","Return","Up","Down","Right",
     "Left","Prior","Next"]
+    
+    print "Key event seen : ", event.Key
+    
     if (stopKey!="") and (event.Key== stopKey)and (tryFocus==False):
+        print "Received order to stop recording ..."
         print "from hook stopKey= :", stopKey
         global recording, fen1
         print "Escape Key pressed from the hook ..."
         start_new_thread(stopFromKBhook,())
+        
     if event.Key in screenshotKeys and( (time.time()-lastEvent)>eventDelay):
        start_new_thread(screenshot,()) 
        lastEvent=time.time()
@@ -422,7 +436,7 @@ def recordNow():
     def record():
         """ Record audio only - mp3 - with pymedia"""
         global recording, cparams
-        f= open( workDirectory+'\\'+nameRecord, 'wb' )
+        f= open( workDirectory+'/'+nameRecord, 'wb' )
         ac= acodec.Encoder( cparams )
         snd= sound.Input(cparams["sample_rate"],cparams["channels"], sound.AFMT_S16_LE)
         snd.start()
@@ -527,7 +541,7 @@ def recordNow():
         print "Going audio live with VLC ..."
         vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
         command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
-        file=pathData+"\\"+dirName+"\\enregistrement-micro.mp3"
+        file=pathData+"/"+dirName+"/enregistrement-micro.mp3"
         typeout="#standard{access=http,mux=raw}"
         # try to launch a pre-configured trayit!.exe to hide VLC GUI
         try:
@@ -579,7 +593,6 @@ def screenshot():
     """
     global recording, diaId, t0, timecodeFile
     time.sleep(tempo)
-    print "In screenshot function before platform check"
 
     if recording == True:
         if sys.platform=="win32":
@@ -597,33 +610,31 @@ def screenshot():
             + str(diaId)+'.jpg"/> </a>\n')"""
             myscreen.thumbnail((256,192))
             myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
-            timecodeFile = open (workDirectory +'\\timecode.csv','a')
+            timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
             
         if sys.platform=="darwin" or "linux2":
-            print "In screenshot function under under darwin"
-            print "workDirectory is", workDirectory
+            t = time.time()
+            diaId += 1
             if sys.platform=="darwin":
                 os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
                 #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
             if sys.platform=="linux2":
                 os.system("scrot "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             t = time.time()
-            diaId += 1
             timeStamp = str(round((t-t0),2))
             print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
-            timecodeFile.close()
-            print "Creating thumbnail"
-            myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.jpg')
+            timecodeFile.close()  
+            myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
             myscreen.thumbnail((256,192))
-            print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
+            #print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
             myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
             #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
-            timecodeFile = open (workDirectory +'\\timecode.csv','a')
+            timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
             
@@ -709,9 +720,11 @@ def recordStop():
     # Visual cue to confirm recording state
     tbicon.SetIcon(icon1, usage+"cours en attente")
     # Audio cue to confirming recording state (2 bis when recording stopped)
-    winsound.Beep(800,100)
-    time.sleep(0.2)
-    winsound.Beep(800,100)
+    
+    if sys.platform=="win32":
+        winsound.Beep(800,100)
+        time.sleep(0.2)
+        winsound.Beep(800,100)
     if live==True:
         flv.stop(FMLEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
         #if 1:
@@ -759,7 +772,7 @@ def playAudio():
     dc= acodec.Decoder( cparams )
     sndOut= sound.Output( cparams["sample_rate"],cparams["channels"], sound.AFMT_S16_LE )
     bytesRead= 0
-    f= open( workDirectory+'\\'+nameRecord, 'rb' )
+    f= open( workDirectory+'/'+nameRecord, 'rb' )
     s=' '
     while len( s ):
         s= f.read(READ_CHUNK)
@@ -832,7 +845,7 @@ def confirmPublish(folder=''):
             ftp.login(ftpLogin, ftpPass)
             print "debut de ftp"
             f = open(workDirectoryToPublish+".zip",'rb')# file to send 
-            #f = open(pathData+"\\"+dirName+".zip",'rb')# file to send 
+            #f = open(pathData+"/"+dirName+".zip",'rb')# file to send 
             if folder=="canceled":
                 print "Trying to open cancel forlder"
                 ftp.cwd("canceled") 
@@ -1076,6 +1089,7 @@ def windowBack(frame,windowTitle="Attention"):
             pass
 
     tryFocus=False
+    
 def setupHooks():
     """
     Setup hooks for Windows OS
@@ -1093,18 +1107,21 @@ def setupHooksLinux():
     Setup hooks for Linux OS
     """
     print "In linux pyxhook now ..."
+    global hm
     hm = HookManager()
     hm.HookKeyboard()
     hm.HookMouse()
-    hm.KeyDown = toto
+    #hm.KeyDown = toto
+    hm.KeyDown = OnKeyboardEvent
     #hm.KeyUp = hm.printevent
-    hm.MouseAllButtonsDown = hm.printevent
+    # hm.MouseAllButtonsDown = hm.printevent
     #hm.MouseAllButtonsUp = hm.printevent
     hm.start()
     #time.sleep(10)
     #hm.cancel()
 
 def toto(event):
+    """ A test for hook events callback """ 
     print dir(event) # what is possible
     print event.Key
     
@@ -1136,7 +1153,7 @@ def kill_if_double():
     """
     try:
         print "Trying to kill an eventual running instance of mediacours.exe."
-        PID_f=open(os.environ["USERPROFILE"]+"\\PID_mediacours.txt",'r')
+        PID_f=open(os.environ["USERPROFILE"]+"/PID_mediacours.txt",'r')
         PID=PID_f.readline()
         #print "PID of mediacours is ",PID
         #print "Killing PID ",PID
@@ -1179,7 +1196,7 @@ def htmlGen():
         media="../enregistrement-video.flv"
         playerHeight="250"
         delayMediaSlides=-3
-    title=workDirectory.split("\\")[-1]
+    title=workDirectory.split("/")[-1]
     
     htmlVars="// --- Variable generated from script\n// timecode of slides for this recording\n"\
     +"var timecode=new Array"+diaArray+";\n"\
@@ -1193,11 +1210,11 @@ def htmlGen():
     file.close()
     
     ## copy third party script in a "thirdparty" folder
-    os.mkdir(workDirectory+"\\thirdparty")
-    shutil.copyfile("thirdparty\\player.swf",workDirectory+"\\thirdparty\\player.swf")
-    shutil.copyfile("thirdparty\\swfobject.js",workDirectory+"\\thirdparty\\swfobject.js")
-    shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
-    shutil.copyfile("thirdparty\\README.txt",workDirectory+"\\thirdparty\\README.txt")
+    os.mkdir(workDirectory+"/thirdparty")
+    shutil.copyfile("thirdparty/player.swf",workDirectory+"/thirdparty/player.swf")
+    shutil.copyfile("thirdparty/swfobject.js",workDirectory+"/thirdparty/swfobject.js")
+    shutil.copyfile("thirdparty/JSFX_ImageZoom.js",workDirectory+"/thirdparty/JSFX_ImageZoom.js")
+    shutil.copyfile("thirdparty/README.txt",workDirectory+"/thirdparty/README.txt")
                   
 def useBrowser(what=""):
     """ Defining the browser to use for 'what' content"""
@@ -1365,7 +1382,7 @@ class SmilGen:
             <body>
             <par>"""
             
-        self.smilFile=open (workDirectory +'\\cours.smil','w')
+        self.smilFile=open (workDirectory +'/cours.smil','w')
         self.smilFile.write(self.smilBegin)
         self.smilFile.write(self.smilLayout)
         
@@ -1562,6 +1579,7 @@ class BeginFrame(wx.Frame):
             mySocket.close()
         except:
             pass
+        exitAVC()
         sys.exit()
         
     def SkiptoEndingFrame(self,evt):
@@ -1571,6 +1589,7 @@ class BeginFrame(wx.Frame):
         
     def engageRecording(self,evt):
         """Confirms and engage recording"""
+        if sys.platform=="linux2": setupHooksLinux()
         global live
         if  liveCheckBox==True:
             live=liveFeed.GetValue()
@@ -1732,8 +1751,10 @@ class EndingFrame(wx.Frame):
         
     def exitApp(self,evt):
         """A function to quit the app"""
-        print "exit"
-        sys.exit()
+        print "time to exit"
+        #frameEnd.Close(True)
+        #frameBegin.Close(True)
+        exitAVC()
         
     def exitPublish(self,evt):
         """Don't publich the recordings on the webserver"""
@@ -2043,14 +2064,14 @@ def recoverFileOrFolder(name,pathData, ftpUrl,ftpLogin,ftpPass):
     if os.path.isdir(pathData+"/"+name):
         print "Creating Zip file of ...",name
         workDirectory=pathData+"/"+name
-        zip = zipfile.ZipFile(pathData+"\\"+name+".zip", 'w')
+        zip = zipfile.ZipFile(pathData+"/"+name+".zip", 'w')
         for fileName in os.listdir ( workDirectory ):
-            if os.path.isfile (workDirectory+"\\"+fileName):
-                zip.write(workDirectory+"\\"+fileName,
+            if os.path.isfile (workDirectory+"/"+fileName):
+                zip.write(workDirectory+"/"+fileName,
                 name+"/"+fileName,zipfile.ZIP_DEFLATED)
-        for fileName in os.listdir ( workDirectory+"\\screenshots"):
-            zip.write(workDirectory+"\\screenshots\\"+fileName,
-                name+"/"+"screenshots\\"+fileName,zipfile.ZIP_DEFLATED)
+        for fileName in os.listdir ( workDirectory+"/screenshots"):
+            zip.write(workDirectory+"/screenshots/"+fileName,
+                name+"/"+"screenshots/"+fileName,zipfile.ZIP_DEFLATED)
         zip.close()
         #writeInLogs("In recoverFolder, counldn't create ZIP file") 
         print "Opening FTP connection..."
@@ -2165,7 +2186,7 @@ if __name__=="__main__":
     
     # Set-up hooks
     if sys.platform=="win32": setupHooks()
-    if sys.platform=="linux2": setupHooksLinux()
+    #if sys.platform=="linux2": setupHooksLinux()
                 
     if 0: # needs osxification ?
              
@@ -2190,7 +2211,18 @@ if __name__=="__main__":
     #frameBegin.Show() # For debug
     frameBegin.Show()
     if standalone != True: frameBegin.Hide()
+    global frameEnd
     frameEnd=EndingFrame(None,title="Attention")
+    
+    def frameEndShow():
+        global frameEnd
+        frameEnd.Show()
+        
+    def exitAVC():
+        print "In exitAVC in main thread" 
+        #os.kill(str(os.getpid()),signal.SIGKILL)
+        os.system("kill "+str(os.getpid()))  
+        
     #frameEnd.Bind(wx.EVT_END_SESSION,onEndSession)
     #frameEnd.Show()
     #frameEnd.Hide()
