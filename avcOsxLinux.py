@@ -484,6 +484,12 @@ def recordNow():
             print todoLiveReal
             os.system(todoLiveReal)
             
+    def ffmpegLinuxAudioRecord():
+        """ Record mp3 in Linux with FFMPEG and liblamemp3 """
+        print "In ffmpegLinuxAudioRecord"
+        cmd="ffmpeg -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y "+workDirectory+"/"+nameRecord
+        os.system(cmd)
+        
     def flashMediaEncoderRecord():
         """
         Record video with Flash Media Encoder
@@ -560,6 +566,8 @@ def recordNow():
     if usage=="audio":
         if sys.platform=="win32":
             start_new_thread(record,())
+        if sys.platform=="linux2":
+            start_new_thread(ffmpegLinuxAudioRecord,())
         
     if live==True:
         start_new_thread(liveScreenshotStart,())
@@ -610,9 +618,6 @@ def screenshot():
             + str(diaId)+'.jpg"/> </a>\n')"""
             myscreen.thumbnail((256,192))
             myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
-            timecodeFile = open (workDirectory +'/timecode.csv','a')
-            timecodeFile.write(timeStamp+"\n")
-            timecodeFile.close()
             
         if sys.platform=="darwin" or "linux2":
             t = time.time()
@@ -632,11 +637,8 @@ def screenshot():
             #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
             myscreen.thumbnail((256,192))
             #print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
-            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
+            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
             #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
-            timecodeFile = open (workDirectory +'/timecode.csv','a')
-            timecodeFile.write(timeStamp+"\n")
-            timecodeFile.close()
             
         if live==True and ftpHandleReady:
             time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
@@ -742,12 +744,17 @@ def recordStop():
             print serverAnswer
     lastEvent=time.time()     
     #timecodeFile.close()
+    
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")#stop Real producer
     if usage=="video" and videoEncoder=="flash":
         flv.stop(FMLEpid)
+    if usage=="audio" and sys.platform=="linux2":
+        print "trying to stop ffmpeg now"
+        os.popen("killall ffmpeg")
+        
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
     """
@@ -1115,6 +1122,7 @@ def setupHooksLinux():
     hm.KeyDown = OnKeyboardEvent
     #hm.KeyUp = hm.printevent
     # hm.MouseAllButtonsDown = hm.printevent
+    hm.MouseAllButtonsDown = OnMouseEvent
     #hm.MouseAllButtonsUp = hm.printevent
     hm.start()
     #time.sleep(10)
@@ -2141,7 +2149,7 @@ if __name__=="__main__":
                 dialog.ShowModal()
         if sys.platform == 'darwin' or 'linux2':
             if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
-                print "Found and using configuration file in ~/audiovideocours/audiovideocours"
+                print "Found and using configuration file in ~/audiovideocours"
                 readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
             else:
                 print "No configuration file found"
