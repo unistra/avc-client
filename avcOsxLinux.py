@@ -293,57 +293,71 @@ def showVuMeter():
         subprocess.Popen(["VUMeter.exe"])
     except:
         print "Couldn't find VUMeter.exe"    
-             
+                
 def stopFromKBhook():
     """
     Start/stop recording when asked from the PC keyboard 'stopKey'
     """
     global frameEnd, frameBegin, tryFocus,id
     #screenshot()#gives a delay too long in case of live recording here
-    print "In stopFromKBhook now..."
-    print "Closing hook now..."
+    print ">> In stopFromKBhook now..."
+    print ">> In stopFromKB hook order recordStop() now"
+    recordStop() 
+    print ">> In stopFromKBhook order recordStop() passed"
+    print ">> Closing hook now..."
     hm.cancel()
-    #if recording==False and tryFocus==False:
-    if recording==False: # no tryFocus for Linux version?
-        print "!!!!! Trying to put frameBegin back in stopFromHook"
-        wx.CallAfter(frameEndShow)
-        if sys.platform=="win32": showVuMeter()
-        # try to show a vumeter here
-        #showVuMeter()
-    if recording==True and tryFocus==False:
-        print "id:",id
-        if id=="":
-            print "Trying to put Ending frame back foreground..."
-            if live==False:
-                screenshot()
-            print "stop recording now recordStop()" 
-            if sys.platform=="win32": windowBack(frameEnd)
-            if sys.platform=="linux2":
-                print "<<<< trying frameEnd.Show() on Linux >>>>>" 
-                wx.CallAfter(frameEndShow)
-            recordStop()    
-            #frameEnd.Show()  
-        else:
-            print "hello?"
-            recordStop()
-            print "Not showing usual publishing form"
-            start_new_thread(confirmPublish,())
-            frameUnivr.Show()
-    # make sure buttons "publish" and "cancel" are enabled for user input
-    #if 1:
-    try:
-        if btnPublish.IsEnabled()==False:
-            btnPublish.Enable(True)
-        if btnCancel.IsEnabled()==False:
-            btnCancel.Enable(True)
-    except:
-        print "warning! tried to check if buttons 'publish' and 'cancel' were enabled but had problems" 
+    print ">> hm.cancel() passed..."
+    print "In stopFromKBhook order frameEndShow() now"
+    wx.CallAfter(frameEndShow)
+    
+    #frameEndShow()
+    print ">> In stopFromKBhook order frameEndShow() passed"
+      
+    if 0:
+        #if recording==False and tryFocus==False:
+        if recording==False: # no tryFocus for Linux version?
+            print "!!!!! Trying to put frameBegin back in stopFromHook"
             
+            if sys.platform=="win32": showVuMeter()
+            # try to show a vumeter here
+            #showVuMeter()
+        if recording==True and tryFocus==False:
+            print "id:",id
+            if id=="":
+                print "Trying to put Ending frame back foreground..."
+                if live==False:
+                    screenshot()
+                print "stop recording now recordStop()" 
+                if sys.platform=="win32": windowBack(frameEnd)
+                if sys.platform=="linux2":
+                    print "<<<< trying frameEnd.Show() on Linux >>>>>" 
+                    wx.CallAfter(frameEndShow)
+                recordStop()    
+                #frameEnd.Show()  
+            else:
+                print "hello?"
+                recordStop()
+                print "Not showing usual publishing form"
+                start_new_thread(confirmPublish,())
+                frameUnivr.Show()
+    # make sure buttons "publish" and "cancel" are enabled for user input
+    if 0:
+        try:
+            if btnPublish.IsEnabled()==False:
+                btnPublish.Enable(True)
+            if btnCancel.IsEnabled()==False:
+                btnCancel.Enable(True)
+        except:
+            print "warning! tried to check if buttons 'publish' and 'cancel' were enabled but had problems" 
+            
+def OnKeyboardEventAfter(event):
+    wx.CallAfter(OnKeyboardEvent(event))
+
 def OnKeyboardEvent(event):
     """
     Catching keyboard events from the hook and deciding what to do
     """
-    global stopKey,lastEvent,lastGlobalEvent
+    global stopKey,lastEvent,lastGlobalEvent,frameBegin,frameEnd
     if 0: winsound.Beep(300,50) # For testing purposes
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     screenshotKeys=["Snapshot","Space","space","Return","Up","Down","Right",
@@ -356,11 +370,17 @@ def OnKeyboardEvent(event):
         print "from hook stopKey= :", stopKey
         global recording, fen1
         print "Escape Key pressed from the hook ..."
-        start_new_thread(stopFromKBhook,())
+        if sys.platform=="win32":
+            start_new_thread(stopFromKBhook,())
+        else:
+            print "launching CallAfter stopFromKBhook now" 
+            stopFromKBhook()
+            print"after launch"
         
-    if event.Key in screenshotKeys and( (time.time()-lastEvent)>eventDelay):
-       start_new_thread(screenshot,()) 
-       lastEvent=time.time()
+    if 0:
+        if event.Key in screenshotKeys and( (time.time()-lastEvent)>eventDelay):
+           start_new_thread(screenshot,()) 
+           lastEvent=time.time()
     # Show each key stroke (for debug only)
     if 0:
         print 'MessageName:',event.MessageName
@@ -387,8 +407,8 @@ def OnMouseEvent(event):
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
     if  (recording == True) and (tryFocus == False)\
     and( (time.time()-lastEvent)>eventDelay):
-        if (event.MessageName == "mouse left down") or (event.Wheel==1)\
-         or (event.Wheel==-1):
+        if (event.MessageName == "mouse left down") or (event.MessageName=="mouse wheel down")\
+         or (event.MessageName=="mouse wheel up"):
             if 0: winsound.Beep(300,50) # For testing purposes
             start_new_thread(screenshot,())
             lastEvent=time.time()
@@ -415,8 +435,9 @@ def recordNow():
     recording= True
     last_session_recording_start=getTime()
     ftpHandleReady=False
-    # Visual cue to confim recording state
-    tbicon.SetIcon(icon2, "Enregistrement en cours")
+    if sys.platform in ("win32","darwin"):
+        # Visual cue to confirm recording state
+        tbicon.SetIcon(icon2, "Enregistrement en cours")
     # Audio cue to confirm recording state
     if sys.platform=="win32":
         winsound.Beep(800,100)
@@ -487,7 +508,7 @@ def recordNow():
     def ffmpegLinuxAudioRecord():
         """ Record mp3 in Linux with FFMPEG and liblamemp3 """
         print "In ffmpegLinuxAudioRecord"
-        cmd="ffmpeg -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y "+workDirectory+"/"+nameRecord
+        cmd="ffmpeg -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
         os.system(cmd)
         
     def flashMediaEncoderRecord():
@@ -697,6 +718,7 @@ def recordStop():
     print "In recordStop() now..."
     
     ## Create smile file
+    print "trying to create smile file now..."
     try:
         smil=SmilGen(usage,workDirectory)
         f=open(workDirectory+"/timecode.csv")
@@ -709,19 +731,25 @@ def recordStop():
         smil.smilEnd(usage,videoEncoder)
     except:
         writeInLogs("- Problem while genration smil file... "+ str(datetime.datetime.now())+"\n") 
+        
     ## Create html file and thirdparty forlder
+    print "trying to create html file now..."
     try:
         htmlGen()
     except:
         writeInLogs("- Problem at generating html and thirdparty folder... "+ str(datetime.datetime.now())+"\n")
     
+    print "setting recording variable to False ..."
     recording= False
     
     last_session_recording_stop=getTime()
-    print "Recording is now = ", recording
-    # Visual cue to confirm recording state
-    tbicon.SetIcon(icon1, usage+"cours en attente")
-    # Audio cue to confirming recording state (2 bis when recording stopped)
+    print "recording is now = ", recording
+    
+    if sys.platform in ("win32","darwin"):
+        print "changing systray icon to non-recording"
+        # Visual cue to confirm recording state
+        tbicon.SetIcon(icon1, usage+"cours en attente")
+        # Audio cue to confirming recording state (2 bis when recording stopped)
     
     if sys.platform=="win32":
         winsound.Beep(800,100)
@@ -742,6 +770,7 @@ def recordStop():
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
+            
     lastEvent=time.time()     
     #timecodeFile.close()
     
@@ -757,15 +786,7 @@ def recordStop():
         
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
-    """
-    if live==True and usage=="audio":
-        os.system('tskill vlc')
-        try:
-            #os.system('tskill trayit!')
-            subprocess.Popen(['tskill','trayit!'])
-        except:
-            pass
-    """
+
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     
 def playAudio():
@@ -2249,12 +2270,12 @@ if __name__=="__main__":
     def onTaskbarActivate():
         print ">>>>> yes my lord?"
     print "setting up icons"    
-    if usage=="audio":
+    if usage=="audio" and sys.platform in("win32","darwin"):
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
         print "setting up binding for left click event"
-        app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
+        #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
         tbicon.SetIcon(icon1, "AudioCours en attente")
     if usage=="video":
         icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
