@@ -2185,8 +2185,8 @@ if __name__=="__main__":
            # Set-up language
     if language=="French":
         print "Setting French language..."
-        langFr = gettext.translation('mediacours', "locale",languages=['fr'])
-        langFr.install()
+        langFr = gettext.translation('mediacours', "locale",languages=['fr'],codeset="iso-8859-1")
+        langFr.install(unicode=True)
                     
     if pathData == None or pathData=="":
         #pathData=os.getcwd()
