@@ -1709,7 +1709,7 @@ class EndingFrame(wx.Frame):
                 frameEnd.statusBar.SetStatusText(_("Nothing to read."))
             if workDirectory!="":
                 print "Attempting to read web preview"
-                useBrowser("http://localhost/"+dirName+"/recording.html")
+                useBrowser("http://localhost:"+str(remotePort)+"/"+dirName+"/recording.html")
                         
         if previewPlayer=="realplayer":
             start_new_thread(readSmilNow,())
@@ -1872,9 +1872,9 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
     except:
          # My attempt to relaunch with another port number fail for now 
         # => display a dialog box to users in the meantime
-        dialog=wx.MessageDialog(None,message="[French] Attention, le port 80 est deja occupe (Skype, serveur?), la lecture avant publication ne sera pas possible.\n\
-        Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration d'Audiovideocours.\n\n[English] Warning, port 80 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
-                                caption="Port 80 non disponible, Port 80 busy", style=wx.OK|wx.ICON_INFORMATION)
+        dialog=wx.MessageDialog(None,message="[French] Attention, le port 80 ou 8081 est deja occupe (Skype, serveur?), la lecture avant publication ne sera pas possible.\n\
+        Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration d'Audiovideocours.\n\n[English] Warning, port 80 or 8081 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
+                                caption="Port 80 ou 8081 non disponible, Port 80 or 8081 busy", style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
         print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"
         writeInLogs("\nCouldn't launch integrated server at port "+str(remPort)+"!!!")      
@@ -2094,6 +2094,9 @@ if __name__=="__main__":
         hosts="127.0.0.1"
     else:
         hosts="0.0.0.0"
+    if remotePort==80 and standalone==True:
+        remotePort=8081
+        print 'switching remote port to '+str(remotePort)+' for standalone usage'
     print "Launching integrated server with port", remotePort, "for hosts", hosts
     start_new_thread(goAVCremote,(remotePort,pathData,hosts))
     app.MainLoop()
