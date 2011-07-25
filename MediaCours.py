@@ -880,7 +880,7 @@ def rss_warning_client_feed(what=""):
         # Retrieve server feed
         ftp = FTP(ftpUrl)
         ftp.login(ftpLogin, ftpPass)
-        #ftp.cwd("releases") #commenting, letting clients-warnings.xml in FTP root (for security reasons, restraining client FTP reach)
+        ftp.cwd("live") # moving clients-warnings.xml in "live" folder (for security reasons, restraining client FTP reach and still http accessible)
         
         # Checking if feed exists on server
         filelist=[]
