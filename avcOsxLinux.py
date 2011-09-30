@@ -39,17 +39,18 @@ from ftplib import FTP
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
-import PIL
-from PIL import GifImagePlugin  # Python Imaging Lib
-from PIL import JpegImagePlugin # Static imports from PIL for py2exe
-from PIL import Image
-#from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
-#import pymedia.audio.sound as sound # for mp3 or ogg encoding
-#import pymedia.audio.acodec as acodec
-#import pymedia.muxer as muxer
-#from pywinauto import * # used to put app. back on foreground
-#from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
-import cherrypy
+if sys.platform !="darwin":
+    import PIL
+    from PIL import GifImagePlugin  # Python Imaging Lib
+    from PIL import JpegImagePlugin # Static imports from PIL for py2exe
+    from PIL import Image
+    #from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
+    #import pymedia.audio.sound as sound # for mp3 or ogg encoding
+    #import pymedia.audio.acodec as acodec
+    #import pymedia.muxer as muxer
+    #from pywinauto import * # used to put app. back on foreground
+    #from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
+    import cherrypy
 
 ## Local imports 
 from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
@@ -57,6 +58,31 @@ import htmlBits      # HTML chuncks for html format output
 
 ## Linux hook specific
 if sys.platform=="linux2": from pyxhook import *
+
+## OS X hook specific
+if sys.platform=="darwin": 
+    from Quartz import *
+    def MyFunction(p, t, e, c):
+        #print "*",e,dir(e)
+        #print "Event Tye", CGEventGetType(e)
+        if CGEventGetType(e)==10: # Event from the keyboard 
+            #print CGEventGetFlags(e) # Indicates modifier key used (shift, fn, etc)
+            keyPressed=CGEventGetIntegerValueField(e,9)
+            print "Key pressed", keyPressed
+            if keyPressed ==100: print "- F8 detected! -"
+            # see constants event fields in http://developer.apple.com/library/mac/#documentation/Carbon/Reference/QuartzEventServicesRef/Reference/reference.html
+            # Key pressed is number 100 for F8
+        if CGEventGetType(e)==1:
+            print "Mouse left click"
+    tap = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap,
+        kCGEventTapOptionListenOnly, CGEventMaskBit(kCGEventLeftMouseDown) | CGEventMaskBit(kCGEventKeyDown),
+        MyFunction, None)
+    runLoopSource = CFMachPortCreateRunLoopSource(None, tap, 0);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopDefaultMode);
+    CGEventTapEnable(tap, True);
+    #CGEventTapEnable(tap, False);
+    # CFRelease(tap); # something to do to manage memory ??
+    # CFRunLoopRun(); # No comprendo! I have the events if i comment this because i'm using the GUI loop?
 
 #----------------------------------------------------------------------------------------
 
@@ -2293,6 +2319,8 @@ if __name__=="__main__":
         hosts="127.0.0.1"
     else:
         hosts="0.0.0.0"
-    print "Launching integrated server with port", remotePort, "for hosts", hosts
-    start_new_thread(goAVCremote,(remotePort,pathData,hosts))
+    if sys.platform!="darwin": 
+        print "Launching integrated server with port", remotePort, "for hosts", hosts
+        start_new_thread(goAVCremote,(remotePort,pathData,hosts))
+       
     app.MainLoop()
