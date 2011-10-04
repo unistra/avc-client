@@ -69,11 +69,14 @@ if sys.platform=="darwin":
             #print CGEventGetFlags(e) # Indicates modifier key used (shift, fn, etc)
             keyPressed=CGEventGetIntegerValueField(e,9)
             print "Key pressed", keyPressed
-            if keyPressed ==100: print "- F8 detected! -"
+            if keyPressed ==100: 
+                print "- F8 detected! -"
+                stopFromKBhook()
             # see constants event fields in http://developer.apple.com/library/mac/#documentation/Carbon/Reference/QuartzEventServicesRef/Reference/reference.html
             # Key pressed is number 100 for F8
-        if CGEventGetType(e)==1:
+        if CGEventGetType(e)==1 and recording==True:
             print "Mouse left click"
+            screenshot()
     tap = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap,
         kCGEventTapOptionListenOnly, CGEventMaskBit(kCGEventLeftMouseDown) | CGEventMaskBit(kCGEventKeyDown),
         MyFunction, None)
@@ -329,9 +332,11 @@ def stopFromKBhook():
     print ">> In stopFromKBhook now..."
     print ">> In stopFromKB hook order recordStop() now"
     recordStop() 
+    #sys.exit()
     print ">> In stopFromKBhook order recordStop() passed"
     print ">> Closing hook now..."
-    hm.cancel()
+    if sys.platform!="darwin":
+        hm.cancel()
     print ">> hm.cancel() passed..."
     print "In stopFromKBhook order frameEndShow() now"
     wx.CallAfter(frameEndShow)
@@ -352,7 +357,7 @@ def stopFromKBhook():
             if id=="":
                 print "Trying to put Ending frame back foreground..."
                 if live==False:
-                    screenshot()
+                    if sys.platform!="darwin": screenshot()
                 print "stop recording now recordStop()" 
                 if sys.platform=="win32": windowBack(frameEnd)
                 if sys.platform=="linux2":
@@ -477,8 +482,9 @@ def recordNow():
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
     os.mkdir(workDirectory + "/screenshots")
-    print "launching screenshot() thread from recordNow()"
-    start_new_thread(screenshot,())    
+    if 1:
+        print "launching screenshot() thread from recordNow()"
+        start_new_thread(screenshot,())    
     
     def record():
         """ Record audio only - mp3 - with pymedia"""
@@ -564,7 +570,7 @@ def recordNow():
         if usage=="video":
             flvPath=pathData+'/'+ dirName+ '/enregistrement-video.flv'
         elif usage=="audio":
-            flvPath=pathData+'/'+ dirName+ '/enregistrement-micro.mp3'
+            flvPath=pathData+'/'+ dirName+ '/enregistrement-micro.flv'
             
         print flvPath  
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
@@ -635,6 +641,8 @@ def recordNow():
     if usage=="video" and videoEncoder=="flash":
         print "searching Flash Media Encoder"    
         start_new_thread(flashMediaEncoderRecord,())
+    if usage=="audio" and videoEncoder=="flash" and sys.platform=="darwin":
+        start_new_thread(flashMediaEncoderRecord,())
     if usage=="video" and videoEncoder=="wmv":
         print "searching Windows Media Encoder ..."   
         start_new_thread(windowsMediaEncoderRecord,())
@@ -679,13 +687,14 @@ def screenshot():
             print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
-            timecodeFile.close()  
-            myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-            #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
-            myscreen.thumbnail((256,192))
-            #print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
-            myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
-            #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
+            timecodeFile.close()
+            if sys.platform=="linux2":  
+                myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+                #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
+                myscreen.thumbnail((256,192))
+                #print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
+                myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
+                #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
             
         if live==True and ftpHandleReady:
             time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
@@ -809,6 +818,9 @@ def recordStop():
     if usage=="audio" and sys.platform=="linux2":
         print "trying to stop ffmpeg now"
         os.popen("killall ffmpeg")
+    if usage=="audio" and sys.platform=="darwin":
+        print "trying to stop FMLE"
+        flv.stop(FMLEpid)
         
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    

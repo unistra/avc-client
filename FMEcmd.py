@@ -226,7 +226,7 @@ videoSource+"""
         
     def stop(self,FMLEpid):
         """Kill the FlashMediaEncoder"""
-        print 'On windows rrdering: FMLEcmd.exe /s "%s" ' % FMLEpid
+        print 'On windows ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
         if sys.platform=="win32":
             FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
         if sys.platform=="darwin":
