@@ -39,7 +39,8 @@ from ftplib import FTP
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
-if sys.platform !="darwin":
+import cherrypy
+if sys.platform =="darwin":
     import PIL
     from PIL import GifImagePlugin  # Python Imaging Lib
     from PIL import JpegImagePlugin # Static imports from PIL for py2exe
@@ -50,8 +51,7 @@ if sys.platform !="darwin":
     #import pymedia.muxer as muxer
     #from pywinauto import * # used to put app. back on foreground
     #from reportlab.platypus.doctemplate import FrameBreak # PDF lib.
-    import cherrypy
-
+    
 ## Local imports 
 from FMEcmd import * # Script to control Flash Media Encoder and genrate profile.xml file
 import htmlBits      # HTML chuncks for html format output
@@ -72,6 +72,8 @@ if sys.platform=="darwin":
             if keyPressed ==100: 
                 print "- F8 detected! -"
                 stopFromKBhook()
+            if keyPressed in [49,124,126,125,123]:
+                screenshot()
             # see constants event fields in http://developer.apple.com/library/mac/#documentation/Carbon/Reference/QuartzEventServicesRef/Reference/reference.html
             # Key pressed is number 100 for F8
         if CGEventGetType(e)==1 and recording==True:
@@ -482,7 +484,7 @@ def recordNow():
     os.mkdir(workDirectory)
     writeInLogs("- Begin recording at "+ str(datetime.datetime.now())+"\n")
     os.mkdir(workDirectory + "/screenshots")
-    if 1:
+    if sys.platform=="linux2":
         print "launching screenshot() thread from recordNow()"
         start_new_thread(screenshot,())    
     
@@ -688,7 +690,7 @@ def screenshot():
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
-            if sys.platform=="linux2":  
+            if 1:  
                 myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
                 #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
                 myscreen.thumbnail((256,192))
@@ -2176,7 +2178,7 @@ if __name__=="__main__":
     ## GUI Define
     app=wx.App(redirect=False)
     
-     # Create a default data audiovideocours folder if it doesn't exists
+    # Create a default data audiovideocours folder if it doesn't exists
     if sys.platform == 'win32':
         if os.path.isdir(os.environ["USERPROFILE"]+"\\audiovideocours"):
             print "Default user data exists at USERPROFILE\\audiovideocours : OK"
@@ -2220,7 +2222,7 @@ if __name__=="__main__":
     #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
     print "... recordingPlace = ", recordingPlace
     
-           # Set-up language
+    # Set-up language
     if language=="French":
         print "Setting French language..."
         langFr = gettext.translation('mediacours', "locale",languages=['fr'],codeset="iso-8859-1")
@@ -2321,7 +2323,6 @@ if __name__=="__main__":
         tbicon = wx.TaskBarIcon()
         tbicon.SetIcon(icon1, "VideoCours en attente")
     
-    
     if standalone==True:
         showVuMeter()
     
@@ -2331,8 +2332,9 @@ if __name__=="__main__":
         hosts="127.0.0.1"
     else:
         hosts="0.0.0.0"
-    if sys.platform!="darwin": 
+    if 1: 
         print "Launching integrated server with port", remotePort, "for hosts", hosts
+        remotePort=8080
         start_new_thread(goAVCremote,(remotePort,pathData,hosts))
        
     app.MainLoop()
