@@ -1,8 +1,7 @@
 #*****************************************************************************
 #
-#     THIS NOT A PRODUCTION FILE
-#     BUT HACKING TESTS (from the windows version) TO PREPARE FOR THE OS X version
-#     USING native Python 2.6 coming with Snow Leopard 
+#     Linux and OSX version of Audiovideocours
+#     Using Python 2.7 coming with OS X Lion 
 #
 #    (c) Universite de Strasbourg  2006-2011
 #     Conception and development : francois.schnell [AT] unistra.fr  
@@ -27,6 +26,7 @@
 __version__="1.22"
 
 ## Python import (base Python 2.4)
+
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
 import subprocess, socket, traceback, webbrowser
 #import winsound # windows libs
@@ -35,6 +35,8 @@ from urllib2 import urlopen
 from os import chdir
 from ftplib import FTP
 
+if False:
+    import wx
 ## External Python libs import
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
@@ -680,7 +682,7 @@ def screenshot():
             t = time.time()
             diaId += 1
             if sys.platform=="darwin":
-                os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
+                os.system("screencapture -t jpg "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
                 #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
             if sys.platform=="linux2":
                 os.system("scrot "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
