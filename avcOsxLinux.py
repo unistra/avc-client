@@ -28,6 +28,11 @@ __version__="1.22"
 ## Python import (base Python 2.4)
 
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
+
+if sys.platform=="darwin":
+    # To enable AppleScript launch:
+    os.chdir(os.path.expanduser("~/Documents/workspace/audiovideocours/")) 
+    
 import subprocess, socket, traceback, webbrowser
 #import winsound # windows libs
 from thread import start_new_thread, exit
@@ -47,6 +52,7 @@ if sys.platform =="darwin":
     from PIL import GifImagePlugin  # Python Imaging Lib
     from PIL import JpegImagePlugin # Static imports from PIL for py2exe
     from PIL import Image
+    from AppKit import NSBeep
     #from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
     #import pymedia.audio.sound as sound # for mp3 or ogg encoding
     #import pymedia.audio.acodec as acodec
@@ -345,7 +351,9 @@ def stopFromKBhook():
     print "In stopFromKBhook order frameEndShow() now"
     wx.CallAfter(frameEndShow)
     
-    #frameEndShow()
+    if sys.platform=="darwin":
+        #frameEndShow()
+        print "."
     print ">> In stopFromKBhook order frameEndShow() passed"
       
     if 0:
@@ -476,6 +484,7 @@ def recordNow():
     # Audio cue to confirm recording state
     if sys.platform=="win32":
         winsound.Beep(800,100)
+
     diaId = 0 # initialize screenshot number and time
     t0 = time.time() 
     dateTime0 = datetime.datetime.now()
@@ -1261,6 +1270,8 @@ def htmlGen():
     diaArray=diaArray[:-1]+")"
     if usage=="audio":
         media="enregistrement-micro.mp3"
+        if sys.platform=="darwin":
+            media="enregistrement-micro.flv"
         playerHeight="20"
         delayMediaSlides=0
     else:
@@ -2288,7 +2299,23 @@ if __name__=="__main__":
     def frameEndShow():
         global frameEnd
         frameEnd.Show()
-        
+        frameEnd.RequestUserAttention()
+        NSBeep()
+        time.sleep(0.3)
+        NSBeep()
+        print ">>>>>>>>>>>", frameEnd.IsShownOnScreen(), str(frameEnd.FindFocus())
+        if 0:
+            for i in range(50):
+                if frameEnd.FindFocus()==None:
+                    time.sleep(0.2)
+                    print "*"
+                    frameEnd.RequestUserAttention()
+        #start_new_thread(frameEndShow,())
+        #frameEnd.SetFocus()
+        #frameEnd.Raise()
+        #frameEnd.UpdateWindowUI()
+        #frameEnd.MoveXY(100,500)
+            
     def exitAVC():
         print "In exitAVC in main thread" 
         #os.kill(str(os.getpid()),signal.SIGKILL)
@@ -2311,14 +2338,18 @@ if __name__=="__main__":
     
     def onTaskbarActivate():
         print ">>>>> yes my lord?"
+    
     print "setting up icons"    
     if usage=="audio" and sys.platform in("win32","darwin"):
+        print ">>> Setting up TaskBarIcon"
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
         tbicon = wx.TaskBarIcon()
-        print "setting up binding for left click event"
+        #print "setting up binding for left click event"
         #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
         tbicon.SetIcon(icon1, "AudioCours en attente")
+        #print dir(tbicon)
+        #print dir(frameBegin)
     if usage=="video":
         icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
