@@ -52,7 +52,7 @@ if sys.platform =="darwin":
     from PIL import GifImagePlugin  # Python Imaging Lib
     from PIL import JpegImagePlugin # Static imports from PIL for py2exe
     from PIL import Image
-    from AppKit import NSBeep
+    from AppKit import NSBeep,NSApp,NSApplication
     #from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
     #import pymedia.audio.sound as sound # for mp3 or ogg encoding
     #import pymedia.audio.acodec as acodec
@@ -2303,14 +2303,21 @@ if __name__=="__main__":
         NSBeep()
         time.sleep(0.3)
         NSBeep()
-        print ">>>>>>>>>>>", frameEnd.IsShownOnScreen(), str(frameEnd.FindFocus())
-        if 0:
-            for i in range(50):
-                if frameEnd.FindFocus()==None:
-                    time.sleep(0.2)
-                    print "*"
-                    frameEnd.RequestUserAttention()
-        #start_new_thread(frameEndShow,())
+        def bounceDock():
+            #print ">>>>>>>>>>>", frameEnd.IsShownOnScreen(), str(frameEnd.FindFocus())
+            if 1:
+                for i in range(50):
+                    if frameEnd.FindFocus()==None:
+                        time.sleep(0.1)
+                        #print "*"
+                        frameEnd.RequestUserAttention()
+        def go_foreground():
+            NSApplication.sharedApplication()
+            NSApp().activateIgnoringOtherApps_(True)
+            
+        go_foreground()
+        start_new_thread(bounceDock,())
+        
         #frameEnd.SetFocus()
         #frameEnd.Raise()
         #frameEnd.UpdateWindowUI()
