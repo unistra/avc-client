@@ -701,14 +701,17 @@ def screenshot():
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
-            if 1:  
+            if sys.platform=="linux2":  
                 myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
                 #myscreen= Image.open(workDirectory+"/screenshots/" + 'D'+ str(diaId-1)+'.png')
                 myscreen.thumbnail((256,192))
                 #print "WARNING: must see how to avoid this error when creating jpg thumbs, png work fine for now"
                 myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.jpg')
                 #myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb'+'.png')
-            
+            if sys.platform=="darwin":
+                print "Creating thumb with sips"
+                os.system("sips -z 192 256 "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg --out '+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'-thumb.jpg')
+                
         if live==True and ftpHandleReady:
             time.sleep(3) # in live mode add a tempo to have the current dia (after an eventual transition)
             #if 1:
@@ -1288,7 +1291,8 @@ def htmlGen():
     file=open(workDirectory+"/recording.html",'w')
     file.write(htmlBits.head)
     file.write(htmlVars)
-    file.write(htmlBits.tail(delayMediaSlides=delayMediaSlides))
+    message="<blink><p> Mac: Ecoute audio possible que via publication sur le serveur</p></blink>"
+    file.write(htmlBits.tail(delayMediaSlides=delayMediaSlides,message=message))
     file.close()
     
     ## copy third party script in a "thirdparty" folder
@@ -1539,7 +1543,10 @@ class BeginFrame(wx.Frame):
         if standalone==True:
             menubar=wx.MenuBar()
             menuInformation=wx.Menu()
-            menubar.Append(menuInformation,"Informations")
+            if sys.platform=="darwin":
+                menubar.Append(menuInformation,"Audiovideocours-Informations")
+            else:
+                menubar.Append(menuInformation,"Informations")    
             help=menuInformation.Append(wx.NewId(),_("Help"))
             conf=menuInformation.Append(wx.NewId(),_("Configuration"))
             version=menuInformation.Append(wx.NewId(),"Version")
@@ -2184,8 +2191,9 @@ def recoverFileOrFolder(name,pathData, ftpUrl,ftpLogin,ftpPass):
 if __name__=="__main__":
 
     # Check if another instance is already launched and kill it if it exist
-    kill_if_double()
-    time.sleep(1)#delay to be sure serial port is free if just killed a double?
+    if sys.platform=="win32":
+        kill_if_double()
+        time.sleep(1)#delay to be sure serial port is free if just killed a double?
     
     app_startup_date=getTime()
     ## GUI Define
@@ -2198,12 +2206,18 @@ if __name__=="__main__":
         else: 
             print "Creating default data folter in USERPROFILE\\audiovideocours"
             os.mkdir(os.environ["USERPROFILE"]+"\\audiovideocours")
-    if sys.platform == 'darwin' or 'linux2':
+    if sys.platform == 'linux2':
         if os.path.isdir(os.path.expanduser("~/audiovideocours")): 
             print "Default user data exists in ~/audiovideocours"
         else: 
             print "Creating default data folter in ~/audiovideocours"
             os.mkdir(os.path.expanduser("~/audiovideocours"))
+    if sys.platform == 'darwin':
+        if os.path.isdir(os.path.expanduser("~/audiovideocours-enregistrements")): 
+            print "Default user data exists in ~/audiovideocours-enregistrements"
+        else: 
+            print "Creating default data folter in ~/audiovideocours-enregistrements"
+            os.mkdir(os.path.expanduser("~/audiovideocours-enregistrements"))        
                    
         confFileReport=""    
         # Check if a configuration file exist in USERPROFILE
@@ -2221,7 +2235,7 @@ if __name__=="__main__":
                 dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
                                         caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
-        if sys.platform == 'darwin' or 'linux2':
+        if sys.platform =='linux2' or 'darwin':
             if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
                 print "Found and using configuration file in ~/audiovideocours"
                 readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
@@ -2230,6 +2244,7 @@ if __name__=="__main__":
                 dialog=wx.MessageDialog(None,message="No configuration file found in ~/audiovideocours",
                                         caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
+        
     # Automatically detect IP of the recoriding place
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
     #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
@@ -2247,6 +2262,8 @@ if __name__=="__main__":
             pathData=os.environ["USERPROFILE"]+"\\audiovideocours"
         if sys.platform == 'darwin' or 'linux2':
             pathData=os.path.expanduser("~/audiovideocours")
+        if sys.platform == 'darwin':
+            pathData=os.path.expanduser("~/audiovideocours-enregistrements")    
         print "pathData=None => PathData is now ", pathData
         writeInLogs(confFileReport)
     
@@ -2326,7 +2343,10 @@ if __name__=="__main__":
     def exitAVC():
         print "In exitAVC in main thread" 
         #os.kill(str(os.getpid()),signal.SIGKILL)
-        os.system("kill "+str(os.getpid()))  
+        if sys.platform!="darwin":
+            os.system("kill "+str(os.getpid()))
+        else:
+            sys.exit()
         
     #frameEnd.Bind(wx.EVT_END_SESSION,onEndSession)
     #frameEnd.Show()

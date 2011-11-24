@@ -63,7 +63,7 @@ head= """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <script>    
 """
-def tail(delayMediaSlides=0):
+def tail(delayMediaSlides=0,message=""):
     """ Returns HTML tails depending on arguments (delay for media/slides)"""
     tail="""
         // a global reference to the JW Player
@@ -149,7 +149,6 @@ def tail(delayMediaSlides=0):
     <p style="color:white; background-color: #CC0000; text-align:center;padding: 5px; border: 1px solid black; "> 
     Pr&eacute;visualisation des m&eacute;dias avant publication et mise en forme. 
     Appuyez sur le bonton "publier" du logiciel client AudioVideoCours si vous souhaitez mettre en ligne cet enregistrement.</p>
-    
         <div id="media">
         <!-- <embed  src="player.swf"  id="flashvideo" name="flashvideo" /> -->
         <a href="http://www.macromedia.com/go/getflashplayer">Get the Flash Player</a> to see this player.
@@ -168,6 +167,7 @@ def tail(delayMediaSlides=0):
          <p id="thumbInfo"></p>
         </div>
         <div id="description">
+        """+message+"""
         </div>
         </div>
         
