@@ -40,19 +40,20 @@ from urllib2 import urlopen
 from os import chdir
 from ftplib import FTP
 
-if False:
-    import wx
 ## External Python libs import
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
 import cherrypy
+
 if sys.platform =="darwin":
+    from AppKit import NSBeep,NSApp,NSApplication
+if 0:
     import PIL
     from PIL import GifImagePlugin  # Python Imaging Lib
     from PIL import JpegImagePlugin # Static imports from PIL for py2exe
     from PIL import Image
-    from AppKit import NSBeep,NSApp,NSApplication
+    
     #from PIL import ImageGrab   #Used for taking screenshots but only works on Windows (will use built in screencapture in OS X) 
     #import pymedia.audio.sound as sound # for mp3 or ogg encoding
     #import pymedia.audio.acodec as acodec
@@ -244,7 +245,7 @@ previewPlayer="realplayer"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     "FTP login for publishing and live screenshots"
-    ftpPass=""
+    ftpPass=""  
     "FTP password for publishing and live screenshots"
     
 #------- i18n settings ------------------------------------------------------------------
