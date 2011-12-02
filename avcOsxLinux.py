@@ -3,7 +3,7 @@
 #     Linux and OSX version of Audiovideocours
 #     Using Python 2.7 coming with OS X Lion 
 #
-#    (c) Universite de Strasbourg  2006-2011
+#    (c) Universite de Strasbourg  2006-2012
 #     Conception and development : francois.schnell [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
