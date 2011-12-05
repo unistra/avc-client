@@ -1292,7 +1292,10 @@ def htmlGen():
     file=open(workDirectory+"/recording.html",'w')
     file.write(htmlBits.head)
     file.write(htmlVars)
-    message="<blink><p> Mac: Ecoute audio possible que via publication sur le serveur</p></blink>"
+    if sys.platform=="darwin":
+        message="<blink><p> Mac: Ecoute audio possible que via publication sur le serveur</p></blink>"
+    else:
+        message=""
     file.write(htmlBits.tail(delayMediaSlides=delayMediaSlides,message=message))
     file.close()
     
@@ -2220,31 +2223,31 @@ if __name__=="__main__":
             print "Creating default data folter in ~/audiovideocours-enregistrements"
             os.mkdir(os.path.expanduser("~/audiovideocours-enregistrements"))        
                    
-        confFileReport=""    
-        # Check if a configuration file exist in USERPROFILE
-        # otherwise search for one in ALLUSERPROFILE
-        print "searching for a configuration file"
-        if sys.platform == 'win32':
-            if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-                print "Found and using configuration file in USERPROFILE\\audiovideocours"
-                readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
-            elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
-                print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
-                readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
-            else:
-                print "No configuration file found"
-                dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
-                                        caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
-                dialog.ShowModal()
-        if sys.platform =='linux2' or 'darwin':
-            if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
-                print "Found and using configuration file in ~/audiovideocours"
-                readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
-            else:
-                print "No configuration file found"
-                dialog=wx.MessageDialog(None,message="No configuration file found in ~/audiovideocours",
-                                        caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
-                dialog.ShowModal()
+    confFileReport=""    
+    # Check if a configuration file exist in USERPROFILE
+    # otherwise search for one in ALLUSERPROFILE
+    print "searching for a configuration file"
+    if sys.platform == 'win32':
+        if os.path.isfile(os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+            print "Found and using configuration file in USERPROFILE\\audiovideocours"
+            readConfFile(confFile=os.environ["USERPROFILE"]+"\\audiovideocours\\mediacours.conf")
+        elif os.path.isfile(os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf"):
+            print "Found and using configuration file in ALLUSERSPROFILE\\audiovideocours"
+            readConfFile(confFile=os.environ["ALLUSERSPROFILE"]+"\\audiovideocours\\mediacours.conf")
+        else:
+            print "No configuration file found"
+            dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
+                                    caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+    if sys.platform =='linux2' or 'darwin':
+        if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
+            print "Found and using configuration file in ~/audiovideocours"
+            readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
+        else:
+            print "No configuration file found"
+            dialog=wx.MessageDialog(None,message="No configuration file found in ~/audiovideocours",
+                                    caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
         
     # Automatically detect IP of the recoriding place
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
@@ -2318,23 +2321,23 @@ if __name__=="__main__":
         global frameEnd
         frameEnd.Show()
         frameEnd.RequestUserAttention()
-        NSBeep()
-        time.sleep(0.3)
-        NSBeep()
-        def bounceDock():
-            #print ">>>>>>>>>>>", frameEnd.IsShownOnScreen(), str(frameEnd.FindFocus())
-            if 1:
-                for i in range(50):
-                    if frameEnd.FindFocus()==None:
-                        time.sleep(0.1)
-                        #print "*"
-                        frameEnd.RequestUserAttention()
-        def go_foreground():
-            NSApplication.sharedApplication()
-            NSApp().activateIgnoringOtherApps_(True)
-            
-        go_foreground()
-        start_new_thread(bounceDock,())
+        if sys.platform=="darwin":
+            NSBeep()
+            time.sleep(0.3)
+            NSBeep()
+            def bounceDock():
+                #print ">>>>>>>>>>>", frameEnd.IsShownOnScreen(), str(frameEnd.FindFocus())
+                if 1:
+                    for i in range(50):
+                        if frameEnd.FindFocus()==None:
+                            time.sleep(0.1)
+                            #print "*"
+                            frameEnd.RequestUserAttention()
+            def go_foreground():
+                NSApplication.sharedApplication()
+                NSApp().activateIgnoringOtherApps_(True)
+            go_foreground()
+            start_new_thread(bounceDock,())
         
         #frameEnd.SetFocus()
         #frameEnd.Raise()
