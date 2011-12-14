@@ -146,8 +146,8 @@ class mainFrame(wx.Frame):
                     os.mkdir(self.recordingPath+"/p"+str(i))
                 except:
                     pass
-                print "- making a copy of p"+str(i)+".mp3 file in his new folder and renaming"
-                os.system('copy "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
+                print "- moving p"+str(i)+".mp3 file in his new folder and renaming"
+                os.system('move "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
                                           self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"))
                 print "- renaming mp3 file to enregistrement-micro.mp3"
                 print "- making screenshot folder"

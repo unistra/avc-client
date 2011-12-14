@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.22"
+__version__="1.23"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1119,7 +1119,7 @@ def htmlGen():
     os.mkdir(workDirectory+"\\thirdparty")
     shutil.copyfile("thirdparty\\player.swf",workDirectory+"\\thirdparty\\player.swf")
     shutil.copyfile("thirdparty\\swfobject.js",workDirectory+"\\thirdparty\\swfobject.js")
-    shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
+    #shutil.copyfile("thirdparty\\JSFX_ImageZoom.js",workDirectory+"\\thirdparty\\JSFX_ImageZoom.js")
     shutil.copyfile("thirdparty\\README.txt",workDirectory+"\\thirdparty\\README.txt")
                   
 def useBrowser(what=""):
@@ -1998,7 +1998,7 @@ class cutToolFrame(wx.Frame):
         Constructor, GUI setting up.
         """
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(600, 300),
+                          pos=(150, 150), size=(600, 600),
                           style=wx.DEFAULT_FRAME_STYLE)  
         # vars
         self.recordingPath=""
@@ -2008,16 +2008,23 @@ class cutToolFrame(wx.Frame):
         
         # widgets
         panel=wx.Panel(self)
-        btnOriginal= wx.Button(panel, -1, "Select original folder")
+        labelIntro=wx.StaticText(panel,-1,"Outil de decoupe d'un enregistrement Audiocours sous windows")
+        btnOriginal= wx.Button(panel, -1, "Selection du dossier enregistrement audiocours")
         self.entryOriginal= wx.TextCtrl(panel, -1,"", size=(500,-1))
-        labelCuts=wx.StaticText(panel,-1,"Enter time cues for cuts: hh:mm:ss separated with ; for example: 00.00.33;00.01.36;00.02.32")
+        labelCuts=wx.StaticText(panel,-1,"Instants de decoupe au format hh:mm:ss, example: 00.00.33;00.01.36;00.02.32")
         
         self.entryCue1=wx.TextCtrl(panel, -1,"", size=(100,-1))
         self.entryCue2=wx.TextCtrl(panel, -1,"", size=(100,-1))
         self.entryCue3=wx.TextCtrl(panel, -1,"", size=(100,-1))
         self.entryCue4=wx.TextCtrl(panel, -1,"", size=(100,-1))
         self.entryCue5=wx.TextCtrl(panel, -1,"", size=(100,-1))
-        btnCut= wx.Button(panel, -1, "<<<   Cut and process!   >>>")
+        
+        # Output text console
+        self.consoleEntry=wx.TextCtrl(panel,style=wx.TE_MULTILINE | wx.HSCROLL)
+        self.consoleEntry.SetBackgroundColour('black')
+        self.consoleEntry.SetForegroundColour('white')
+                                              
+        btnCut= wx.Button(panel, -1, "<<<   Couper et calculer!   >>>")
         
         #bindings
         self.Bind(wx.EVT_BUTTON, self.findFolder, btnOriginal)
@@ -2030,6 +2037,7 @@ class cutToolFrame(wx.Frame):
 
         # layout
         vbox=wx.BoxSizer(wx.VERTICAL)   
+        vbox.Add(labelIntro,0,wx.ALIGN_CENTER|wx.ALL,border=10)
         vbox.Add(btnOriginal,0,wx.ALIGN_CENTER|wx.ALL,border=10)
         vbox.Add(self.entryOriginal,0,wx.ALIGN_CENTER|wx.ALL,border=5)
         vbox.Add(labelCuts,0,wx.ALIGN_CENTER|wx.ALL,border=2)
@@ -2039,17 +2047,27 @@ class cutToolFrame(wx.Frame):
         vbox.Add(self.entryCue4,0,wx.ALIGN_CENTER|wx.ALL,border=2)
         vbox.Add(self.entryCue5,0,wx.ALIGN_CENTER|wx.ALL,border=2)
         vbox.Add(btnCut,0,wx.ALIGN_CENTER|wx.ALL,border=10)
+        vbox.Add(self.consoleEntry,proportion=1,flag=wx.EXPAND | wx.ALL, border=10)
         panel.SetSizer(vbox)
-        
         self.Show(True)     
+        self.writeConsole("Please select a recording folder to process and indicate cutting times")
+    
+    def writeConsole(self,text):
+        "Write in Console precedte by date-time"
+        self.consoleEntry.AppendText("\n["+getTime()+"] "+text)
     
     def findFolder(self,evt):  
         """ select original recording folder """
         openDir=wx.DirDialog(self)
+        if pathData=="":
+            pathData==os.getcwd()
+        openDir.SetPath(pathData)
         openDir.ShowModal()
         self.recordingPath=openDir.GetPath()
         print self.recordingPath
+        self.writeConsole("- Folder selected "+self.recordingPath)
         self.entryOriginal.SetValue(self.recordingPath)
+        self.baseFolder=os.path.basename(self.recordingPath)
         
     def process(self,evt): 
         """ process and cut """
@@ -2069,6 +2087,7 @@ class cutToolFrame(wx.Frame):
         print "- Cut times defined by the user:"
         print self.cutTimes
         print "- reading timecode file..."
+        self.writeConsole("- Cut times defined by user: "+str(self.cutTimes)+"\n")
         f_global_timecode=open(self.recordingPath+"\\timecode.csv")
         global_times=f_global_timecode.read().split("\n")[:-1]
         print ">>> ---",global_times
@@ -2091,6 +2110,7 @@ class cutToolFrame(wx.Frame):
             print "cutEnd:",cutEnd
             mp3ToCut=self.recordingPath+"\\enregistrement-micro.mp3"
             print "mp3ToCut: ",mp3ToCut
+            self.writeConsole("- cutting original mp3")
             mp3Output="p"+str(cutIndex+1)+".mp3"
             print "mp3Output: ",mp3Output
             os.system('mp3splt.exe "%s" %s %s -d "%s" -o %s ' \
@@ -2100,14 +2120,16 @@ class cutToolFrame(wx.Frame):
         for i in [1,2,3,4,5]:
                 
             if os.path.isfile(self.recordingPath+"/p"+str(i)+".mp3"):
+                self.consoleEntry.AppendText("\n- processing new sub recording")
                 print "- found a p"+str(i)+".mp3 file"
                 print "- creating folder p"+str(i)
+                self.writeConsole("- creating folder p"+str(i)+"\n")
                 try:
                     os.mkdir(self.recordingPath+"/p"+str(i))
                 except:
                     pass
-                print "- making a copy of p"+str(i)+".mp3 file in his new folder and renaming"
-                os.system('copy "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
+                print "- moving a copy of p"+str(i)+".mp3 file in his new folder and renaming"
+                os.system('move "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
                                           self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"))
                 print "- renaming mp3 file to enregistrement-micro.mp3"
                 print "- making screenshot folder"
@@ -2123,6 +2145,7 @@ class cutToolFrame(wx.Frame):
                 diaIDglob=1
                 diaIDtrack=1
                 for j in global_times:
+                    self.consoleEntry.AppendText("*")
                     if (float(j)< self.cutTimes[i]) and (float(j)> self.cutTimes[i-1]):
                         print ">>> "+str(j)
                         if i>1 and diaIDtrack==1:
@@ -2152,7 +2175,17 @@ class cutToolFrame(wx.Frame):
                     diaIDglob+=1       
                 timecodeFile.close()
                 smil.smilEnd("audio")
+                global workDirectory
+                workDirectory= self.recordingPath+"/p"+str(i)
+                htmlGen()
+                #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),os.path.basename(self.recordingPath)+"/pp"+str(i)+"-"+self.baseFolder))
+                #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"p"+str(i)+"-"+self.baseFolder))
+                os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)))
+                print "moving to --> ", self.recordingPath+"-p"+str(i)
+                #print "attempting to  :", 'move %s %s' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)+"-"+self.baseFolder)
+                
         print "Finished processing!"
+        self.writeConsole("- Finished processing!\n")
                                
     def time_in_seconds(self,time="00.00.00"):
         """ Returns integer seconds from hh:mm:ss format"""
@@ -2210,7 +2243,7 @@ if __name__=="__main__":
                                 caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
     
-    # Automatically detect IP of the recoriding place
+    # Automatically detect IP of the recording place
     recordingPlace=socket.gethostbyname(socket.gethostname()).replace(".","_")
     #recordingPlace=socket.gethostbyaddr(socket.gethostname()) #gives also the litteral hostname (list)
     print "... recordingPlace = ", recordingPlace
