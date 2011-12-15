@@ -2088,7 +2088,10 @@ class cutToolFrame(wx.Frame):
         print self.cutTimes
         print "- reading timecode file..."
         self.writeConsole("- Cut times defined by user: "+str(self.cutTimes)+"\n")
-        f_global_timecode=open(self.recordingPath+"\\timecode.csv")
+        try:
+            f_global_timecode=open(self.recordingPath+"\\timecode.csv")
+        except:
+            self.writeConsole("- Warning : This is not a valid recorging folder. Processing stopped. \n")
         global_times=f_global_timecode.read().split("\n")[:-1]
         print ">>> ---",global_times
         print "- global time code:"
