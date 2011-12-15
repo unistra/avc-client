@@ -2116,8 +2116,11 @@ class cutToolFrame(wx.Frame):
             self.writeConsole("- cutting original mp3")
             mp3Output="p"+str(cutIndex+1)+".mp3"
             print "mp3Output: ",mp3Output
-            os.system('mp3splt.exe "%s" %s %s -d "%s" -o %s ' \
-            % (mp3ToCut,cutBegin,cutEnd,self.recordingPath,mp3Output))
+            #os.system('thirdparty\mp3splt.exe "%s" %s %s -d "%s" -o %s ' \
+            #% (mp3ToCut,cutBegin,cutEnd,self.recordingPath,mp3Output))
+            # warning !!! above commmand open dos window on the exe, try something like subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
+            subprocess.Popen(["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output])
+            print ["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output]
             cutIndex+=1
                 
         for i in [1,2,3,4,5]:

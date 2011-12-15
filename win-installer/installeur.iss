@@ -94,6 +94,7 @@ Source: ..\locale\fr\LC_MESSAGES\mediacours.po; DestDir:{app}\locale\fr\LC_MESSA
 Source: ..\thirdparty\player.swf; DestDir:{app}\thirdparty
 Source: ..\thirdparty\swfobject.js; DestDir:{app}\thirdparty
 Source: ..\thirdparty\README.txt; DestDir:{app}\thirdparty
+Source: ..\thirdparty\mp3splt.exe; DestDir:{app}\thirdparty
 ;Source: ..\thirdparty\JSFX_ImageZoom.js; DestDir:{app}\thirdparty
 
 [Run]
