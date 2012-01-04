@@ -2071,6 +2071,7 @@ class cutToolFrame(wx.Frame):
         
     def process(self,evt): 
         """ process and cut """
+        print ">>> In process..."
         self.cutTimes=[]
         self.cutTimes.append(0)
         # get cut times
@@ -2087,7 +2088,7 @@ class cutToolFrame(wx.Frame):
         print "- Cut times defined by the user:"
         print self.cutTimes
         print "- reading timecode file..."
-        self.writeConsole("- Cut times defined by user: "+str(self.cutTimes)+"\n")
+        self.writeConsole("- Cut times defined by user: "+str(self.cutTimes))
         try:
             f_global_timecode=open(self.recordingPath+"\\timecode.csv")
         except:
@@ -2101,7 +2102,6 @@ class cutToolFrame(wx.Frame):
             global_times[ix]=round(float(x),2)
             ix+=1
         print global_times
-        
         #cut main mp3 file into tracks p1.mp3, p2.mp3, etc
         totalTracks=len(self.cutTimes)-1
         print "totalTracks:",str(totalTracks)
@@ -2122,77 +2122,106 @@ class cutToolFrame(wx.Frame):
             subprocess.Popen(["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output])
             print ["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output]
             cutIndex+=1
-                
-        for i in [1,2,3,4,5]:
-                
-            if os.path.isfile(self.recordingPath+"/p"+str(i)+".mp3"):
-                self.consoleEntry.AppendText("\n- processing new sub recording")
-                print "- found a p"+str(i)+".mp3 file"
-                print "- creating folder p"+str(i)
-                self.writeConsole("- creating folder p"+str(i)+"\n")
-                try:
+            #self.consoleEntry.AppendText("\n- DEBUG:"+self.recordingPath+"\\p"+str(i)+".mp3")
+            print "sleeping 2 sec to be sure mp3splt is finished"
+            time.sleep(2) 
+        def makeNewRec():   
+            for i in [1,2,3,4,5]:
+                print "checking for",  self.recordingPath+"/p"+str(i)+".mp3"
+                if os.path.isfile(self.recordingPath+"/p"+str(i)+".mp3"):
+                    self.consoleEntry.AppendText("\n- processing new sub recording")
+                    print "- found a p"+str(i)+".mp3 file"
+                    print "- creating folder p"+str(i)
+                    self.writeConsole("- creating folder p"+str(i)+"\n")
                     os.mkdir(self.recordingPath+"/p"+str(i))
-                except:
-                    pass
-                print "- moving a copy of p"+str(i)+".mp3 file in his new folder and renaming"
-                os.system('move "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
-                                          self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"))
-                print "- renaming mp3 file to enregistrement-micro.mp3"
-                print "- making screenshot folder"
-                try:
-                    os.mkdir(self.recordingPath+"\\p"+str(i)+"\\screenshots")
-                except:
-                    pass
-                #create a smile file for this track
-                smil=SmilGen("audio",self.recordingPath+"\\p"+str(i)+"\\")
-                #create a timecode file for this track
-                timecodeFile=open(self.recordingPath+"\\p"+str(i)+"\\timecode.csv",'a')
-                print "Found slides for this track:"
-                diaIDglob=1
-                diaIDtrack=1
-                for j in global_times:
-                    self.consoleEntry.AppendText("*")
-                    if (float(j)< self.cutTimes[i]) and (float(j)> self.cutTimes[i-1]):
-                        print ">>> "+str(j)
-                        if i>1 and diaIDtrack==1:
-                            # Make a copy of the last slide in the previous track
-                            os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+".jpg",
-                                    self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
-                            os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+"-thumb.jpg",
-                                    self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
-                            # write time of this first slide
-                            timecodeFile.write("0.00"+"\n")
+                    print "- moving a copy of p"+str(i)+".mp3 file in his new folder and renaming"
+                    if 1:#original code but flickering problems of the console in exe GUI
+                        os.system('move "%s" "%s"' % (self.recordingPath+"\\p"+str(i)+".mp3",
+                                                  self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"))
+                    if 0:
+                        print ">>> source:",self.recordingPath+"\\p"+str(i)+".mp3"
+                        print ">>> destination:",self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"
+                        subprocess.Popen(["move","%s"% self.recordingPath+"\\p"+str(i)+".mp3","%s"%self.recordingPath+"\\p"+str(i)+"\\enregistrement-micro.mp3"])
+                    print "- renaming mp3 file to enregistrement-micro.mp3"
+                    print "- making screenshot folder"
+                    try:
+                        os.mkdir(self.recordingPath+"\\p"+str(i)+"\\screenshots")
+                    except:
+                        pass
+                    #create a smile file for this track
+                    smil=SmilGen("audio",self.recordingPath+"\\p"+str(i)+"\\")
+                    #create a timecode file for this track
+                    timecodeFile=open(self.recordingPath+"\\p"+str(i)+"\\timecode.csv",'a')
+                    print "Found slides for this track:"
+                    diaIDglob=1
+                    diaIDtrack=1
+                    for j in global_times:
+                        self.consoleEntry.AppendText("*")
+                        if (float(j)< self.cutTimes[i]) and (float(j)> self.cutTimes[i-1]):
+                            print ">>> "+str(j)
+                            if i>1 and diaIDtrack==1:
+                                # Make a copy of the last slide in the previous track
+                                if 1: #original code but flickering problems of the console in exe GUI
+                                    os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+".jpg",
+                                            self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
+                                    os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+"-thumb.jpg",
+                                            self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
+                                if 0:
+                                    subprocess.Popen(["copy","%s"%self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+".jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg"])
+                                    subprocess.Popen(["copy","%s"%self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+"-thumb.jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+"-thumb.jpg"])
+                                # write time of this first slide
+                                timecodeFile.write("0.00"+"\n")
+                                # write smil file
+                                smil.smilEvent("0.00",diaIDtrack)
+                                diaIDtrack+=1
+                                
+                            # Make a copy of the j slides and thumbnails  and rename
+                            if 1:#original code but flickering problems of the console in exe GUI
+                                os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+".jpg",
+                                        self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
+                                os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg",
+                                        self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
+                            if 0:
+                                subprocess.Popen(["copy","%s" % self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+".jpg","%s" % self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"])
+                                subprocess.Popen(["copy","%s" % self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg","%s" % self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"])
+                            # corrected time and write time code
+                            adjustedTime=j-float(self.cutTimes[i-1])
+                            timecodeFile.write(str(adjustedTime)+"\n")
                             # write smil file
-                            smil.smilEvent("0.00",diaIDtrack)
-                            diaIDtrack+=1
+                            smil.smilEvent(str(adjustedTime),diaIDtrack)
                             
-                        # Make a copy of the j slides and thumbnails  and rename
-                        os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+".jpg",
-                                self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
-                        os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg",
-                                self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
-                        # corrected time and write time code
-                        adjustedTime=j-float(self.cutTimes[i-1])
-                        timecodeFile.write(str(adjustedTime)+"\n")
-                        # write smil file
-                        smil.smilEvent(str(adjustedTime),diaIDtrack)
-                        
-                        diaIDtrack+=1
-                    diaIDglob+=1       
-                timecodeFile.close()
-                smil.smilEnd("audio")
-                global workDirectory
-                workDirectory= self.recordingPath+"/p"+str(i)
-                htmlGen()
-                #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),os.path.basename(self.recordingPath)+"/pp"+str(i)+"-"+self.baseFolder))
-                #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"p"+str(i)+"-"+self.baseFolder))
-                os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)))
-                print "moving to --> ", self.recordingPath+"-p"+str(i)
-                #print "attempting to  :", 'move %s %s' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)+"-"+self.baseFolder)
-                
-        print "Finished processing!"
-        self.writeConsole("- Finished processing!\n")
-                               
+                            diaIDtrack+=1
+                        diaIDglob+=1       
+                    timecodeFile.close()
+                    smil.smilEnd("audio")
+                    global workDirectory
+                    workDirectory= self.recordingPath+"/p"+str(i)
+                    try:
+                        htmlGen()
+                    except:
+                        self.consoleEntry.AppendText("\n- Error: p* foler may already exist, please delete before")
+                    #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),os.path.basename(self.recordingPath)+"/pp"+str(i)+"-"+self.baseFolder))
+                    #os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"p"+str(i)+"-"+self.baseFolder))
+                    print "moving to --> ", self.recordingPath+"-p"+str(i)
+                    if 0:#original code but flickering problems of the console in exe GUI
+                        os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)))
+                    if 0:
+                        subprocess.Popen(["move","%s"%self.recordingPath+"/p"+str(i),"%s"%self.recordingPath+"-p"+str(i)])
+                    if 0:
+                        subprocess.Popen(["move","p"+str(i),"..\p"+str(i)],shell=True, stdout=subprocess.PIPE)
+                    if 0:#screenshots folder empty :/ 
+                        shutil.copytree(self.recordingPath+"/p"+str(i), self.recordingPath+"-p"+str(i))
+                    #print "attempting to  :", 'move %s %s' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)+"-"+self.baseFolder)
+            self.writeConsole("- Moving new folders to Audiovideocorus data folder\n")
+            for i in [1,2,3,4,5]:
+                if os.path.exists(self.recordingPath+"/p"+str(i)):
+                    #subprocess.Popen(["move","%s"%self.recordingPath+"/p"+str(i),"%s"%self.recordingPath+"-p"+str(i)])
+                    os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),"%s"%self.recordingPath+"-p"+str(i)))
+            print "Finished processing!"
+            self.writeConsole("- Finished processing!\n")
+            self.writeConsole("- End\n") 
+        start_new_thread(makeNewRec,())   
+        #makeNewRec()
     def time_in_seconds(self,time="00.00.00"):
         """ Returns integer seconds from hh:mm:ss format"""
         t=time.split(".")
