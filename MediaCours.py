@@ -2072,6 +2072,7 @@ class cutToolFrame(wx.Frame):
     def process(self,evt): 
         """ process and cut """
         print ">>> In process..."
+        """
         self.cutTimes=[]
         self.cutTimes.append(0)
         # get cut times
@@ -2125,7 +2126,62 @@ class cutToolFrame(wx.Frame):
             #self.consoleEntry.AppendText("\n- DEBUG:"+self.recordingPath+"\\p"+str(i)+".mp3")
             print "sleeping 2 sec to be sure mp3splt is finished"
             time.sleep(2) 
+            """
         def makeNewRec():   
+            print ">>> In process..."
+            self.cutTimes=[]
+            self.cutTimes.append(0)
+            # get cut times
+            c1=self.entryCue1.GetValue()
+            c2=self.entryCue2.GetValue()
+            c3=self.entryCue3.GetValue()
+            c4=self.entryCue4.GetValue()
+            c5=self.entryCue5.GetValue()
+            if c1 != "": self.cutTimes.append(self.time_in_seconds(c1))
+            if c2 != "": self.cutTimes.append(self.time_in_seconds(c2))
+            if c3 != "": self.cutTimes.append(self.time_in_seconds(c3))
+            if c4 != "": self.cutTimes.append(self.time_in_seconds(c4))
+            if c5 != "": self.cutTimes.append(self.time_in_seconds(c5))
+            print "- Cut times defined by the user:"
+            print self.cutTimes
+            print "- reading timecode file..."
+            self.writeConsole("- Cut times defined by user: "+str(self.cutTimes))
+            try:
+                f_global_timecode=open(self.recordingPath+"\\timecode.csv")
+            except:
+                self.writeConsole("- Warning : This is not a valid recorging folder. Processing stopped. \n")
+            global_times=f_global_timecode.read().split("\n")[:-1]
+            print ">>> ---",global_times
+            print "- global time code:"
+            # 
+            ix=0
+            for x in global_times: 
+                global_times[ix]=round(float(x),2)
+                ix+=1
+            print global_times
+            #cut main mp3 file into tracks p1.mp3, p2.mp3, etc
+            totalTracks=len(self.cutTimes)-1
+            print "totalTracks:",str(totalTracks)
+            cutIndex=0
+            for tr in range(totalTracks):
+                cutBegin=self.time_in_ms(self.cutTimes[cutIndex])
+                print "cutBegin:",cutBegin
+                cutEnd=self.time_in_ms(self.cutTimes[cutIndex+1])
+                print "cutEnd:",cutEnd
+                mp3ToCut=self.recordingPath+"\\enregistrement-micro.mp3"
+                print "mp3ToCut: ",mp3ToCut
+                self.writeConsole("- cutting original mp3")
+                mp3Output="p"+str(cutIndex+1)+".mp3"
+                print "mp3Output: ",mp3Output
+                #os.system('thirdparty\mp3splt.exe "%s" %s %s -d "%s" -o %s ' \
+                #% (mp3ToCut,cutBegin,cutEnd,self.recordingPath,mp3Output))
+                # warning !!! above commmand open dos window on the exe, try something like subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
+                subprocess.Popen(["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output])
+                print ["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output]
+                cutIndex+=1
+                #self.consoleEntry.AppendText("\n- DEBUG:"+self.recordingPath+"\\p"+str(i)+".mp3")
+                print "sleeping 2 sec to be sure mp3splt is finished"
+                time.sleep(2) 
             for i in [1,2,3,4,5]:
                 print "checking for",  self.recordingPath+"/p"+str(i)+".mp3"
                 if os.path.isfile(self.recordingPath+"/p"+str(i)+".mp3"):
@@ -2161,14 +2217,16 @@ class cutToolFrame(wx.Frame):
                             print ">>> "+str(j)
                             if i>1 and diaIDtrack==1:
                                 # Make a copy of the last slide in the previous track
-                                if 1: #original code but flickering problems of the console in exe GUI
+                                if 0: #original code but flickering problems of the console in exe GUI
                                     os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+".jpg",
                                             self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
                                     os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob-1)+"-thumb.jpg",
                                             self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
-                                if 0:
-                                    subprocess.Popen(["copy","%s"%self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+".jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg"])
-                                    subprocess.Popen(["copy","%s"%self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+"-thumb.jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+"-thumb.jpg"])
+                                if 1:
+                                    #subprocess.Popen(["copy","%s"%self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+".jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg"])
+                                    shutil.copy(self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+".jpg",self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg")
+                                    #subprocess.Popen(["copy","%s"%(self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+"-thumb.jpg","%s"%self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+"-thumb.jpg")])
+                                    shutil.copy(self.recordingPath+"\screenshots\D"+str(diaIDglob-1)+"-thumb.jpg",self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+"-thumb.jpg")
                                 # write time of this first slide
                                 timecodeFile.write("0.00"+"\n")
                                 # write smil file
@@ -2176,14 +2234,20 @@ class cutToolFrame(wx.Frame):
                                 diaIDtrack+=1
                                 
                             # Make a copy of the j slides and thumbnails  and rename
-                            if 1:#original code but flickering problems of the console in exe GUI
+                            if 0:#original code but flickering problems of the console in exe GUI
                                 os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+".jpg",
                                         self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"))
                                 os.system('copy "%s" "%s"' % (self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg",
                                         self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"))
-                            if 0:
-                                subprocess.Popen(["copy","%s" % self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+".jpg","%s" % self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+".jpg"])
-                                subprocess.Popen(["copy","%s" % self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg","%s" % self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"])
+                            if 1:
+                                #copyfrom=self.recordingPath+"\screenshots\D"+str(diaIDglob)+".jpg"
+                                #copyto=self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg"
+                                #print "copyfrom:",copyfrom
+                                #print "copyto:",copyto
+                                #subprocess.Popen(["copy","%s" % self.recordingPath+"\screenshots\D"+str(diaIDglob)+".jpg","%s" % self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg"])
+                                shutil.copy(self.recordingPath+"\screenshots\D"+str(diaIDglob)+".jpg",self.recordingPath+"\p"+str(i)+"\screenshots\D"+str(diaIDtrack)+".jpg")
+                                #subprocess.Popen(["copy","%s" % self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg","%s" % self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg"])
+                                shutil.copy(self.recordingPath+"\\screenshots\\D"+str(diaIDglob)+"-thumb.jpg",self.recordingPath+"\\p"+str(i)+"\\screenshots\\D"+str(diaIDtrack)+"-thumb.jpg")
                             # corrected time and write time code
                             adjustedTime=j-float(self.cutTimes[i-1])
                             timecodeFile.write(str(adjustedTime)+"\n")
