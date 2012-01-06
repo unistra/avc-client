@@ -187,10 +187,17 @@ videoSource+"""
         """ Launch FMEcmd.exe with the given profile. """
         if sys.platform=="win32":
             winsound.Beep(500,50)
-            FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FME1='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FME2='C:/Program Files/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            if os.path.exists(FME1):
+                FME=FME1
+            if os.path.exists(FME2):
+                FME=FME2
+            else:
+                print "!!! No FME found !!!"
         if sys.platform=="darwin": 
             FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
-        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
         
         try:
             subprocess.Popen(["%s"%FME,"/d","/P",self.pathData+"/flv_startup.xml"])
@@ -206,8 +213,8 @@ videoSource+"""
                 except:
                     print "Couldn't find C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe"
                     caption="Audiovideocours Error Message"
-                    text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3.1\FMLEcmd.exe exists?"+\
-                    "\n If not install Flash Media Live Encoder 3.1" 
+                    text="Problem while launching Flash Media Encoder.\n\n Is C:\Program Files\Adobe\Flash Media Live Encoder 3.2\FMLEcmd.exe exists?"+\
+                    "\n If not install Flash Media Live Encoder 3.2" 
                     dialog=wx.MessageDialog(None,message=text,caption=caption,
                     style=wx.OK|wx.ICON_INFORMATION)
                     dialog.ShowModal()
@@ -228,10 +235,17 @@ videoSource+"""
         """Kill the FlashMediaEncoder"""
         print 'On windows ordering: FMLEcmd.exe /s "%s" ' % FMLEpid
         if sys.platform=="win32":
-            FME='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FME1='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FME2='C:/Program Files/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            if os.path.exists(FME1):
+                FME=FME1
+            if os.path.exists(FME2):
+                FME=FME2
+            else:
+                print "!!! No FME found !!!"
         if sys.platform=="darwin":
             FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
-        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
         except:
