@@ -189,15 +189,25 @@ videoSource+"""
             winsound.Beep(500,50)
             FME1='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
             FME2='C:/Program Files/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            FMEwin7_31='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FMEwin7_32='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
             if os.path.exists(FME1):
+                print ">>> Detected",FME1
                 FME=FME1
-            if os.path.exists(FME2):
+            elif os.path.exists(FME2):
+                print ">>> Detected",FME2
                 FME=FME2
+            elif os.path.exists(FMEwin7_31):
+                print ">>> Detected",FMEwin7_31
+                FME=FMEwin7_31
+            elif os.path.exists(FMEwin7_32):
+                print ">>> Detected",FMEwin7_32
+                FME=FMEwin7_32
             else:
                 print "!!! No FME found !!!"
         if sys.platform=="darwin": 
             FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
-        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
         
         try:
             subprocess.Popen(["%s"%FME,"/d","/P",self.pathData+"/flv_startup.xml"])
@@ -237,15 +247,21 @@ videoSource+"""
         if sys.platform=="win32":
             FME1='C:/Program Files/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
             FME2='C:/Program Files/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
+            FMEwin7_31='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.1/FMLEcmd.exe'
+            FMEwin7_32='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
             if os.path.exists(FME1):
                 FME=FME1
-            if os.path.exists(FME2):
+            elif os.path.exists(FME2):
                 FME=FME2
+            elif os.path.exists(FMEwin7_31):
+                FME=FMEwin7_31
+            elif os.path.exists(FMEwin7_32):
+                FME=FMEwin7_32
             else:
                 print "!!! No FME found !!!"
         if sys.platform=="darwin":
             FME='/Applications/Adobe/Flash Media Live Encoder 3.2/CommandLineFMLE/FMLECmd'
-        FMEwin7='C:/Program Files (x86)/Adobe/Flash Media Live Encoder 3.2/FMLEcmd.exe'
         try:
             subprocess.Popen(["%s"%FME,"/s","%s" % FMLEpid])
         except:
