@@ -1543,7 +1543,7 @@ class EndingFrame(wx.Frame):
         linkWebsite.SetFont(wx.Font(11, wx.SWISS, wx.NORMAL,wx.NORMAL, False,'Arial'))
         linkWebsite.SetForegroundColour("white")
         linkWebsite.SetColours("white", "white", "white")
-        textWeb=wx.StaticText(panel,-1, _("Pour publier sur le serveur, cliquez sur 'Publier' et remplissez \nle forumlaire dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
+        textWeb=wx.StaticText(panel,-1, _("Pour publier sur le serveur, cliquez sur 'Publier' et remplissez \nle formulaire dans le navigateur qui se lancera."),size=(400,-1),style=wx.ALIGN_CENTER)
         textWeb.SetForegroundColour("white")
             
         for label in [textTitle,textDescription,textLastname,textFirstname,textTraining,textCode,
