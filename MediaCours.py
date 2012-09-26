@@ -1,8 +1,8 @@
 #*****************************************************************************
 #
-#     MediaCours (Windows AudioVideoCours client and 'standalone' version)
-#
-#    (c) Universite de Strasbourg  2006-2011
+#     MediaCours (Windows AudioVideoCast client and 'standalone' version)
+#     Also known as Audiovideocours (previous name)
+#    (c) Universite de Strasbourg  2006-2012
 #     Conception and development : francois.schnell [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.23"
+__version__="1.25"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -1347,7 +1347,7 @@ class BeginFrame(wx.Frame):
         style=wx.DEFAULT_FRAME_STYLE ^ (wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
         
         favicon = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO, 16, 16)
-        statusMessage= " AudioVideoCours Version "+__version__
+        statusMessage= " AudioVideoCast Version "+__version__
         self.statusBar=self.CreateStatusBar()
         self.statusBar.SetStatusText(statusMessage)
         wx.Frame.SetIcon(self, favicon)
@@ -1435,10 +1435,10 @@ class BeginFrame(wx.Frame):
     
     def about(self,evt): 
         """An about message dialog"""
-        text="AudioVideoCours version "+__version__+"  \n\n"\
+        text="AudioVideoCast version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
-        "http://audiovideocours.u-strasbg.fr/"+"\n\n"\
-        +"(c) UDS 2007-2011"
+        "http://audiovideocast.unistra.fr/"+"\n\n"\
+        +"(c) UDS 2006-2012"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
@@ -1454,7 +1454,7 @@ class BeginFrame(wx.Frame):
         def launch():
             print "I'm in launch in help"
             try:
-                useBrowser(what="http://sites.google.com/site/audiovideocours/")
+                useBrowser(what="http://services-numeriques.unistra.fr/les-directions-du-numerique/")
                 #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
             except:
                 print "Couldn't open or find Aide_AudioCours_StandAlone.url"
@@ -1804,7 +1804,7 @@ class AVCremote:
 
     def index(self):
         global welcome
-        welcome="<p> ((( AudioVideoCours Client - Web Interface ))) </p> "
+        welcome="<p> ((( AudioVideoCast Client - Web Interface ))) </p> "
         welcome+="Recording now: "+str(recording)+" <br><br>"
         welcome+= "> client version : "+__version__+"</br>"
         welcome+= "> app_startup_date : "+app_startup_date+"</br>"
@@ -1879,7 +1879,7 @@ def goAVCremote(remPort=remotePort,pathData=pathData,hosts="127.0.0.1"):
          # My attempt to relaunch with another port number fail for now 
         # => display a dialog box to users in the meantime
         dialog=wx.MessageDialog(None,message="[French] Attention, le port 80 ou 8081 est deja occupe (Skype, serveur?), la lecture avant publication ne sera pas possible.\n\
-        Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration d'Audiovideocours.\n\n[English] Warning, port 80 or 8081 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
+        Arretez l'application utilisant ce port ou changez le numero de port dans le fichier de configuration.\n\n[English] Warning, port 80 or 8081 is already used (Skype? server?), preview reading before publication won't be possible.\nStop the application using this port or change port number in configuration file",
                                 caption="Port 80 ou 8081 non disponible, Port 80 or 8081 busy", style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
         print "!!! Couldn't launch integrated server at port "+str(remPort)+"!!!"

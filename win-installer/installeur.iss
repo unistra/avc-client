@@ -1,19 +1,19 @@
-; Install file for audiovideocours (mediacours.py)
+; Install file for audiovideocast - formely audiovideocours (mediacours.py)
 ; (C) Universtiy of Strasbourg - UDS
 ;  Developer : francois schnell
 
 
 [Setup]
-AppName=audiovideocours
-AppId=audiovideocours
-AppVerName=audiovideocours 1.22
-AppVersion=1.21
-AppPublisher=(C) ULP Multimedia 2006-2011
-AppPublisherURL=http://audiovideocours.u-strasbg.fr/
-AppSupportURL=http://audiovideocours.u-strasbg.fr/
-AppUpdatesURL=http://audiovideocours.u-strasbg.fr/
+AppName=audiovideocast
+AppId=audiovideocast
+AppVerName=audiovideocast 1.25
+AppVersion=1.24
+AppPublisher=(C) University of Strasbourg 2006-2012
+AppPublisherURL=http://www.unistra.fr
+AppSupportURL=http://www.unistra.fr
+AppUpdatesURL=http://www.unistra.fr
 DefaultDirName={pf}\AudioCours
-DefaultGroupName=AudioCours
+DefaultGroupName=AudioVideoCast
 LicenseFile=..\readme.txt
 OutputDir=Output
 ;PrivilegesRequired=admin

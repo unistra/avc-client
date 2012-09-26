@@ -1,6 +1,6 @@
 ﻿******************************************************************
-*         README - AUDIOVIDEOCOURS "client" and "standalone"
-*      (c) 2008/2012 - ULP Multimedia - University Louis Pasteur
+*         README - Audiovideocast (formely Audiovideocours)
+*          (c) 2008/2012 - University of Strasbourg
 ******************************************************************
 
 This program is distributed in the hope that it will be useful,
@@ -23,9 +23,6 @@ For each recording, a folder is created in your home folder, for example
 C:\documents and settings\yourlogin\audiovideocours\date-time\
 
 The default playback file is "recording.html".
-
-AudioVideoCours webiste:
-http://audiovideocours.u-strasbg.fr/avc/home
 
 AudioVideoCours developement (GNU GPL code):
 https://sourcesup.cru.fr/projects/audiovideocours/
