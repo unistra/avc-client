@@ -240,6 +240,11 @@ videoSource+"""
                     winsound.Beep(500,100)
                     time.sleep(0.2)
                 print "Couldn't find and minimize DOS window"
+                caption="Audiovideocours Error Message"
+                text="Impossible d'acceder a la source video ou Audio qui est peut-être déja en cours d'utilisation.\n Merci de redemarrer le PC puis de relancer l'enregistrement."
+                dialog=wx.MessageDialog(None,message=text,caption=caption,
+                style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
         
     def stop(self,FMLEpid):
         """Kill the FlashMediaEncoder"""

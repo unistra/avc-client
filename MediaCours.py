@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.25"
+__version__="1.26"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile

@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocast
 AppId=audiovideocast
-AppVerName=audiovideocast 1.25
-AppVersion=1.24
+AppVerName=audiovideocast 1.26
+AppVersion=1.26
 AppPublisher=(C) University of Strasbourg 2006-2012
 AppPublisherURL=http://www.unistra.fr
 AppSupportURL=http://www.unistra.fr
@@ -105,11 +105,11 @@ Name: Anglais; MessagesFile: compiler:Default.isl
 Name: Allemand; MessagesFile: compiler:Languages\German.isl
 
 [Icons]
-Name: {group}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours2.ico
-Name: {commondesktop}\AudioCours; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours1.ico
+Name: {group}\AudioVideoCast; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours2.ico
+Name: {commondesktop}\AudioVideoCast; Filename: {app}\mediacours.exe; WorkingDir: {app}; IconFilename: {app}\images\audiocours1.ico
 ;Name: {group}\Dossier Cours; Filename: {app}\Cours\local\Media
-Name: {group}\Site web audiovideocours; Filename: {app}\AudioVideoCours.url; WorkingDir: {app}
-Name: {group}\Desinstaller AudioVideoCours; Filename: {uninstallexe}; IconFilename: {app}\unins000.exe; WorkingDir: {app}
+Name: {group}\Site web Audiovideocast; Filename: {app}\AudioVideoCours.url; WorkingDir: {app}
+Name: {group}\Desinstaller AudioVideoCast; Filename: {uninstallexe}; IconFilename: {app}\unins000.exe; WorkingDir: {app}
 
 [Registry]
 
