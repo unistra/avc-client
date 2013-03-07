@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.26"
+__version__="1.27alpha"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -508,6 +508,12 @@ def recordNow():
             #FMLEpid=FMEprocess.pid
             FMLEpid=flvPath # FME use the full path of the flv not the pid...
             
+    def ffmpegAudioRecord():
+        """ Record mp3 using FFMPEG and liblamemp3 """
+        print "In ffmpegAudioRecord function"
+        cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
+        os.system(cmd)
+    
     def liveStream():
         """ Control VLC for *audio* live stream """
         global vlcPid,dirName
@@ -544,6 +550,9 @@ def recordNow():
         #Send the information that live is ON
         page = urlopen(urlLiveState,\
         "recordingPlace="+recordingPlace+"&status="+"begin")
+        print ">>>>>>>>>>>>>>>>>>>",urlLiveState
+        print ">>>>>>>>>>>>>>>>>>>",recordingPlace
+        
         if 0:#For Degub
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
@@ -2303,6 +2312,8 @@ class cutToolFrame(wx.Frame):
         if 1: print ">>> computed timeResult :",timeResult
         return timeResult
 
+
+    
 ## Start app
 if __name__=="__main__":
 
@@ -2390,6 +2401,34 @@ if __name__=="__main__":
     frameEnd.Show()
     frameEnd.Hide()
     #frameEnd.Show() # For debug
+    
+    # get audio inputs
+    def getAudioInputFfmpeg(pathData=pathData):
+        """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/) """
+        # ffmpeg.exe don't work with input number. It is necessary to get the name of the Direcshow input.
+        # also subprocess.Popen returns an empty string I therefore create the output in a file that i read just after
+        
+        # Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
+        os.system('ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData)
+        #Read back devices.txt
+        devices=[] # List of devices
+        audioIndex=1000
+        fd=open(pathData+"\devices.txt","r")
+        devicesList=fd.readlines()
+        fd.close()
+        for index,device in enumerate(devicesList):
+            if device.find("audio devices")>0:
+                audioIndex= int(index) 
+                print "Found 'audio devices' from Direcshow/ffmpeg, taking first device by default", audioIndex
+            if (index>audioIndex) and (device.find("exit")<0):
+                aDevice=device.split('"')[1]
+                print ">>>", aDevice
+                devices.append(aDevice)
+        print devices        
+        return devices
+    
+    if 0: # if True search for Directshow devices on windows via ffmpeg.exe
+        getAudioInputFfmpeg()
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
