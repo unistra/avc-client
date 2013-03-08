@@ -53,7 +53,11 @@ import htmlBits      # HTML chuncks for html format output
 #----------------------------------------------------------------------------------------
 
 ## Some default global variables in case no configuration file is found
-
+audioEncoder=False
+"""Choice of audio encoder (if any, otherwise False) """
+videoEncoder="flash"
+"""Choice of the videoencoder to use if usage=video
+'wmv' = Windows Media Encoder ; 'real'= Real producer """
 remoteControl=False
 "If True the client will also act as a mini server for maintenance purposes. Go to http://your-PC:port"
 remotePort="8080"
@@ -147,10 +151,6 @@ maxRecordingLength=18000
 usage="audio"
 "Usage ='audio' for audio and 'video' for video recording "
 "A generic access code"
-videoEncoder="wmv"
-"""Choice of the videoencoder to use if usage=video
-'wmv' = Windows Media Encoder ; 'real'= Real producer """
-
 smilBegin=""" <?xml version="1.0"?>
 <!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
 <smil xmlns="http://www.w3.org/2001/SMIL20/Language">
@@ -212,7 +212,7 @@ def readConfFile(confFile="mediacours.conf"):
     global confFileReport,id,urlserver,samplingFrequency,createMp3,stopKey,portNumber,pathData\
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
-    ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
+    ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
     ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer
     
@@ -241,6 +241,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"pathData") == True: pathData=readParam("pathData")
         if config.has_option(section,"standalone") == True: standalone=readParam("standalone")
         if config.has_option(section,"videoEncoder") == True: videoEncoder=readParam("videoEncoder")
+        if config.has_option(section,"audioEncoder") == True: audioEncoder=readParam("audioEncoder")
         if config.has_option(section,"urlserver") == True: urlserver=readParam("urlserver")
         if config.has_option(section,"samplingFrequency") == True: samplingFrequency=readParam("samplingFrequency")
         if config.has_option(section,"bitrate") == True: cparams['bitrate']=eval(readParam("bitrate"))
@@ -428,6 +429,18 @@ def recordNow():
             if recording == False:
                 snd.stop()
                 print "-- stopped recording now --"
+
+    def ffmpegAudioRecord():
+        """ Record mp3 using FFMPEG and liblamemp3 """
+        print "In ffmpegAudioRecord function"
+        audioFileOutput=workDirectory+"/"+nameRecord
+        #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
+        cmd=('ffmpeg -f dshow -i audio="'+audioinput+'" "%s"')%(audioFileOutput)
+        print "send cmd to DOS:", cmd
+        os.system(cmd)
+        
+    def ffmpegVideoRecord():
+         """Record video using FFMPEG """
         
     def windowsMediaEncoderRecord():
         """
@@ -507,12 +520,6 @@ def recordNow():
             #FMEprocess=flv.record()
             #FMLEpid=FMEprocess.pid
             FMLEpid=flvPath # FME use the full path of the flv not the pid...
-            
-    def ffmpegAudioRecord():
-        """ Record mp3 using FFMPEG and liblamemp3 """
-        print "In ffmpegAudioRecord function"
-        cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
-        os.system(cmd)
     
     def liveStream():
         """ Control VLC for *audio* live stream """
@@ -537,7 +544,9 @@ def recordNow():
             subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
     
     # Check for usage and engage recording
-    if usage=="audio":
+    if usage=="audio" and audioEncoder=="ffmpeg":
+        start_new_thread(ffmpegAudioRecord,())
+    else:
         start_new_thread(record,())
         
     if live==True:
@@ -691,6 +700,8 @@ def recordStop():
             print serverAnswer
     lastEvent=time.time()     
     #timecodeFile.close()
+    if usage=="audio" and audioEncoder=="ffmpeg":
+        os.popen("taskkill /F /IM  ffmpeg.exe")#stop MWE !
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
     if usage=="video" and videoEncoder=="real":
@@ -2312,7 +2323,47 @@ class cutToolFrame(wx.Frame):
         if 1: print ">>> computed timeResult :",timeResult
         return timeResult
 
-
+def getAudioVideoInputFfmpeg(pathData=pathData):
+        """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
+        Returns a list of two lists : [audioDevices,videoDevices]"""
+        
+        #ffmpeg.exe don't work with input number. It is necessary to get the name of the Direcshow input.
+        #also subprocess.Popen returns an empty string I therefore create the output in a file that i read just after
+        
+        #Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
+        os.system('ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData)
+        #Read back devices.txt
+        audioDevices=[] # List of audio devices
+        videoDevices=[] # List of video devices
+        audioIndex=None # Index position where audio devices listing is starting
+        videoIndex=None # Index position where video devices listing is starting
+        fileDevices=open(pathData+"\devices.txt","r") #as direct shell communication is not possible (=>file intermediary)
+        devicesList=fileDevices.readlines()
+        print devicesList
+        fileDevices.close()
+        # searching audio devices
+        for index,device in enumerate(devicesList):
+            if device.find("audio devices")>0:
+                audioIndex= int(index) 
+                print "Found 'audio devices' from Direcshow/ffmpeg, taking first device by default (0)"
+            if (audioIndex!=None)and(index>audioIndex) and (device.find("exit")<0):
+                aDevice=device.split('"')[1]
+                print index-(audioIndex+1),":", aDevice
+                audioDevices.append(aDevice)
+        # searching video devices
+        for index,device in enumerate(devicesList):
+            if device.find("video devices")>0:
+                videoIndex= int(index) 
+                print "Found 'video devices' from Direcshow/ffmpeg, taking first device by default (0)"
+            if device.find("audio devices")>0:
+                break
+            if (videoIndex!=None) and (index>videoIndex):
+                aDevice=device.split('"')[1]
+                print index-(videoIndex+1),":", aDevice
+                videoDevices.append(aDevice)    
+        print audioDevices
+        print videoDevices        
+        return [audioDevices,videoDevices]
     
 ## Start app
 if __name__=="__main__":
@@ -2403,32 +2454,10 @@ if __name__=="__main__":
     #frameEnd.Show() # For debug
     
     # get audio inputs
-    def getAudioInputFfmpeg(pathData=pathData):
-        """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/) """
-        # ffmpeg.exe don't work with input number. It is necessary to get the name of the Direcshow input.
-        # also subprocess.Popen returns an empty string I therefore create the output in a file that i read just after
-        
-        # Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
-        os.system('ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData)
-        #Read back devices.txt
-        devices=[] # List of devices
-        audioIndex=1000
-        fd=open(pathData+"\devices.txt","r")
-        devicesList=fd.readlines()
-        fd.close()
-        for index,device in enumerate(devicesList):
-            if device.find("audio devices")>0:
-                audioIndex= int(index) 
-                print "Found 'audio devices' from Direcshow/ffmpeg, taking first device by default", audioIndex
-            if (index>audioIndex) and (device.find("exit")<0):
-                aDevice=device.split('"')[1]
-                print ">>>", aDevice
-                devices.append(aDevice)
-        print devices        
-        return devices
-    
-    if 0: # if True search for Directshow devices on windows via ffmpeg.exe
-        getAudioInputFfmpeg()
+    #audioEncoder="ffmpeg"
+    if audioEncoder=="ffmpeg": # if True search for Directshow devices on windows via ffmpeg.exe
+        audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        print "audioinput is >>>", audioinput
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
