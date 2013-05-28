@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.27alpha"
+__version__="1.27alpha1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -2018,7 +2018,7 @@ class cutToolFrame(wx.Frame):
         Constructor, GUI setting up.
         """
         wx.Frame.__init__(self, parent, -1, title,
-                          pos=(150, 150), size=(600, 600),
+                          pos=(150, 150), size=(700, 600),
                           style=wx.DEFAULT_FRAME_STYLE)  
         # vars
         self.recordingPath=""
@@ -2166,10 +2166,15 @@ class cutToolFrame(wx.Frame):
             print self.cutTimes
             print "- reading timecode file..."
             self.writeConsole("- Cut times defined by user: "+str(self.cutTimes))
+            self.writeConsole("- Reading global timecode...")
             try:
-                f_global_timecode=open(self.recordingPath+"\\timecode.csv")
+                f_global_timecode=open(self.recordingPath+"/timecode.csv")
             except:
-                self.writeConsole("- Warning : This is not a valid recorging folder. Processing stopped. \n")
+                self.writeConsole("- Warning : This is not a valid recorging folder no timecode.csv found. Processing stopped. \n")
+            if not os.path.isfile(self.recordingPath+"/enregistrement-micro.mp3"):
+                self.writeConsole("- Warning : This is not a valid recorging folder no enregistrement-micro.mp3 found. Processing stopped. \n")
+                return 0
+            
             global_times=f_global_timecode.read().split("\n")[:-1]
             print ">>> ---",global_times
             print "- global time code:"
@@ -2200,14 +2205,17 @@ class cutToolFrame(wx.Frame):
                 print ["thirdparty\mp3splt.exe","%s" % mp3ToCut,"%s"%cutBegin, "%s"%cutEnd,"-d","%s"%self.recordingPath,"-o","%s"%mp3Output]
                 cutIndex+=1
                 #self.consoleEntry.AppendText("\n- DEBUG:"+self.recordingPath+"\\p"+str(i)+".mp3")
-                print "sleeping 2 sec to be sure mp3splt is finished"
-                time.sleep(2) 
+                pauseTime=5
+                print "sleeping " +str(pauseTime)+"sec to be sure mp3splt is finished"
+                self.consoleEntry.AppendText("\n- waiting for mp3split to finish - pausing for "+str(pauseTime)+" seconds ...")
+                time.sleep(pauseTime)
+                
             for i in [1,2,3,4,5]:
                 print "checking for",  self.recordingPath+"/p"+str(i)+".mp3"
                 if os.path.isfile(self.recordingPath+"/p"+str(i)+".mp3"):
                     self.consoleEntry.AppendText("\n- processing new sub recording")
                     print "- found a p"+str(i)+".mp3 file"
-                    print "- creating folder p"+str(i)
+                    print "- creating folder p"+str(i)+"\n"
                     self.writeConsole("- creating folder p"+str(i)+"\n")
                     os.mkdir(self.recordingPath+"/p"+str(i))
                     print "- moving a copy of p"+str(i)+".mp3 file in his new folder and renaming"
@@ -2223,6 +2231,7 @@ class cutToolFrame(wx.Frame):
                     try:
                         os.mkdir(self.recordingPath+"\\p"+str(i)+"\\screenshots")
                     except:
+                        print "- !!! Couldn't make screenshots folder !!!"
                         pass
                     #create a smile file for this track
                     smil=SmilGen("audio",self.recordingPath+"\\p"+str(i)+"\\")
@@ -2296,13 +2305,18 @@ class cutToolFrame(wx.Frame):
                     if 0:#screenshots folder empty :/ 
                         shutil.copytree(self.recordingPath+"/p"+str(i), self.recordingPath+"-p"+str(i))
                     #print "attempting to  :", 'move %s %s' % (self.recordingPath+"/p"+str(i),self.recordingPath+"-p"+str(i)+"-"+self.baseFolder)
-            self.writeConsole("- Moving new folders to Audiovideocorus data folder\n")
+            
+            self.writeConsole("- Moving new folders to Audiovideocorus data folder")
+            time.sleep(2)
             for i in [1,2,3,4,5]:
                 if os.path.exists(self.recordingPath+"/p"+str(i)):
                     #subprocess.Popen(["move","%s"%self.recordingPath+"/p"+str(i),"%s"%self.recordingPath+"-p"+str(i)])
+                    self.writeConsole("- Found and moving " + self.recordingPath+"/p"+str(i)+"to AVC data folder...")
                     os.system('move "%s" "%s"' % (self.recordingPath+"/p"+str(i),"%s"%self.recordingPath+"-p"+str(i)))
+                    time.sleep(2)
+                    
             print "Finished processing!"
-            self.writeConsole("- Finished processing!\n")
+            #self.writeConsole("- Finished processing\n")
             self.writeConsole("- End\n") 
         start_new_thread(makeNewRec,())   
         #makeNewRec()
