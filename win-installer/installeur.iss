@@ -7,7 +7,7 @@
 AppName=audiovideocast
 AppId=audiovideocast
 AppVerName=audiovideocast 1.27alpha1
-AppVersion=1.26
+AppVersion=1.27
 AppPublisher=(C) University of Strasbourg 2006-2012
 AppPublisherURL=http://www.unistra.fr
 AppSupportURL=http://www.unistra.fr

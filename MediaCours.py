@@ -189,6 +189,8 @@ liveCheckBox=False
 "Indicates if user wants(checked) a live session from the GUI"
 audioVideoChoice=False # give the possibility to choose between an audio or video recording
 "Show in the GUI the choice between a video or audio recording"
+screencasting=False
+"Grab the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' freeware on Windows"
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
@@ -214,7 +216,8 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer,\
+    screencasting
     
     confFileReport=""
     
@@ -271,6 +274,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
+        if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
         
         fconf.close()
     except:
@@ -439,11 +443,26 @@ def recordNow():
         print "send cmd to DOS:", cmd
         os.system(cmd)
         
+    def ffmpegScreencastingRecord():
+        """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
+        print "In ffmpegScreencastingRecord"
+        videoFileOutput=workDirectory+"/enregistrement-video.flv"
+        if 0: # if we want an mp4 output instead of a flv
+            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
+        if 1: # output a flv video file
+            if 0: #without sound
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -q 5 "%s"')%(videoFileOutput)
+            if 1: #with sound
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinput, videoFileOutput)
+        print "send cmd to DOS:", cmd
+        os.system(cmd)
+        
     def ffmpegVideoRecord():
          """Record video using FFMPEG """
         
     def windowsMediaEncoderRecord():
         """
+        --- DEPRECATED ---
         Record Video with Windows Media Encoder Series 9
         """ 
         scriptPath=r' cscript.exe C:\"Program Files\Windows Media Components\Encoder\WMCmd.vbs"'
@@ -453,6 +472,7 @@ def recordNow():
         
     def realProducerRecord():
         """ 
+        --- DEPRECATED ---
         Record video with Real Producer basic 
         """
         MaximumRecordingLength=str(maxRecordingLength)
@@ -547,7 +567,8 @@ def recordNow():
     if usage=="audio" and audioEncoder=="ffmpeg":
         start_new_thread(ffmpegAudioRecord,())
     else:
-        start_new_thread(record,())
+        if usage=="audio" and audioEncoder==False:
+            start_new_thread(record,())
         
     if live==True:
         start_new_thread(liveScreenshotStart,())
@@ -568,15 +589,19 @@ def recordNow():
             print serverAnswer
     print "Usage is > ", usage
     
-    if usage=="video" and videoEncoder=="flash":
-        print "searching Flash Media Encoder"    
-        start_new_thread(flashMediaEncoderRecord,())
-    if usage=="video" and videoEncoder=="wmv":
-        print "searching Windows Media Encoder ..."   
-        start_new_thread(windowsMediaEncoderRecord,())
-    if usage=="video" and videoEncoder=="real":
-        print "searching Real media encoder"    
-        start_new_thread(realProducerRecord,())
+    if screencasting == True and usage=="video":
+        print "searching for FFMPEG for starting screencasting ..."    
+        start_new_thread(ffmpegScreencastingRecord,())
+    else:
+        if usage=="video" and videoEncoder=="flash":
+            print "searching for Flash Media Encoder"    
+            start_new_thread(flashMediaEncoderRecord,())
+        if usage=="video" and videoEncoder=="wmv":
+            print "searching Windows Media Encoder ..."   
+            start_new_thread(windowsMediaEncoderRecord,())
+        if usage=="video" and videoEncoder=="real":
+            print "searching Real media encoder"    
+            start_new_thread(realProducerRecord,())
                         
 def screenshot():
     """
@@ -701,13 +726,15 @@ def recordStop():
     lastEvent=time.time()     
     #timecodeFile.close()
     if usage=="audio" and audioEncoder=="ffmpeg":
-        os.popen("taskkill /F /IM  ffmpeg.exe")#stop MWE !
+        os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="wmv":
-        os.popen("taskkill /F /IM  cscript.exe")#stop MWE !!!
+        os.popen("taskkill /F /IM  cscript.exe")
     if usage=="video" and videoEncoder=="real":
-        os.popen("signalproducer.exe -P pid.txt")#stop Real producer
-    if usage=="video" and videoEncoder=="flash":
+        os.popen("signalproducer.exe -P pid.txt")
+    if usage=="video" and videoEncoder=="flash" and screencasting==False: 
         flv.stop(FMLEpid)
+    if usage=="video" and screencasting==True:
+        os.popen("taskkill /F /IM  ffmpeg.exe") 
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
     """
@@ -2469,7 +2496,7 @@ if __name__=="__main__":
     
     # get audio inputs
     #audioEncoder="ffmpeg"
-    if audioEncoder=="ffmpeg": # if True search for Directshow devices on windows via ffmpeg.exe
+    if audioEncoder=="ffmpeg" or screencasting==True: # if True search for Directshow devices on windows via ffmpeg.exe
         audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         print "audioinput is >>>", audioinput
     
