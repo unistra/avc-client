@@ -149,7 +149,7 @@ recordingPlace= "not given"
 maxRecordingLength=18000
 "Maximum recording length in seconds(1h=3600s,5h=18000s)"
 usage="audio"
-"Usage ='audio' for audio and 'video' for video recording "
+"Usage ='audio' for audio and 'video' for video recording or 'screencast' for screen grabbing / screencasting (Grab the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' freeware on Windows)"
 "A generic access code"
 smilBegin=""" <?xml version="1.0"?>
 <!DOCTYPE smil PUBLIC "-//W3C//DTD SMIL 2.0//EN" "http://www.w3.org/2001/SMIL20/SMIL20.dtd">
@@ -188,8 +188,8 @@ lastGlobalEvent=time.time()
 liveCheckBox=False
 "Indicates if user wants(checked) a live session from the GUI"
 audioVideoChoice=False # give the possibility to choose between an audio or video recording
-"Show in the GUI the choice between a video or audio recording"
-screencasting=False
+#"Show in the GUI the choice between a video or audio recording"
+#screencasting=False
 "Grab the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' freeware on Windows"
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
@@ -216,8 +216,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer,\
-    screencasting
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer#,screencasting
     
     confFileReport=""
     
@@ -274,7 +273,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
-        if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
+        #if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
         
         fconf.close()
     except:
@@ -446,7 +445,10 @@ def recordNow():
     def ffmpegScreencastingRecord():
         """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
         print "In ffmpegScreencastingRecord"
+        print "Searching for audioinput text at postion 0"
         videoFileOutput=workDirectory+"/enregistrement-video.flv"
+        audioinput="0"
+        audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         if 0: # if we want an mp4 output instead of a flv
             cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
         if 1: # output a flv video file
@@ -589,7 +591,7 @@ def recordNow():
             print serverAnswer
     print "Usage is > ", usage
     
-    if screencasting == True and usage=="video":
+    if usage=="screencast":
         print "searching for FFMPEG for starting screencasting ..."    
         start_new_thread(ffmpegScreencastingRecord,())
     else:
@@ -731,9 +733,9 @@ def recordStop():
         os.popen("taskkill /F /IM  cscript.exe")
     if usage=="video" and videoEncoder=="real":
         os.popen("signalproducer.exe -P pid.txt")
-    if usage=="video" and videoEncoder=="flash" and screencasting==False: 
+    if usage=="video" and videoEncoder=="flash": 
         flv.stop(FMLEpid)
-    if usage=="video" and screencasting==True:
+    if usage=="screencast":
         os.popen("taskkill /F /IM  ffmpeg.exe") 
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
@@ -1419,15 +1421,18 @@ class BeginFrame(wx.Frame):
         if audioVideoChoice==True:
             radio1=wx.RadioButton(panel,-1,"audio")
             radio2=wx.RadioButton(panel,-1,"video")
+            radio3=wx.RadioButton(panel,-1,"screencast")
             if usage=="video":
                 radio2.SetValue(True)
             if usage=="audio":
                 radio1.SetValue(True)
+            if usage=="screencast":
+                radio3.SetValue(True)    
             def onRadio(evt):
                 radioSelected=evt.GetEventObject()
                 self.usage=radioSelected.GetLabel()
-                print "Usage selected (audio or video):",self.usage
-            for eachRadio in [radio1,radio2]:
+                print "Usage selected (audio or video or screencast):",self.usage
+            for eachRadio in [radio1,radio2,radio3]:
                 self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
             
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
@@ -1462,6 +1467,7 @@ class BeginFrame(wx.Frame):
             sizerH2=wx.BoxSizer()
             sizerH2.Add(radio1,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
             sizerH2.Add(radio2,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
+            sizerH2.Add(radio3,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
             sizerV.Add(sizerH2, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
@@ -2496,9 +2502,9 @@ if __name__=="__main__":
     
     # get audio inputs
     #audioEncoder="ffmpeg"
-    if audioEncoder=="ffmpeg" or screencasting==True: # if True search for Directshow devices on windows via ffmpeg.exe
+    if audioEncoder=="ffmpeg" or usage=="screencast": # if True search for Directshow devices on windows via ffmpeg.exe
         audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        print "audioinput is >>>", audioinput
+        print "audioinput is  now >>>", audioinput
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
