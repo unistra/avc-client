@@ -449,6 +449,17 @@ def recordNow():
         videoFileOutput=workDirectory+"/enregistrement-video.flv"
         audioinput="0"
         audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        videoinput= getAudioVideoInputFfmpeg(pathData=pathData)[1][0]
+        print "Default videoinput is:", videoinput
+        if "UScreenCapture" not in videoinput:
+            dialogText= "Didn't find 'UScreenCapture' as the default video source for screen recording\n "\
+             " please stop (F8) and check you've installed 'Screen Capture DirectShow source filter' \n "\
+             "(freeware) on Windows" 
+            print dialogText
+            dialog=wx.MessageDialog(None,message=dialogText,
+            style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+            return 0
         if 0: # if we want an mp4 output instead of a flv
             cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
         if 1: # output a flv video file
