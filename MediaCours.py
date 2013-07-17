@@ -471,7 +471,19 @@ def recordNow():
         os.system(cmd)
         
     def ffmpegVideoRecord():
-         """Record video using FFMPEG """
+        """Record video using FFMPEG """
+        print "In ffmpegVideoRecord..."
+        global audioinput, videoinput
+        videoFileOutput=workDirectory+"/enregistrement-video.flv"
+        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
+        ## TODO : add a check to be sure there's at least one video source ?
+        print "FfmpegVideoRecord video input set to:", videoinputName
+        print "FfmpegVideoRecord audio input set to:", audioinputName
+        if 1: # if we want an mp4 output instead of a flv
+            cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
+        print "send cmd to DOS:", cmd
+        os.system(cmd)
         
     def windowsMediaEncoderRecord():
         """
@@ -609,6 +621,9 @@ def recordNow():
         if usage=="video" and videoEncoder=="flash":
             print "searching for Flash Media Encoder"    
             start_new_thread(flashMediaEncoderRecord,())
+        if usage=="video" and videoEncoder=="ffmpeg":
+            print "searching for FFMPEG"    
+            start_new_thread(ffmpegVideoRecord,())
         if usage=="video" and videoEncoder=="wmv":
             print "searching Windows Media Encoder ..."   
             start_new_thread(windowsMediaEncoderRecord,())
@@ -739,6 +754,8 @@ def recordStop():
     lastEvent=time.time()     
     #timecodeFile.close()
     if usage=="audio" and audioEncoder=="ffmpeg":
+        os.popen("taskkill /F /IM  ffmpeg.exe")
+    if usage=="video" and videoEncoder=="ffmpeg":
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")
