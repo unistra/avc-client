@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="1.27alpha1"
+__version__="2.0alpha1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -444,14 +444,13 @@ def recordNow():
         
     def ffmpegScreencastingRecord():
         """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
+        global audioinput, videoinput
         print "In ffmpegScreencastingRecord"
         print "Searching for audioinput text at postion 0"
         videoFileOutput=workDirectory+"/enregistrement-video.flv"
-        audioinput="0"
-        audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        videoinput= getAudioVideoInputFfmpeg(pathData=pathData)[1][0]
-        print "Default videoinput is:", videoinput
-        if "UScreenCapture" not in videoinput:
+        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
+        if "UScreenCapture" not in videoinputList:
             dialogText= "Didn't find 'UScreenCapture' as the default video source for screen recording\n "\
              " please stop (F8) and check you've installed 'Screen Capture DirectShow source filter' \n "\
              "(freeware) on Windows" 
@@ -466,7 +465,7 @@ def recordNow():
             if 0: #without sound
                 cmd=('ffmpeg -f dshow -i video="UScreenCapture" -q 5 "%s"')%(videoFileOutput)
             if 1: #with sound
-                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinput, videoFileOutput)
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
         print "send cmd to DOS:", cmd
         os.system(cmd)
         
@@ -1519,7 +1518,7 @@ class BeginFrame(wx.Frame):
         text="AudioVideoCast version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocast.unistra.fr/"+"\n\n"\
-        +"(c) UDS 2006-2012"
+        +"(c) UDS 2006-2013"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()

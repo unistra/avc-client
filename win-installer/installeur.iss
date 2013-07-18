@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocast
 AppId=audiovideocast
-AppVerName=audiovideocast 1.27alpha1
-AppVersion=1.27
+AppVerName=audiovideocast 2.0
+AppVersion=2.0
 AppPublisher=(C) University of Strasbourg 2006-2012
 AppPublisherURL=http://www.unistra.fr
 AppSupportURL=http://www.unistra.fr
@@ -91,6 +91,7 @@ Source: ..\locale\fr\LC_MESSAGES\mediacours.mo; DestDir:{app}\locale\fr\LC_MESSA
 Source: ..\locale\fr\LC_MESSAGES\mediacours.po; DestDir:{app}\locale\fr\LC_MESSAGES
 
 ; Third party
+Source: ..\ffmpeg.exe; DestDir:{app}
 Source: ..\thirdparty\player.swf; DestDir:{app}\thirdparty
 Source: ..\thirdparty\swfobject.js; DestDir:{app}\thirdparty
 Source: ..\thirdparty\README.txt; DestDir:{app}\thirdparty
