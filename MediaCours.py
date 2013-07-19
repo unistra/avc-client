@@ -53,8 +53,10 @@ import htmlBits      # HTML chuncks for html format output
 #----------------------------------------------------------------------------------------
 
 ## Some default global variables in case no configuration file is found
+videoFormatFFMPEG="flv"
+"parameter for FFMPEG encoder used since version 2.0 of the AVC client, flv or mp4 (flv by default until AVC server compatible with client mp4 uploads)"
 audioEncoder=False
-"""Choice of audio encoder (if any, otherwise False) """
+"Choice of audio encoder (if any, otherwise False)"
 videoEncoder="flash"
 """Choice of the videoencoder to use if usage=video
 'wmv' = Windows Media Encoder ; 'real'= Real producer """
@@ -216,7 +218,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer#,screencasting
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer, videoFormatFFMPEG#,screencasting
     
     confFileReport=""
     
@@ -273,6 +275,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
+        if config.has_option(section,"videoFormatFFMPEG") == True: videoFormatFFMPEG=readParam("videoFormatFFMPEG")
         #if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
         
         fconf.close()
@@ -447,7 +450,7 @@ def recordNow():
         global audioinput, videoinput
         print "In ffmpegScreencastingRecord"
         print "Searching for audioinput text at postion 0"
-        videoFileOutput=workDirectory+"/enregistrement-video.flv"
+        videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
         if "UScreenCapture" not in videoinputList:
@@ -459,28 +462,26 @@ def recordNow():
             style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
             dialog.ShowModal()
             return 0
-        if 0: # if we want an mp4 output instead of a flv
-            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
-        if 1: # output a flv video file
-            if 0: #without sound
-                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -q 5 "%s"')%(videoFileOutput)
-            if 1: #with sound
-                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-        print "send cmd to DOS:", cmd
+        if videoFormatFFMPEG=="flv": 
+            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+        if videoFormatFFMPEG=="mp4": 
+            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
         os.system(cmd)
         
     def ffmpegVideoRecord():
         """Record video using FFMPEG """
         print "In ffmpegVideoRecord..."
         global audioinput, videoinput
-        videoFileOutput=workDirectory+"/enregistrement-video.flv"
+        videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
         ## TODO : add a check to be sure there's at least one video source ?
         print "FfmpegVideoRecord video input set to:", videoinputName
         print "FfmpegVideoRecord audio input set to:", audioinputName
-        if 1: # if we want an mp4 output instead of a flv
+        if videoFormatFFMPEG=="flv": # if we want an mp4 output instead of a flv
             cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
+        if videoFormatFFMPEG=="mp4": # if we want an mp4 output instead of a flv
+            cmd=('ffmpeg -f dshow -i video="%s" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
         print "send cmd to DOS:", cmd
         os.system(cmd)
         
