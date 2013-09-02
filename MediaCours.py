@@ -22,7 +22,7 @@
 #*******************************************************************************
 
 
-__version__="2.0alpha1"
+__version__="2.0a1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -190,9 +190,9 @@ lastGlobalEvent=time.time()
 liveCheckBox=False
 "Indicates if user wants(checked) a live session from the GUI"
 audioVideoChoice=False # give the possibility to choose between an audio or video recording
-#"Show in the GUI the choice between a video or audio recording"
-#screencasting=False
-"Grab the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' freeware on Windows"
+"Show in the GUI the choice between a video or audio recording"
+screencastChoice=False
+"Show in the GUI an additional choice for screencasting"
 ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
@@ -218,7 +218,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
     language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
-    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer, videoFormatFFMPEG#,screencasting
+    ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer, videoFormatFFMPEG, screencastChoice
     
     confFileReport=""
     
@@ -270,6 +270,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"flashServerIP") == True: flashServerIP=readParam("flashServerIP")
         if config.has_option(section,"formFormation") == True: formFormation=readParam("formFormation")
         if config.has_option(section,"audioVideoChoice") == True: audioVideoChoice=readParam("audioVideoChoice")
+        if config.has_option(section,"screencastChoice") == True: screencastChoice=readParam("screencastChoice")
         if config.has_option(section,"urlLiveState") == True: urlLiveState=readParam("urlLiveState")
         if config.has_option(section,"publishingForm") == True: publishingForm=readParam("publishingForm")
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
@@ -1449,7 +1450,8 @@ class BeginFrame(wx.Frame):
         if audioVideoChoice==True:
             radio1=wx.RadioButton(panel,-1,"audio")
             radio2=wx.RadioButton(panel,-1,"video")
-            radio3=wx.RadioButton(panel,-1,"screencast")
+            if usage=="screencast" or screencastChoice==True:
+                radio3=wx.RadioButton(panel,-1,"screencast")
             if usage=="video":
                 radio2.SetValue(True)
             if usage=="audio":
@@ -1460,8 +1462,10 @@ class BeginFrame(wx.Frame):
                 radioSelected=evt.GetEventObject()
                 self.usage=radioSelected.GetLabel()
                 print "Usage selected (audio or video or screencast):",self.usage
-            for eachRadio in [radio1,radio2,radio3]:
-                self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
+            self.Bind(wx.EVT_RADIOBUTTON ,onRadio,radio1)
+            self.Bind(wx.EVT_RADIOBUTTON ,onRadio,radio2)
+            if usage=="screencast" or screencastChoice==True:
+                self.Bind(wx.EVT_RADIOBUTTON ,onRadio,radio3)
             
         im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 
@@ -1495,7 +1499,8 @@ class BeginFrame(wx.Frame):
             sizerH2=wx.BoxSizer()
             sizerH2.Add(radio1,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
             sizerH2.Add(radio2,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
-            sizerH2.Add(radio3,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
+            if usage=="screencast" or screencastChoice==True:
+                sizerH2.Add(radio3,proportion=0,flag=wx.ALIGN_CENTER|wx.ALL,border=2)
             sizerV.Add(sizerH2, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
