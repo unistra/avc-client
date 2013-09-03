@@ -479,12 +479,17 @@ def recordNow():
         ## TODO : add a check to be sure there's at least one video source ?
         print "FfmpegVideoRecord video input set to:", videoinputName
         print "FfmpegVideoRecord audio input set to:", audioinputName
-        if videoFormatFFMPEG=="flv": # if we want an mp4 output instead of a flv
-            cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
+        if videoFormatFFMPEG=="flv":
+            #hide DOS console:
+            if 1:
+                print "... ((( Using subprocess to order FFMPEG and hide Shell/DOS window ))) ..."
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
+            if 0: #worked but switech to subprocess as there's no way to hide the console this way
+                cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
         if videoFormatFFMPEG=="mp4": # if we want an mp4 output instead of a flv
             cmd=('ffmpeg -f dshow -i video="%s" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
-        print "send cmd to DOS:", cmd
-        os.system(cmd)
+            print "send cmd to DOS:", cmd
+            os.system(cmd)
         
     def windowsMediaEncoderRecord():
         """
