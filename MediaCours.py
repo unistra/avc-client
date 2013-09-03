@@ -442,9 +442,12 @@ def recordNow():
         print "In ffmpegAudioRecord function"
         audioFileOutput=workDirectory+"/"+nameRecord
         #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
-        cmd=('ffmpeg -f dshow -i audio="'+audioinput+'" "%s"')%(audioFileOutput)
+        cmd=('ffmpeg -f dshow -i audio="'+audioinputName+'" "%s"')%(audioFileOutput)
         print "send cmd to DOS:", cmd
-        os.system(cmd)
+        if 0: # No possibility to hide DOS window this way    
+            os.system(cmd)
+        if 1:
+            subprocess.Popen(cmd, shell=True)
         
     def ffmpegScreencastingRecord():
         """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
@@ -474,6 +477,7 @@ def recordNow():
         print "In ffmpegVideoRecord..."
         global audioinput, videoinput
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
+        print "audioinput and videoinput", audioinput,type(audioinput), videoinput, type(videoinput)
         audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
         ## TODO : add a check to be sure there's at least one video source ?
@@ -595,7 +599,7 @@ def recordNow():
             subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
     
     # Check for usage and engage recording
-    if usage=="audio" and audioEncoder=="ffmpeg":
+    if usage=="audio" and audioEncoder==True:
         start_new_thread(ffmpegAudioRecord,())
     else:
         if usage=="audio" and audioEncoder==False:
@@ -759,7 +763,7 @@ def recordStop():
             print serverAnswer
     lastEvent=time.time()     
     #timecodeFile.close()
-    if usage=="audio" and audioEncoder=="ffmpeg":
+    if usage=="audio" and audioEncoder==True:
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="ffmpeg":
         os.popen("taskkill /F /IM  ffmpeg.exe")
@@ -2540,9 +2544,9 @@ if __name__=="__main__":
     
     # get audio inputs
     #audioEncoder="ffmpeg"
-    if audioEncoder=="ffmpeg" or usage=="screencast": # if True search for Directshow devices on windows via ffmpeg.exe
-        audioinput= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        print "audioinput is  now >>>", audioinput
+    if audioEncoder==True or usage=="screencast": # if True search for Directshow devices on windows via ffmpeg.exe
+        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        print "audioinput is  now >>>", audioinputName
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
