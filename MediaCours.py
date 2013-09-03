@@ -468,9 +468,11 @@ def recordNow():
             return 0
         if videoFormatFFMPEG=="flv": 
             cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+            subprocess.Popen(cmd,shell=True)
         if videoFormatFFMPEG=="mp4": 
             cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-        os.system(cmd)
+            subprocess.Popen(cmd,shell=True)
+        #os.system(cmd)
         
     def ffmpegVideoRecord():
         """Record video using FFMPEG """
