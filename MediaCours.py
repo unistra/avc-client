@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: latin-1 -*-
 #*****************************************************************************
 #
 #     MediaCours (Windows AudioVideoCast client and 'standalone' version)
@@ -22,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.0a1"
+__version__="2.0a2"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -455,12 +457,12 @@ def recordNow():
         print "In ffmpegScreencastingRecord"
         print "Searching for audioinput text at postion 0"
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
-        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
+        #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        #videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
         if "UScreenCapture" not in videoinputList:
             dialogText= "Didn't find 'UScreenCapture' as the default video source for screen recording\n "\
              " please stop (F8) and check you've installed 'Screen Capture DirectShow source filter' \n "\
-             "(freeware) on Windows" 
+             "Windows freeware : http://www.umediaserver.net/umediaserver/download.html" 
             print dialogText
             dialog=wx.MessageDialog(None,message=dialogText,
             style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
@@ -480,8 +482,8 @@ def recordNow():
         global audioinput, videoinput
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         print "audioinput and videoinput", audioinput,type(audioinput), videoinput, type(videoinput)
-        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
+        #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        #videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
         ## TODO : add a check to be sure there's at least one video source ?
         print "FfmpegVideoRecord video input set to:", videoinputName
         print "FfmpegVideoRecord audio input set to:", audioinputName
@@ -1551,7 +1553,7 @@ class BeginFrame(wx.Frame):
         def launch():
             print "I'm in launch in help"
             try:
-                useBrowser(what="http://services-numeriques.unistra.fr/les-directions-du-numerique/")
+                useBrowser(what="http://audiovideocast.unistra.fr/avc/home")
                 #subprocess.Popen([r'C:\Program Files\Internet Explorer\iexplore.exe',os.environ["USERPROFILE"]+"/audiovideocours/Aide_AudioCours_StandAlone.url"])
             except:
                 print "Couldn't open or find Aide_AudioCours_StandAlone.url"
@@ -2422,7 +2424,8 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
         #also subprocess.Popen returns an empty string I therefore create the output in a file that i read just after
         
         #Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
-        os.system('ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData)
+        if 1:
+            os.system('ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData)
         #Read back devices.txt
         audioDevices=[] # List of audio devices
         videoDevices=[] # List of video devices
@@ -2430,7 +2433,7 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
         videoIndex=None # Index position where video devices listing is starting
         fileDevices=open(pathData+"\devices.txt","r") #as direct shell communication is not possible (=>file intermediary)
         devicesList=fileDevices.readlines()
-        print devicesList
+        print "device list from devices.txt", devicesList
         fileDevices.close()
         # searching audio devices
         for index,device in enumerate(devicesList):
@@ -2452,8 +2455,8 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
                 aDevice=device.split('"')[1]
                 print index-(videoIndex+1),":", aDevice
                 videoDevices.append(aDevice)    
-        print audioDevices
-        print videoDevices        
+        print "audio device deduced from devices.txt", audioDevices
+        print "video device deduced from devices.txt", videoDevices        
         return [audioDevices,videoDevices]
     
 ## Start app
@@ -2544,11 +2547,42 @@ if __name__=="__main__":
     frameEnd.Hide()
     #frameEnd.Show() # For debug
     
-    # get audio inputs
+    # get audio and video inputs
     #audioEncoder="ffmpeg"
-    if audioEncoder==True or usage=="screencast": # if True search for Directshow devices on windows via ffmpeg.exe
-        audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        print "audioinput is  now >>>", audioinputName
+    if 1:
+        if audioEncoder==True or usage=="screencast" or videoEncoder=="ffmpeg": # if True search for Directshow devices on windows via ffmpeg.exe
+            inputList=getAudioVideoInputFfmpeg(pathData=pathData)
+            audioinputList=inputList[0]
+            videoinputList=inputList[1]
+            print "inputList", inputList
+            print "audioinputList", audioinputList
+            print "videoinputList", videoinputList
+            #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+            audioinputName=audioinputList[int(audioinput)]
+            try:
+                #videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
+                videoinputName= videoinputList[int(videoinput)]
+            except:
+                videoinputName="None"
+            if 1:
+                audioinputName=audioinputName.replace("é","�")
+                videoinputName=videoinputName.replace("é","�")
+                # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798
+            print "audioinput is  now >>>", audioinputName
+            print "audioinput is  now >>>", videoinputName
+            if 0: # Detecting non english characters and warning pop up ??
+                if audioinputName.find("é")>=0:
+                    dialogText= "!!! Warning : non english characters in audio input device name it may not work !!!" 
+                    print dialogText
+                    dialog=wx.MessageDialog(None,message=dialogText,
+                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
+                if videoinputName.find("é")>=0:
+                    dialogText= "!!! Warning : non english characters in video input device name it may not work !!!" 
+                    print dialogText
+                    dialog=wx.MessageDialog(None,message=dialogText,
+                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
