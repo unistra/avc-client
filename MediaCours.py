@@ -144,7 +144,7 @@ ftpUrl="audiovideocours.u-strasbg.fr"
 "FTP URL server for online publication"
 urlserver= "https://audiovideocours.u-strasbg.fr/avc/publication"
 "Default URL of the audiovideocours server containing the submit form"
-urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
+urlLiveState="http://audiovideocast.unistra.fr/avc/livestate"
 "URL of the live form status"
 eventDelay=1.5
 "Number of seconds before allowing a new screenshot"
@@ -547,6 +547,7 @@ def recordNow():
             #urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
             page = urlopen(urlLiveState,\
             "recordingPlace="+recordingPlace+"&status="+"begin")
+            html=page.read()
             if 0:
                 print "------ Response from Audiocours : -----"
                 serverAnswer= page.read() # Read/Check the result
