@@ -24,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.0a2"
+__version__="2.1-a1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
@@ -438,18 +438,6 @@ def recordNow():
             if recording == False:
                 snd.stop()
                 print "-- stopped recording now --"
-
-    def ffmpegAudioRecord():
-        """ Record mp3 using FFMPEG and liblamemp3 """
-        print "In ffmpegAudioRecord function"
-        audioFileOutput=workDirectory+"/"+nameRecord
-        #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
-        cmd=('ffmpeg -f dshow -i audio="'+audioinputName+'" "%s"')%(audioFileOutput)
-        print "send cmd to DOS:", cmd
-        if 0: # No possibility to hide DOS window this way    
-            os.system(cmd)
-        if 1:
-            subprocess.Popen(cmd, shell=True)
         
     def ffmpegScreencastingRecord():
         """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
@@ -469,17 +457,51 @@ def recordNow():
             dialog.ShowModal()
             return 0
         if videoFormatFFMPEG=="flv": 
-            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-            subprocess.Popen(cmd,shell=True)
+            if live==False:
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+                subprocess.Popen(cmd,shell=True)
+            if live==True:
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+                page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                if 0: # DEPRECATED 
+                    cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+                    subprocess.Popen(cmd,shell=True)    
         if videoFormatFFMPEG=="mp4": 
             cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
             subprocess.Popen(cmd,shell=True)
         #os.system(cmd)
-        
+
+    def ffmpegAudioRecord():
+        """ Record mp3 using FFMPEG and liblamemp3 """
+        print "In ffmpegAudioRecord function"
+        audioFileOutput=workDirectory+"/"+nameRecord
+        if 1:
+            print "In ffmpegAudioRecord"
+            if live==False:
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput],shell=True)
+            if live==True:
+                if 0:
+                    caption=_("WARNING")
+                    text=_("Live is not working for audio only with FFMPEG\n Please stop 'f8' and choose either 'video' or switch to Flash encoder")
+                    dialog=wx.MessageDialog(None,message=text,caption=caption,
+                    style=wx.OK|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
+                print "In ffmpegAudioRecord Live"
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+        if 0: # WORKS but DEPRECATED (going for subprocess)
+            print "In old deprecated ffmpegAudioRecord"
+            #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
+            cmd=('ffmpeg -f dshow -i audio="'+audioinputName+'" "%s"')%(audioFileOutput)
+            print "send cmd to DOS:", cmd
+            if 0: # No possibility to hide DOS window this way    
+                os.system(cmd)
+            if 1:
+                subprocess.Popen(cmd, shell=True)
+                
     def ffmpegVideoRecord():
         """Record video using FFMPEG """
         print "In ffmpegVideoRecord..."
-        global audioinput, videoinput
+        global audioinput, videoinput, urlLiveState
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         print "audioinput and videoinput", audioinput,type(audioinput), videoinput, type(videoinput)
         #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
@@ -489,9 +511,15 @@ def recordNow():
         print "FfmpegVideoRecord audio input set to:", audioinputName
         if videoFormatFFMPEG=="flv":
             #hide DOS console:
-            if 1:
+            print "LIVE IS >>>>>>>>>>>>>>>>>>>>", live
+            if live==False:
                 print "... ((( Using subprocess to order FFMPEG and hide Shell/DOS window ))) ..."
                 subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
+            
+            if live==True:
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+                page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+            
             if 0: #worked but switech to subprocess as there's no way to hide the console this way
                 cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
         if videoFormatFFMPEG=="mp4": # if we want an mp4 output instead of a flv
@@ -606,23 +634,27 @@ def recordNow():
     # Check for usage and engage recording
     if usage=="audio" and audioEncoder==True:
         start_new_thread(ffmpegAudioRecord,())
+        #Send the information that live is ON
+        page = urlopen(urlLiveState,\
+        "recordingPlace="+recordingPlace+"&status="+"begin")
+        print ">>>>>>>>>>>>>>>>>>>",urlLiveState
+        print ">>>>>>>>>>>>>>>>>>>",recordingPlace
     else:
         if usage=="audio" and audioEncoder==False:
             start_new_thread(record,())
         
     if live==True:
         start_new_thread(liveScreenshotStart,())
+        print "Starting LiveScreenshotStart"
     
-    if live==True and usage=="audio":
+    if live==True and usage=="audio" and audioEncoder==False:
         #start_new_thread(liveStream,())
         start_new_thread(flashMediaEncoderRecord,())
-    
         #Send the information that live is ON
         page = urlopen(urlLiveState,\
         "recordingPlace="+recordingPlace+"&status="+"begin")
         print ">>>>>>>>>>>>>>>>>>>",urlLiveState
         print ">>>>>>>>>>>>>>>>>>>",recordingPlace
-        
         if 0:#For Degub
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
@@ -751,27 +783,30 @@ def recordStop():
     winsound.Beep(800,100)
     time.sleep(0.2)
     winsound.Beep(800,100)
+    
     if live==True:
-        flv.stop(FMLEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
-        #if 1:
+        if videoEncoder=="flash":
+            print "[LIVE] Trying to stop live session with Flash Media Live Encoder"
+            flv.stop(FMLEpid="rtmp://"+flashServerIP+"/live+"+recordingPlace)
         try:
             liveScreenshotStop()
-        #if 0:
         except:
-            print "problem with FTP connection"
-    if live==True:
+            print "[Live] problem with FTP connection"
+        print "[Live] Sending end signal for live to server"
         page = urlopen(urlLiveState,\
         "recordingPlace="+recordingPlace+"&status="+"end")
         if 0:#For debug
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
+            
     lastEvent=time.time()     
     #timecodeFile.close()
     if usage=="audio" and audioEncoder==True:
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="ffmpeg":
         os.popen("taskkill /F /IM  ffmpeg.exe")
+        #page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"end")
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")
     if usage=="video" and videoEncoder=="real":
