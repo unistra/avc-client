@@ -1,6 +1,6 @@
 ﻿******************************************************************
 *         README - Audiovideocast (formely Audiovideocours)
-*          (c) 2008/2012 - University of Strasbourg
+*          (c) 2008/2014 - University of Strasbourg
 ******************************************************************
 
 This program is distributed in the hope that it will be useful,
