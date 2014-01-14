@@ -2600,25 +2600,17 @@ if __name__=="__main__":
                 videoinputName= videoinputList[int(videoinput)]
             except:
                 videoinputName="None"
+            ## Warning : dirty fix before unicode version with some french characters with devices names 
+            # (as FFMPEG don't take numbers as input sources)  
+            # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798    
             if 1:
                 audioinputName=audioinputName.replace("Ã©","é")
                 videoinputName=videoinputName.replace("Ã©","é")
-                # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798
+                audioinputName=audioinputName.replace("Â®","®")
+                videoinputName=videoinputName.replace("Â®","®")
+                
             print "audioinput is  now >>>", audioinputName
             print "audioinput is  now >>>", videoinputName
-            if 0: # Detecting non english characters and warning pop up ??
-                if audioinputName.find("Ã©")>=0:
-                    dialogText= "!!! Warning : non english characters in audio input device name it may not work !!!" 
-                    print dialogText
-                    dialog=wx.MessageDialog(None,message=dialogText,
-                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-                    dialog.ShowModal()
-                if videoinputName.find("Ã©")>=0:
-                    dialogText= "!!! Warning : non english characters in video input device name it may not work !!!" 
-                    print dialogText
-                    dialog=wx.MessageDialog(None,message=dialogText,
-                    style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-                    dialog.ShowModal()
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
