@@ -27,7 +27,7 @@
 __version__="2.1-a1"
 
 ## Python import (base Python 2.4)
-import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile
+import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
 import subprocess, socket, winsound, traceback, webbrowser
 from thread import start_new_thread, exit
 from urllib2 import urlopen
@@ -199,7 +199,13 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
-if 1:# in case no server informations found in the configuration file
+forBuild = False
+#  For publishing and live screenshots
+if forBuild == False:# in case no server informations found in the configuration file
+    passFtp=pickle.load(open("pass.p","rb"))
+    ftpLogin=passFtp["ftpLogin"]
+    ftpPass=passFtp["ftpPass"]
+if forBuild == True:
     ftpLogin=""
     "FTP login for publishing and live screenshots"
     ftpPass=""
