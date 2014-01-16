@@ -432,9 +432,9 @@ def recordNow():
                 recordStop()
             s= snd.getData()
             if s and len( s ):
-              for fr in ac.encode(s):
-                f.write( fr )
-                #print "*",
+                for fr in ac.encode(s):
+                    f.write( fr )
+                    #print "*",
             if recording == False:
                 snd.stop()
                 print "-- stopped recording now --"
@@ -461,7 +461,7 @@ def recordNow():
                 cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
                 subprocess.Popen(cmd,shell=True)
             if live==True:
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
                 page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
                 if 0: # DEPRECATED 
                     cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
@@ -487,7 +487,7 @@ def recordNow():
                     style=wx.OK|wx.ICON_INFORMATION)
                     dialog.ShowModal()
                 print "In ffmpegAudioRecord Live"
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
         if 0: # WORKS but DEPRECATED (going for subprocess)
             print "In old deprecated ffmpegAudioRecord"
             #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
@@ -517,7 +517,7 @@ def recordNow():
                 subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
             
             if live==True:
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/130_79_143_130"],shell=True)
+                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
                 page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
             
             if 0: #worked but switech to subprocess as there's no way to hide the console this way
