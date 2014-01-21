@@ -826,7 +826,6 @@ def recordStop():
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="ffmpeg":
         pffmpeg.stdin.write("q") # !!!!!!!!!!!!!   DO necessary changes for flash too then !!!!!!!!!!!!!!!!!
-        #time.sleep(1) # Is this necessary to be sure the recoridng is finished properly?
         pffmpeg.kill()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")
