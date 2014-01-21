@@ -24,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.1-a1"
+__version__="2.2-alpha"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
@@ -199,7 +199,7 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
-forBuild = False
+forBuild = True
 #  For publishing and live screenshots
 if forBuild == False:# in case no server informations found in the configuration file
     passFtp=pickle.load(open("pass.p","rb"))
@@ -1575,7 +1575,7 @@ class BeginFrame(wx.Frame):
         text="AudioVideoCast version "+__version__+"  \n\n"\
         +_("Website:")+"\n\n"+\
         "http://audiovideocast.unistra.fr/"+"\n\n"\
-        +"(c) UDS 2006-2013"
+        +"(c) UDS 2006-2014"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
