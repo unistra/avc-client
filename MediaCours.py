@@ -402,6 +402,7 @@ def recordNow():
     """
     global recording, diaId, timecodeFile, t0, dateTime0, dirName, workDirectory
     global snd,ac,cparams, nameRecord,usage,smil,pathData, last_session_recording_start
+    global pffmpeg #handle for the FFMPEG subprocess 
     usage=frameBegin.usage
     recording= True
     last_session_recording_start=getTime()
@@ -473,7 +474,11 @@ def recordNow():
                     cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
                     subprocess.Popen(cmd,shell=True)    
         if videoFormatFFMPEG=="mp4": 
-            cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+            if 0: # original
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
+            if 1:
+                #cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
+                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
             subprocess.Popen(cmd,shell=True)
         #os.system(cmd)
 
@@ -508,6 +513,7 @@ def recordNow():
         """Record video using FFMPEG """
         print "In ffmpegVideoRecord..."
         global audioinput, videoinput, urlLiveState
+        global pffmpeg #handle for the FFMPEG subprocess
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         print "audioinput and videoinput", audioinput,type(audioinput), videoinput, type(videoinput)
         #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
@@ -529,9 +535,16 @@ def recordNow():
             if 0: #worked but switech to subprocess as there's no way to hide the console this way
                 cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
         if videoFormatFFMPEG=="mp4": # if we want an mp4 output instead of a flv
-            cmd=('ffmpeg -f dshow -i video="%s" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
-            print "send cmd to DOS:", cmd
-            os.system(cmd)
+            if 0:
+                cmd=('ffmpeg -f dshow -i video="%s" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
+                print "send cmd to DOS:", cmd
+                os.system(cmd)
+            if 1:
+                #subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-vcodec","mpeg4","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f",
+                                          "dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],
+                                         stdin=subprocess.PIPE,shell=True)
+                
         
     def windowsMediaEncoderRecord():
         """
@@ -758,6 +771,7 @@ def recordStop():
     Stop recording the audio input now
     """
     global recording,timecodeFile,FMLEpid, last_session_recording_stop
+    global pffmpeg #handle for the FFMPEG subprocess
     print "In recordStop() now..."
     
     ## Create smile file
@@ -811,8 +825,9 @@ def recordStop():
     if usage=="audio" and audioEncoder==True:
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="ffmpeg":
-        os.popen("taskkill /F /IM  ffmpeg.exe")
-        #page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"end")
+        pffmpeg.stdin.write("q") # !!!!!!!!!!!!!   DO necessary changes for flash too then !!!!!!!!!!!!!!!!!
+        #time.sleep(1) # Is this necessary to be sure the recoridng is finished properly?
+        pffmpeg.kill()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")
     if usage=="video" and videoEncoder=="real":
