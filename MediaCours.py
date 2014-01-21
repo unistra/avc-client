@@ -206,7 +206,7 @@ if forBuild == False:# in case no server informations found in the configuration
     ftpLogin=passFtp["ftpLogin"]
     ftpPass=passFtp["ftpPass"]
 if forBuild == True:
-    ftpLogin="ftpuser"
+    ftpLogin=""
     "FTP login for publishing and live screenshots"
     ftpPass=""
     "FTP password for publishing and live screenshots"
@@ -485,30 +485,16 @@ def recordNow():
 
     def ffmpegAudioRecord():
         """ Record mp3 using FFMPEG and liblamemp3 """
+        global pffmpeg #handle for the FFMPEG subprocess
         print "In ffmpegAudioRecord function"
         audioFileOutput=workDirectory+"/"+nameRecord
-        if 1:
-            print "In ffmpegAudioRecord"
-            if live==False:
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput],shell=True)
-            if live==True:
-                if 0:
-                    caption=_("WARNING")
-                    text=_("Live is not working for audio only with FFMPEG\n Please stop 'f8' and choose either 'video' or switch to Flash encoder")
-                    dialog=wx.MessageDialog(None,message=text,caption=caption,
-                    style=wx.OK|wx.ICON_INFORMATION)
-                    dialog.ShowModal()
-                print "In ffmpegAudioRecord Live"
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
-        if 0: # WORKS but DEPRECATED (going for subprocess)
-            print "In old deprecated ffmpegAudioRecord"
-            #cmd="ffmpeg.exe -f alsa -ac 2 -i pulse -acodec libmp3lame  -aq 0  -y -loglevel 0 "+workDirectory+"/"+nameRecord
-            cmd=('ffmpeg -f dshow -i audio="'+audioinputName+'" "%s"')%(audioFileOutput)
-            print "send cmd to DOS:", cmd
-            if 0: # No possibility to hide DOS window this way    
-                os.system(cmd)
-            if 1:
-                subprocess.Popen(cmd, shell=True)
+        print "In ffmpegAudioRecord..."
+        if live==False:
+            pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput],stdin=subprocess.PIPE,shell=True)
+        if live==True:
+            print "In ffmpegAudioRecord Live"
+            pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f",
+                                      "flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
                 
     def ffmpegVideoRecord():
         """Record video using FFMPEG """
@@ -773,7 +759,7 @@ def recordStop():
     """
     Stop recording the audio input now
     """
-    global recording,timecodeFile,FMLEpid, last_session_recording_stop
+    global recording,timecodeFile,FMLEpid, last_session_recording_stop,liveFeed
     global pffmpeg #handle for the FFMPEG subprocess
     print "In recordStop() now..."
     
@@ -824,32 +810,24 @@ def recordStop():
             print serverAnswer
             
     lastEvent=time.time()     
-    #timecodeFile.close()
     if usage=="audio" and audioEncoder==True:
-        os.popen("taskkill /F /IM  ffmpeg.exe")
+        pffmpeg.stdin.write("q") 
+        pffmpeg.kill()
     if usage=="video" and videoEncoder=="ffmpeg":
         pffmpeg.stdin.write("q") 
         pffmpeg.kill()
-    if usage=="video" and videoEncoder=="wmv":
-        os.popen("taskkill /F /IM  cscript.exe")
-    if usage=="video" and videoEncoder=="real":
-        os.popen("signalproducer.exe -P pid.txt")
     if usage=="video" and videoEncoder=="flash": 
         flv.stop(FMLEpid)
     if usage=="screencast":
         pffmpeg.stdin.write("q") 
         pffmpeg.kill()
     if live==True:
-        liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
-    """
-    if live==True and usage=="audio":
-        os.system('tskill vlc')
-        try:
-            #os.system('tskill trayit!')
-            subprocess.Popen(['tskill','trayit!'])
-        except:
-            pass
-    """
+        liveFeed.SetValue(False) #unchecks live checkbox for next user    
+    #DEPRECATED VIDEO FORMATS AND ENCODERS
+    if usage=="video" and videoEncoder=="wmv":
+        os.popen("taskkill /F /IM  cscript.exe")
+    if usage=="video" and videoEncoder=="real":
+        os.popen("signalproducer.exe -P pid.txt")
     writeInLogs("- Stopped recording at "+ str(datetime.datetime.now())+"\n")
     
 def playAudio():
