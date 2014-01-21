@@ -206,7 +206,7 @@ if forBuild == False:# in case no server informations found in the configuration
     ftpLogin=passFtp["ftpLogin"]
     ftpPass=passFtp["ftpPass"]
 if forBuild == True:
-    ftpLogin=""
+    ftpLogin="ftpuser"
     "FTP login for publishing and live screenshots"
     ftpPass=""
     "FTP password for publishing and live screenshots"
@@ -449,8 +449,8 @@ def recordNow():
     def ffmpegScreencastingRecord():
         """Record the desktop as a video source, requires FFMPEG and 'Screen Capture DirectShow source filter' on Windows """
         global audioinput, videoinput
+        global pffmpeg #handle for the FFMPEG subprocess
         print "In ffmpegScreencastingRecord"
-        print "Searching for audioinput text at postion 0"
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
         #videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
@@ -466,10 +466,11 @@ def recordNow():
         if videoFormatFFMPEG=="flv": 
             if live==False:
                 cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-                subprocess.Popen(cmd,shell=True)
+                pffmpeg=subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
             if live==True:
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
-                page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5",
+                                          "%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+                urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
                 if 0: # DEPRECATED 
                     cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
                     subprocess.Popen(cmd,shell=True)    
@@ -479,7 +480,7 @@ def recordNow():
             if 1:
                 #cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
                 cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
-            subprocess.Popen(cmd,shell=True)
+            pffmpeg=subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
         #os.system(cmd)
 
     def ffmpegAudioRecord():
@@ -526,11 +527,13 @@ def recordNow():
             print "LIVE IS >>>>>>>>>>>>>>>>>>>>", live
             if live==False:
                 print "... ((( Using subprocess to order FFMPEG and hide Shell/DOS window ))) ..."
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
+                                          "5","%s"%videoFileOutput],stdin=subprocess.PIPE,shell=True)
             
             if live==True:
-                subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],shell=True)
-                page = urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
+                                          "5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+                urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
             
             if 0: #worked but switech to subprocess as there's no way to hide the console this way
                 cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
@@ -825,7 +828,7 @@ def recordStop():
     if usage=="audio" and audioEncoder==True:
         os.popen("taskkill /F /IM  ffmpeg.exe")
     if usage=="video" and videoEncoder=="ffmpeg":
-        pffmpeg.stdin.write("q") # !!!!!!!!!!!!!   DO necessary changes for flash too then !!!!!!!!!!!!!!!!!
+        pffmpeg.stdin.write("q") 
         pffmpeg.kill()
     if usage=="video" and videoEncoder=="wmv":
         os.popen("taskkill /F /IM  cscript.exe")
@@ -834,7 +837,8 @@ def recordStop():
     if usage=="video" and videoEncoder=="flash": 
         flv.stop(FMLEpid)
     if usage=="screencast":
-        os.popen("taskkill /F /IM  ffmpeg.exe") 
+        pffmpeg.stdin.write("q") 
+        pffmpeg.kill()
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
     """
