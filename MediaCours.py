@@ -199,7 +199,8 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
-forBuild = True
+debug = True     # more verbose messages when run from source if debug = True 
+forBuild = False # If not look for credentials in pass.p which is not versionned
 #  For publishing and live screenshots
 if forBuild == False:# in case no server informations found in the configuration file
     passFtp=pickle.load(open("pass.p","rb"))
@@ -2587,32 +2588,40 @@ if __name__=="__main__":
     
     # get audio and video inputs
     #audioEncoder="ffmpeg"
-    if 1:
-        if audioEncoder==True or usage=="screencast" or videoEncoder=="ffmpeg": # if True search for Directshow devices on windows via ffmpeg.exe
-            inputList=getAudioVideoInputFfmpeg(pathData=pathData)
-            audioinputList=inputList[0]
-            videoinputList=inputList[1]
+    if audioEncoder==True or usage=="screencast" or videoEncoder=="ffmpeg": # if True search for Directshow devices on windows via ffmpeg.exe
+        inputList=getAudioVideoInputFfmpeg(pathData=pathData)
+        audioinputList=inputList[0]
+        videoinputList=inputList[1]
+        if debug:
+            print "Number of audio inputs and video inputs",len(audioinputList),len(videoinputList)
             print "inputList", inputList
             print "audioinputList", audioinputList
             print "videoinputList", videoinputList
-            #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
+        try:
             audioinputName=audioinputList[int(audioinput)]
-            try:
-                #videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
-                videoinputName= videoinputList[int(videoinput)]
-            except:
-                videoinputName="None"
-            ## Warning : dirty fix before unicode version with some french characters with devices names 
-            # (as FFMPEG don't take numbers as input sources)  
-            # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798    
-            if 1:
-                audioinputName=audioinputName.replace("Ã©","é")
-                videoinputName=videoinputName.replace("Ã©","é")
-                audioinputName=audioinputName.replace("Â®","®")
-                videoinputName=videoinputName.replace("Â®","®")
-                
-            print "audioinput is  now >>>", audioinputName
-            print "audioinput is  now >>>", videoinputName
+        except IndexError:
+            audioinputName="None"
+            dialog=wx.MessageDialog(None,message="No audio source found, please restart the client and be sure that \n an audio source is seen by Windows or is setup properly in the config file.",
+                                caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+        try:
+            videoinputName= videoinputList[int(videoinput)]
+        except IndexError:
+            videoinputName="None"
+            if 0:
+                dialog=wx.MessageDialog(None,message="No video source found, please restart the client and be sure that \n a video source is seen by Windows or is setup properly in the config file.",
+                                    caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
+        ## Warning : dirty fix before unicode version with some french characters with devices names 
+        # (as FFMPEG don't take numbers as input sources)  
+        # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798    
+        audioinputName=audioinputName.replace("Ã©","é")
+        videoinputName=videoinputName.replace("Ã©","é")
+        audioinputName=audioinputName.replace("Â®","®")
+        videoinputName=videoinputName.replace("Â®","®")
+            
+        print "audioinput is  now >>>", audioinputName
+        print "audioinput is  now >>>", videoinputName
     
     ## Use a special serial keyboard ?
     if serialKeyboard==True:
