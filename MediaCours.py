@@ -471,7 +471,11 @@ def recordNow():
             if live==True:
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5",
                                           "%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
-                urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                try:
+                    urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                except:
+                    writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+                    print "!!! WARNING !!! Couldn't send begin signal to live server... "
                 if 0: # DEPRECATED 
                     cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
                     subprocess.Popen(cmd,shell=True)    
@@ -520,7 +524,11 @@ def recordNow():
             if live==True:
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
                                           "5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
-                urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                try:
+                    urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
+                except:
+                    writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+                    print "!!! WARNING !!! Couldn't send begin signal to live server... "
             
             if 0: #worked but switech to subprocess as there's no way to hide the console this way
                 cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
@@ -582,9 +590,13 @@ def recordNow():
             </rtmp>"""
             #Send the information that live is ON
             #urlLiveState="http://audiovideocours.u-strasbg.fr/audiocours_v2/servlet/LiveState"
-            page = urlopen(urlLiveState,\
-            "recordingPlace="+recordingPlace+"&status="+"begin")
-            html=page.read()
+            try:
+                page = urlopen(urlLiveState,\
+                "recordingPlace="+recordingPlace+"&status="+"begin")
+                html=page.read()
+            except:
+                writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+                print "!!! WARNING !!! Couldn't send begin signal to live server... "
             if 0:
                 print "------ Response from Audiocours : -----"
                 serverAnswer= page.read() # Read/Check the result
@@ -644,10 +656,15 @@ def recordNow():
     if usage=="audio" and audioEncoder==True:
         start_new_thread(ffmpegAudioRecord,())
         #Send the information that live is ON
-        page = urlopen(urlLiveState,\
-        "recordingPlace="+recordingPlace+"&status="+"begin")
         print ">>>>>>>>>>>>>>>>>>>",urlLiveState
         print ">>>>>>>>>>>>>>>>>>>",recordingPlace
+        try:
+            page = urlopen(urlLiveState,\
+            "recordingPlace="+recordingPlace+"&status="+"begin")
+        except:
+            writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+            print "!!! WARNING !!! Couldn't send begin signal to live server... "
+        
     else:
         if usage=="audio" and audioEncoder==False:
             start_new_thread(record,())
@@ -660,10 +677,15 @@ def recordNow():
         #start_new_thread(liveStream,())
         start_new_thread(flashMediaEncoderRecord,())
         #Send the information that live is ON
-        page = urlopen(urlLiveState,\
-        "recordingPlace="+recordingPlace+"&status="+"begin")
         print ">>>>>>>>>>>>>>>>>>>",urlLiveState
         print ">>>>>>>>>>>>>>>>>>>",recordingPlace
+        try:
+            page = urlopen(urlLiveState,\
+            "recordingPlace="+recordingPlace+"&status="+"begin")
+        except:
+            writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+            print "!!! WARNING !!! Couldn't send begin signal to live server... "
+            
         if 0:#For Degub
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
@@ -803,8 +825,12 @@ def recordStop():
         except:
             print "[Live] problem with FTP connection"
         print "[Live] Sending end signal for live to server"
-        page = urlopen(urlLiveState,\
-        "recordingPlace="+recordingPlace+"&status="+"end")
+        try:
+            page = urlopen(urlLiveState,\
+            "recordingPlace="+recordingPlace+"&status="+"end")
+        except:
+            writeInLogs("- Couldn't send end signal to live server... "+ str(datetime.datetime.now())+"\n")
+            print "!!! WARNING !!! Couldn't send end signal to live server... "
         if 0:#For debug
             print "------ Response from Audiocours : -----"
             serverAnswer= page.read() # Read/Check the result
