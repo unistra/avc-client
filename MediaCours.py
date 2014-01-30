@@ -836,18 +836,25 @@ def recordStop():
             serverAnswer= page.read() # Read/Check the result
             print serverAnswer
             
+    def stopFFMPEG():
+        global pffmpeg
+        try:
+            pffmpeg.stdin.write("q") 
+            pffmpeg.kill()
+        except:
+            print "WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may not be directly readable..."
+            writeInLogs("- WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may lack header as a result and may not be directly readable... "+ str(datetime.datetime.now())+"\n")
+            os.popen("taskkill /F /IM  ffmpeg.exe")
+            
     lastEvent=time.time()     
     if usage=="audio" and audioEncoder==True:
-        pffmpeg.stdin.write("q") 
-        pffmpeg.kill()
+        stopFFMPEG()
     if usage=="video" and videoEncoder=="ffmpeg":
-        pffmpeg.stdin.write("q") 
-        pffmpeg.kill()
+        stopFFMPEG()
     if usage=="video" and videoEncoder=="flash": 
         flv.stop(FMLEpid)
     if usage=="screencast":
-        pffmpeg.stdin.write("q") 
-        pffmpeg.kill()
+        stopFFMPEG()
     if live==True:
         liveFeed.SetValue(False) #unchecks live checkbox for next user    
     #DEPRECATED VIDEO FORMATS AND ENCODERS
