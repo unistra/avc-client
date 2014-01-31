@@ -24,11 +24,11 @@
 #*******************************************************************************
 
 
-__version__="2.2-alpha"
+__version__="2.3"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
-import subprocess, socket, winsound, traceback, webbrowser
+import subprocess, socket, winsound, traceback, webbrowser, platform
 from thread import start_new_thread, exit
 from urllib2 import urlopen
 from os import chdir
@@ -513,6 +513,7 @@ def recordNow():
         ## TODO : add a check to be sure there's at least one video source ?
         print "FfmpegVideoRecord video input set to:", videoinputName
         print "FfmpegVideoRecord audio input set to:", audioinputName
+        
         if videoFormatFFMPEG=="flv":
             #hide DOS console:
             print "LIVE IS >>>>>>>>>>>>>>>>>>>>", live
@@ -843,6 +844,9 @@ def recordStop():
             pffmpeg.kill()
         except:
             print "WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may not be directly readable..."
+            text=_("WARNING: Can't stop properly FFMPEG subprocess,\n attempting forced stop, media may not be readable.")
+            dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
             writeInLogs("- WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may lack header as a result and may not be directly readable... "+ str(datetime.datetime.now())+"\n")
             os.popen("taskkill /F /IM  ffmpeg.exe")
             
@@ -2689,5 +2693,15 @@ if __name__=="__main__":
         remotePort=8081
         print 'switching remote port to '+str(remotePort)+' for standalone usage'
     print "Launching integrated server with port", remotePort, "for hosts", hosts
+    
+    # platform check and warning for XP
+    if ("XP" or "xp") in platform.platform():
+            dialogText= "This version is incompatible with Windows XP (works for Windows 7 and above).\n "\
+             "For Windows XP please use a previous versions of Audiovideocast (2.1 or below)." 
+            print dialogText
+            dialog=wx.MessageDialog(None,message=dialogText,
+            style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+    
     start_new_thread(goAVCremote,(remotePort,pathData,hosts))
     app.MainLoop()
