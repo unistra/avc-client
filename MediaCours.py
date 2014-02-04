@@ -199,7 +199,7 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
-debug = True     # more verbose messages when run from source if debug = True 
+debug = False     # more verbose messages when run from source if debug = True 
 forBuild = False # If not look for credentials in pass.p which is not versionned
 #  For publishing and live screenshots
 if forBuild == False:# in case no server informations found in the configuration file
@@ -453,8 +453,6 @@ def recordNow():
         global pffmpeg #handle for the FFMPEG subprocess
         print "In ffmpegScreencastingRecord"
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
-        #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        #videoinputList= getAudioVideoInputFfmpeg(pathData=pathData)[1]
         if "UScreenCapture" not in videoinputList:
             dialogText= "Didn't find 'UScreenCapture' as the default video source for screen recording\n "\
              " please stop (F8) and check you've installed 'Screen Capture DirectShow source filter' \n "\
@@ -470,27 +468,20 @@ def recordNow():
                 pffmpeg=subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
             if live==True:
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q","5",
-                                          "%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
-                try:
-                    urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
-                except:
-                    writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
-                    print "!!! WARNING !!! Couldn't send begin signal to live server... "
-                if 0: # DEPRECATED 
-                    cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-                    subprocess.Popen(cmd,shell=True)    
-        if videoFormatFFMPEG=="mp4": 
-            if 0: # original
-                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(audioinputName, videoFileOutput)
-            if 1:
-                #cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
-                cmd=('ffmpeg -f dshow -i video="UScreenCapture" -vcodec mpeg4 -q 5 "%s"')%(videoFileOutput)
-            pffmpeg=subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
-        #os.system(cmd)
+                                          "%s"%videoFileOutput,"-f","flv","rtmp://"+flashServerIP+"/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+                # WARNING recording in mp4 but streaming in flv ?? check to steam in mp4 to and ask server to be set for that
+        if videoFormatFFMPEG=="mp4":
+            print "LIVE SCREENCASTING MP4 FORMAT WITH FFMPEG"
+            if live==False:
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f",
+                                          "dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],stdin=subprocess.PIPE,shell=True)   
+            if live==True:
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video=UScreenCapture","-f","dshow","-i","audio="+audioinputName,"-q",
+                                          "5","%s"%videoFileOutput,"-f","flv","rtmp://"+flashServerIP+"/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)  
 
     def ffmpegAudioRecord():
         """ Record mp3 using FFMPEG and liblamemp3 """
-        global pffmpeg #handle for the FFMPEG subprocess
+        global pffmpeg, flashServerIP #handle for the FFMPEG subprocess
         print "In ffmpegAudioRecord function"
         audioFileOutput=workDirectory+"/"+nameRecord
         print "In ffmpegAudioRecord..."
@@ -499,67 +490,46 @@ def recordNow():
         if live==True:
             print "In ffmpegAudioRecord Live"
             pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","audio="+audioinputName,"%s"%audioFileOutput,"-f",
-                                      "flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+                                          "flv","rtmp://"+flashServerIP+"/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+            # WARNING recording in mp4 but streaming in flv ?? check to steam in mp4 to and ask server to be set for that
                 
     def ffmpegVideoRecord():
-        """Record video using FFMPEG """
+        """ Record video using FFMPEG """
         print "In ffmpegVideoRecord..."
         global audioinput, videoinput, urlLiveState
         global pffmpeg #handle for the FFMPEG subprocess
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
         print "audioinput and videoinput", audioinput,type(audioinput), videoinput, type(videoinput)
-        #audioinputName= getAudioVideoInputFfmpeg(pathData=pathData)[0][int(audioinput)]
-        #videoinputName= getAudioVideoInputFfmpeg(pathData=pathData)[1][int(videoinput)]
-        ## TODO : add a check to be sure there's at least one video source ?
         print "FfmpegVideoRecord video input set to:", videoinputName
         print "FfmpegVideoRecord audio input set to:", audioinputName
-        
         if videoFormatFFMPEG=="flv":
-            #hide DOS console:
-            print "LIVE IS >>>>>>>>>>>>>>>>>>>>", live
+            print "LIVE FLV FORMAT WITH FFMPEG"
             if live==False:
                 print "... ((( Using subprocess to order FFMPEG and hide Shell/DOS window ))) ..."
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
                                           "5","%s"%videoFileOutput],stdin=subprocess.PIPE,shell=True)
-            
             if live==True:
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
-                                          "5","%s"%videoFileOutput,"-f","flv","rtmp://vod-flash-avc.u-strasbg.fr/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
-                try:
-                    urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
-                except:
-                    writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
-                    print "!!! WARNING !!! Couldn't send begin signal to live server... "
-            
-            if 0: #worked but switech to subprocess as there's no way to hide the console this way
-                cmd=('ffmpeg -f dshow -i video="%s" -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
-        if videoFormatFFMPEG=="mp4": # if we want an mp4 output instead of a flv
-            if 0:
-                cmd=('ffmpeg -f dshow -i video="%s" -vcodec mpeg4 -f dshow -i audio="%s" -q 5 "%s"')%(videoinputName, audioinputName, videoFileOutput)
-                print "send cmd to DOS:", cmd
-                os.system(cmd)
-            if 1:
-                #subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-vcodec","mpeg4","-f","dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],shell=True)
+                                          "5","%s"%videoFileOutput,"-f","flv","rtmp://"+flashServerIP+"/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)
+        if videoFormatFFMPEG=="mp4": 
+            print "LIVE MP4 FORMAT WITH FFMPEG"
+            if live==False:
                 pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f",
-                                          "dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],
-                                         stdin=subprocess.PIPE,shell=True)
-                
+                                          "dshow","-i","audio="+audioinputName,"-q","5","%s"%videoFileOutput],stdin=subprocess.PIPE,shell=True)   
+            if live==True:
+                pffmpeg=subprocess.Popen(["ffmpeg","-f","dshow","-i","video="+videoinputName,"-f","dshow","-i","audio="+audioinputName,"-q",
+                                          "5","%s"%videoFileOutput,"-f","flv","rtmp://"+flashServerIP+"/live/"+recordingPlace],stdin=subprocess.PIPE,shell=True)  
+                # WARNING recording in mp4 but streaming in flv ?? check to steam in mp4 to and ask server to be set for that
         
     def windowsMediaEncoderRecord():
-        """
-        --- DEPRECATED ---
-        Record Video with Windows Media Encoder Series 9
-        """ 
+        """ --- DEPRECATED --- Record Video with Windows Media Encoder Series 9 """ 
         scriptPath=r' cscript.exe C:\"Program Files\Windows Media Components\Encoder\WMCmd.vbs"'
         arguments=" -adevice 1 -vdevice 1 -output "+\
         dirName+"\enregistrement-video.wmv -duration "+str(maxRecordingLength)
         os.system(scriptPath+arguments)
         
     def realProducerRecord():
-        """ 
-        --- DEPRECATED ---
-        Record video with Real Producer basic 
-        """
+        """  --- DEPRECATED ---  Record video with Real Producer basic """
         MaximumRecordingLength=str(maxRecordingLength)
         fileVideo=workDirectory+ '\\enregistrement-video.rm'
         if live==False:
@@ -577,9 +547,7 @@ def recordNow():
             os.system(todoLiveReal)
             
     def flashMediaEncoderRecord():
-        """
-        Record video with Flash Media Encoder
-        """
+        """ Record video with Flash Media Encoder """
         print "In flashMediaEncoderRecord()"
         global flv,flashServer,FMLEpid,urlLiveState
         if live==True:
@@ -604,108 +572,71 @@ def recordNow():
                 print serverAnswer
         else:
             liveParams=""
-        #flvPath=r"C:\Documents and Settings\franz\Bureau\newsample.flv"
         if usage=="video":
             flvPath=pathData+'\\'+ dirName+ '\\enregistrement-video.flv'
         elif usage=="audio":
             flvPath=pathData+'\\'+ dirName+ '\\enregistrement-micro.mp3'
-            
         print flvPath  
         print "In FlashMediaRecord() videoinput=",videoinput,"audioinput=",audioinput
         print "Current directory is", os.getcwd()
         if os.path.isfile("startup.xml")==True:
             print ">>>   Found startup.xml in AudioVideoCours folder. This profile will be used by Flash Media Encoder insted of the configuration file parameters."
-            #subprocess.Popen(["FMEcmd.exe", "/P","startup.xml"])
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
                        flvPath=flvPath,liveParams=liveParams,externalProfile=True,usage=usage,live=live,pathData=pathData)
             flv.record()
-            #FMEprocess=flv.record()
-            #FMLEpid=FMEprocess.pid
             FMLEpid=flvPath # FME use the full path of the flv not the pid...
         else:
             print "FME: using configuration file parameters"
             flv=FMEcmd(videoDeviceName=videoinput,audioDeviceName=audioinput,
                        flvPath=flvPath,liveParams=liveParams,externalProfile=False,usage=usage,live=live,pathData=pathData)
             flv.record()
-            #FMEprocess=flv.record()
-            #FMLEpid=FMEprocess.pid
             FMLEpid=flvPath # FME use the full path of the flv not the pid...
-    
-    def liveStream():
-        """ Control VLC for *audio* live stream """
-        global vlcPid,dirName
-        time.sleep(2)
-        print "Going audio live with VLC ..."
-        vlcapp='C:\\Program'+' '+'Files\\VideoLAN\\VLC\\vlc.exe'
-        command=r'C:\"Program Files"\VideoLAN\VLC\vlc.exe -vvvv '
-        file=pathData+"\\"+dirName+"\\enregistrement-micro.mp3"
-        typeout="#standard{access=http,mux=raw}"
-        # try to launch a pre-configured trayit!.exe to hide VLC GUI
+        
+    if live==True:
         try:
-            subprocess.Popen(['trayit!'])
-            #time.sleep(0.5)
-        except:
-            pass
-        if 0: # Using os.system (meaning there will be a DOS window visible)
-            os.system('%s -vvvv "%s" --sout %s'%(command,file,typeout))
-        if 1: # Using subprocess (no DOS window visible)
-            arg1= '-vvvv '+file
-            arg2= '"#standard{access=http,mux=asf}"'
-            subprocess.Popen(['%s'%(vlcapp),"-vvvv",file,"--sout","%s"%typeout])
-    
-    # Check for usage and engage recording
-    if usage=="audio" and audioEncoder==True:
-        start_new_thread(ffmpegAudioRecord,())
-        #Send the information that live is ON
-        print ">>>>>>>>>>>>>>>>>>>",urlLiveState
-        print ">>>>>>>>>>>>>>>>>>>",recordingPlace
-        try:
-            page = urlopen(urlLiveState,\
-            "recordingPlace="+recordingPlace+"&status="+"begin")
+            urlopen(urlLiveState,"recordingPlace="+recordingPlace+"&status="+"begin")
         except:
             writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
-            print "!!! WARNING !!! Couldn't send begin signal to live server... "
-        
+            print "!!! WARNING !!! Couldn't send begin signal to live server... " 
+        start_new_thread(liveScreenshotStart,())
+    
+        print "Usage check before recording is now > ", usage
+    # Check for audio usage (encoder or not) and engage recording
+    if usage=="audio" and audioEncoder==True:
+        start_new_thread(ffmpegAudioRecord,())
     else:
         if usage=="audio" and audioEncoder==False:
             start_new_thread(record,())
         
-    if live==True:
-        start_new_thread(liveScreenshotStart,())
-        print "Starting LiveScreenshotStart"
-    
-    if live==True and usage=="audio" and audioEncoder==False:
-        #start_new_thread(liveStream,())
-        start_new_thread(flashMediaEncoderRecord,())
-        #Send the information that live is ON
-        print ">>>>>>>>>>>>>>>>>>>",urlLiveState
-        print ">>>>>>>>>>>>>>>>>>>",recordingPlace
-        try:
-            page = urlopen(urlLiveState,\
-            "recordingPlace="+recordingPlace+"&status="+"begin")
-        except:
-            writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
-            print "!!! WARNING !!! Couldn't send begin signal to live server... "
-            
-        if 0:#For Degub
-            print "------ Response from Audiocours : -----"
-            serverAnswer= page.read() # Read/Check the result
-            print serverAnswer
-    print "Usage is > ", usage
-    
+    ### Screencasting usage ###
     if usage=="screencast":
         print "searching for FFMPEG for starting screencasting ..."    
         start_new_thread(ffmpegScreencastingRecord,())
     else:
-        if usage=="video" and videoEncoder=="flash":
-            print "searching for Flash Media Encoder"    
-            start_new_thread(flashMediaEncoderRecord,())
+        ### video recording usage with ffmpeg ### 
         if usage=="video" and videoEncoder=="ffmpeg":
             print "searching for FFMPEG"    
             start_new_thread(ffmpegVideoRecord,())
+            
+        ### DEPRECATED ENCODERS (legacy code)
+        # Flash Media Live Encoder (Deprecated now)
+        if usage=="video" and videoEncoder=="flash":
+            print "searching for Flash Media Encoder"    
+            start_new_thread(flashMediaEncoderRecord,())
+        # Flash Media Live Encoder audio case (Deprecated now)
+        if live==True and usage=="audio" and audioEncoder==False:
+            start_new_thread(flashMediaEncoderRecord,())
+            try:
+                page = urlopen(urlLiveState,\
+                "recordingPlace="+recordingPlace+"&status="+"begin")
+            except:
+                writeInLogs("- Couldn't send begin signal to live server... "+ str(datetime.datetime.now())+"\n")
+                print "!!! WARNING !!! Couldn't send begin signal to live server... "
+        # recording video with Microsoft Media Encoder (Deprecated)
         if usage=="video" and videoEncoder=="wmv":
             print "searching Windows Media Encoder ..."   
             start_new_thread(windowsMediaEncoderRecord,())
+        # recording video with Real Producer Encoder (Deprecated)
         if usage=="video" and videoEncoder=="real":
             print "searching Real media encoder"    
             start_new_thread(realProducerRecord,())
