@@ -24,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.3"
+__version__="2.4"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
