@@ -13,6 +13,10 @@ import subprocess, os
 import ImageChops, Image
 import math, shutil
 
+# Only useful if OCRanalyse=True
+# https://code.google.com/p/pytesser/
+from pytesser import *  
+
 # Variables
 sizeChangeThreshold=5000   # used only in File Size change comparison method
 picsExtraction = True   # extract pictures from video files
@@ -20,6 +24,7 @@ videoFilePath="enregistrement-video.mp4"   # name of the video to analyse
 extractionInterval= "0.1" # 1 / time interval  : 1= each seconds, 0.1 each 10 secs...
 outputPath="tests" # Output folder
 cleanFiles=True # remove extacted files to only keep different ones renamed D1.jpg, D2.jpg, etc
+OCRanalyse=True # perform OCR on "slides"
 
 print "> videoFileAnalyser started..."
 
@@ -67,7 +72,7 @@ for fileName in (os.listdir(outputPath)):
             if diffSize > sizeChangeThreshold: 
                 slideIndex+=1
                 #print ">>>>>>>>>>>>>> " + str(fileName)
-                shutil.copy2(outputPath+"/"+fileName, outputPath+"/D"+str(slideIndex)+".jpg")
+                shutil.copy2(outputPath+"/"+fileName, outputPath+"/D"+str(slideIndex)+".jpg")                    
             previousFileSize=currentFileSize 
         
         if 0: # Root Mean Square comparison method (don't work well on my test sample)
@@ -87,3 +92,12 @@ if cleanFiles==True:
             pass
         else:
             os.remove(outputPath+"/"+fileName)
+            
+if OCRanalyse==True:
+    print "> starting OCR with pytesser"
+    for fileName in (os.listdir(outputPath)):
+        im = Image.open(outputPath+"/"+fileName)
+        text = image_to_string(im)
+        print "############## "+fileName+" ############"
+        print text
+        print "#####################################"
