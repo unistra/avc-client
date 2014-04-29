@@ -58,7 +58,7 @@ slideIndex=1
 shutil.copy2(outputPath+"/"+previousFileName,outputPath+"/D"+str(slideIndex)+".jpg")
 
 for fileName in (os.listdir(outputPath)):
-    if fileName != "00001.jpg":
+    if fileName != "00001.jpg" or fileName !="D1.jpg":
         
         if 1: # File Size comparison method
             currentFileSize=os.path.getsize(outputPath+"/"+fileName)
