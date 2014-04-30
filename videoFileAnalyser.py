@@ -92,12 +92,27 @@ if cleanFiles==True:
             pass
         else:
             os.remove(outputPath+"/"+fileName)
-            
+
 if OCRanalyse==True:
     print "> starting OCR with pytesser"
     for fileName in (os.listdir(outputPath)):
-        im = Image.open(outputPath+"/"+fileName)
-        text = image_to_string(im)
-        print "############## "+fileName+" ############"
-        print text
-        print "#####################################"
+        
+        if 0: # Using pytesser (2007, no french dic) https://code.google.com/p/pytesser/
+            im = Image.open(outputPath+"/"+fileName)
+            text = image_to_string(im)
+            print "############## "+fileName+" ############"
+            print text
+            print "########################################"
+            
+        if 1: # Using tesseract-ocr-setup-3.02.02.exe on Windows
+            inputFile=os.getcwd()+"/"+outputPath+"/"+fileName
+            outputFile=os.getcwd()+"/"+outputPath+"/"+(fileName.split(".")[0])+".txt"
+            print inputFile
+            print outputFile
+            app='tesseract.exe'
+            appPath=os.path.join(r'C:\Program Files (x86)/Tesseract-OCR',app)
+            print "appPath", appPath
+            commandLine=[app, inputFile,outputFile ]
+            p= subprocess.Popen([r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe', inputFile ,outputFile  ])
+            p.communicate()
+
