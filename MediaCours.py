@@ -645,8 +645,8 @@ def screenshot():
     """
     Take a screenshot and thumbnails of the screen
     """
-    global recording, diaId, t0, timecodeFile
-    time.sleep(tempo)
+    global recording, diaId, t0, timecodeFile, ftpHandle
+    #time.sleep(tempo)
     if recording == True: #or False?
         myscreen= ImageGrab.grab() #print "screenshot from mouse"
         t = time.time()
