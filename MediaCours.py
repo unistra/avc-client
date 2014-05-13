@@ -288,7 +288,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
         if config.has_option(section,"videoFormatFFMPEG") == True: videoFormatFFMPEG=readParam("videoFormatFFMPEG")
-        if config.has_option(section,"audiocue") == True: audiocue=readParam("live")
+        if config.has_option(section,"audiocue") == True: audiocue=readParam("audiocue")
         #if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
         
         fconf.close()
@@ -437,6 +437,23 @@ def recordNow():
     os.mkdir(workDirectory + "/screenshots")
     start_new_thread(screenshot,())    
     
+    def mediaCheck():
+        """ Checking if the media is created (mp3, flv, mp4) or if recording must be stopped """
+        global maxRecordingLength, recording, t0
+        print "In mediaCheck and duration check"
+        time.sleep(5) #gives some time for recording thread to begin
+        while recording==True:
+            time.sleep(5) # checking each few seconds
+            ### checking if recording is beyond max recording time
+            if (time.time()-t0 > maxRecordingLength): 
+                print "recording beyond max recording time"
+                writeInLogs("- Recording duration > maxRecordingLength => Stop recording  "+ str(datetime.datetime.now())+"\n")
+                recordStop()
+                windowBack(frameEnd)
+                text="Enregistrement AVC stoppe car au dessus de la durree maximale."
+                dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()
+        
     def record():
         """ Record audio only - mp3 - with pymedia"""
         global recording, cparams
@@ -613,9 +630,11 @@ def recordNow():
         start_new_thread(liveScreenshotStart,())
     
         print "Usage check before recording is now > ", usage
-    # Check for audio usage (encoder or not) and engage recording
+    
+    ### Check for audio usage (encoder or not) and engage recording
     if usage=="audio" and audioEncoder==True:
         start_new_thread(ffmpegAudioRecord,())
+        start_new_thread(mediaCheck,())
     else:
         if usage=="audio" and audioEncoder==False:
             start_new_thread(record,())
@@ -624,11 +643,13 @@ def recordNow():
     if usage=="screencast":
         print "searching for FFMPEG for starting screencasting ..."    
         start_new_thread(ffmpegScreencastingRecord,())
+        start_new_thread(mediaCheck,())
     else:
         ### video recording usage with ffmpeg ### 
         if usage=="video" and videoEncoder=="ffmpeg":
             print "searching for FFMPEG"    
             start_new_thread(ffmpegVideoRecord,())
+            start_new_thread(mediaCheck,())
             
         ### DEPRECATED ENCODERS (legacy code)
         # Flash Media Live Encoder (Deprecated now)
