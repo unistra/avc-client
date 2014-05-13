@@ -379,13 +379,24 @@ def OnMouseEvent(event):
     """
     Catching mouse events from the hook and deciding what to do
     """
-    global recording,lastEvent,lastGlobalEvent
+    global recording,lastEvent,lastGlobalEvent,eventDelay
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
-    if  (recording == True) and (tryFocus == False) and( (time.time()-lastEvent)>eventDelay):
+    
+    if  (recording == True) and eventDelay==0:
+        #print "eventDelay is = 0"
         if (event.MessageName == "mouse left down") or (event.Wheel==1) or (event.Wheel==-1):
             if 0:  winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
             start_new_thread(screenshot,())
             lastEvent=time.time()
+    else:
+        #print "evenDelay is != 0"
+        if  (recording == True) and ( (time.time()-lastEvent)>eventDelay ):
+        #if  (recording == True) and (tryFocus == False) and( (time.time()-lastEvent)>eventDelay):
+            if (event.MessageName == "mouse left down") or (event.Wheel==1) or (event.Wheel==-1):
+                if 0:  winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                start_new_thread(screenshot,())
+                lastEvent=time.time()
+            
     if 0: # For debug purpose put 0 for example
         print 'MessageName:',event.MessageName
         print 'Message:',event.Message
