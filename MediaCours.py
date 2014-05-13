@@ -24,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.4"
+__version__="2.5"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
@@ -199,6 +199,8 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
+audiocue=True
+"make a sound when a screenshot is taken"
 debug = False     # more verbose messages when run from source if debug = True 
 forBuild = False # If not look for credentials in pass.p which is not versionned
 #  For publishing and live screenshots
@@ -226,7 +228,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,audioEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
+    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP,audiocue\
     ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer, videoFormatFFMPEG, screencastChoice
     
     confFileReport=""
@@ -286,6 +288,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
         if config.has_option(section,"videoFormatFFMPEG") == True: videoFormatFFMPEG=readParam("videoFormatFFMPEG")
+        if config.has_option(section,"audiocue") == True: audiocue=readParam("live")
         #if config.has_option(section,"screencasting") == True: screencasting=readParam("screencasting")
         
         fconf.close()
@@ -378,11 +381,9 @@ def OnMouseEvent(event):
     """
     global recording,lastEvent,lastGlobalEvent
     lastGlobalEvent=time.time()# For shutdownPC_if_noactivity
-    if  (recording == True) and (tryFocus == False)\
-    and( (time.time()-lastEvent)>eventDelay):
-        if (event.MessageName == "mouse left down") or (event.Wheel==1)\
-         or (event.Wheel==-1):
-            if 0: winsound.Beep(300,50) # For testing purposes
+    if  (recording == True) and (tryFocus == False) and( (time.time()-lastEvent)>eventDelay):
+        if (event.MessageName == "mouse left down") or (event.Wheel==1) or (event.Wheel==-1):
+            if 0:  winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
             start_new_thread(screenshot,())
             lastEvent=time.time()
     if 0: # For debug purpose put 0 for example
@@ -645,7 +646,7 @@ def screenshot():
     """
     Take a screenshot and thumbnails of the screen
     """
-    global recording, diaId, t0, timecodeFile, ftpHandle
+    global recording, diaId, t0, timecodeFile, ftpHandle, audiocue
     #time.sleep(tempo)
     if recording == True: #or False?
         myscreen= ImageGrab.grab() #print "screenshot from mouse"
@@ -654,6 +655,8 @@ def screenshot():
         myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
         timeStamp = str(round((t-t0),2))
         print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+        if audiocue==True:
+            winsound.Beep(500,70)
         timecodeFile = open (workDirectory +'\\timecode.csv','a')
         timecodeFile.write(timeStamp+"\n")
         timecodeFile.close()
