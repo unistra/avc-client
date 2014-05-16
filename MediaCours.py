@@ -442,6 +442,7 @@ def recordNow():
         global maxRecordingLength, recording, t0
         print "In mediaCheck and duration check"
         time.sleep(5) #gives some time for recording thread to begin
+        checkMediaFile=True
         while recording==True:
             time.sleep(5) # checking each few seconds
             ### checking if recording is beyond max recording time
@@ -453,6 +454,21 @@ def recordNow():
                 text="Enregistrement AVC stoppe car au dessus de la durree maximale."
                 dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
+            if ( (time.time()-t0 > 30) and (checkMediaFile==True)):
+                print "checking the existence of a media file" 
+                #if os.path.isfile (workDirectory+"\\"+fileName):
+                if 0:
+                    text=" Probleme d'enregistrement, media non cree."
+                    dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+                    dialog.ShowModal()
+                if 0:
+                    text="L'enregistrement video ou audio semble vide."
+                    dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+                    dialog.ShowModal()    
+                checkMediaFile=False
+                
+                
+                
         
     def record():
         """ Record audio only - mp3 - with pymedia"""
