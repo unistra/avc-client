@@ -425,7 +425,7 @@ def recordNow():
     # Audio cue to confirm recording state
     winsound.Beep(800,100)
     diaId = 0 # initialize screenshot number and time
-    t0 = time.time() 
+    t0 = time.time()  
     dateTime0 = datetime.datetime.now()
     print "- Recording now ! ... ( from recordNow() )"
     dirName = str(dateTime0)
@@ -437,12 +437,11 @@ def recordNow():
     os.mkdir(workDirectory + "/screenshots")
     start_new_thread(screenshot,())    
     
-    def mediaCheck():
-        """ Checking if the media is created (mp3, flv, mp4) or if recording must be stopped """
-        global maxRecordingLength, recording, t0
-        print "In mediaCheck and duration check"
+    def checkRecordingLimit():
+        """ Checking if the recording time limit is reached and if recording must be stopped """
+        global recording, t0
+        print "In checkRecordingLimit..."
         time.sleep(5) #gives some time for recording thread to begin
-        checkMediaFile=True
         while recording==True:
             time.sleep(5) # checking each few seconds
             ### checking if recording is beyond max recording time
@@ -454,21 +453,25 @@ def recordNow():
                 text="Enregistrement AVC stoppe car au dessus de la durree maximale."
                 dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
                 dialog.ShowModal()
-            if ( (time.time()-t0 > 30) and (checkMediaFile==True)):
-                print "checking the existence of a media file" 
-                #if os.path.isfile (workDirectory+"\\"+fileName):
-                if 0:
-                    text=" Probleme d'enregistrement, media non cree."
-                    dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
-                    dialog.ShowModal()
-                if 0:
-                    text="L'enregistrement video ou audio semble vide."
-                    dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
-                    dialog.ShowModal()    
-                checkMediaFile=False
                 
-                
-                
+    def checkMedia(mediaFile="",checkDelay=10):
+        """ Check if the media file - mp3, flv or mp4 - is created and not empty after checkDelay seconds""" 
+        fileToCheck=workDirectory+"\\"+mediaFile
+        print "\nIn checkMedia..."
+        print"\nfileToCheck",fileToCheck
+        time.sleep(checkDelay) #gives some time for recording thread to begin
+        print "checking the existence of the media file", mediaFile 
+        if not os.path.isfile (fileToCheck):
+            text=" Probleme d'enregistrement, media non cree."
+            dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+            dialog.ShowModal()
+        if os.path.isfile (fileToCheck):
+            mediaFileSize=os.stat(fileToCheck).st_size
+            print "mediaFileSize=",mediaFileSize 
+            if mediaFileSize == 0:
+                text="L'enregistrement video ou audio semble vide."
+                dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+                dialog.ShowModal()          
         
     def record():
         """ Record audio only - mp3 - with pymedia"""
@@ -650,22 +653,34 @@ def recordNow():
     ### Check for audio usage (encoder or not) and engage recording
     if usage=="audio" and audioEncoder==True:
         start_new_thread(ffmpegAudioRecord,())
-        start_new_thread(mediaCheck,())
+        start_new_thread(checkRecordingLimit,())
+        start_new_thread(checkMedia,("enregistrement-micro.mp3",10,))
     else:
         if usage=="audio" and audioEncoder==False:
             start_new_thread(record,())
+            start_new_thread(checkRecordingLimit,())
+            start_new_thread(checkMedia,("enregistrement-micro.mp3",10,))
         
     ### Screencasting usage ###
     if usage=="screencast":
         print "searching for FFMPEG for starting screencasting ..."    
         start_new_thread(ffmpegScreencastingRecord,())
-        start_new_thread(mediaCheck,())
+        start_new_thread(checkRecordingLimit,())
+        if videoFormatFFMPEG=="mp4":
+            start_new_thread(checkMedia,("enregistrement-video.mp4",10,))
+        if videoFormatFFMPEG=="flv":
+            start_new_thread(checkMedia,("enregistrement-video.flv",10,))
+            
     else:
         ### video recording usage with ffmpeg ### 
         if usage=="video" and videoEncoder=="ffmpeg":
-            print "searching for FFMPEG"    
+            print "searching for FFMPEG..."    
             start_new_thread(ffmpegVideoRecord,())
-            start_new_thread(mediaCheck,())
+            start_new_thread(checkRecordingLimit,())
+            if videoFormatFFMPEG=="mp4":
+                start_new_thread(checkMedia,("enregistrement-video.mp4",10,))
+            if videoFormatFFMPEG=="flv":
+                start_new_thread(checkMedia,("enregistrement-video.flv",10,))
             
         ### DEPRECATED ENCODERS (legacy code)
         # Flash Media Live Encoder (Deprecated now)
