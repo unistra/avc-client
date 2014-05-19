@@ -6,8 +6,8 @@
 [Setup]
 AppName=audiovideocast
 AppId=audiovideocast
-AppVerName=audiovideocast 2.4
-AppVersion=2.4
+AppVerName=audiovideocast 2.5
+AppVersion=2.5
 AppPublisher=(C) University of Strasbourg 2006-2014
 AppPublisherURL=http://www.unistra.fr
 AppSupportURL=http://www.unistra.fr
