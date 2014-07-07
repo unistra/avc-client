@@ -27,7 +27,7 @@
 __version__="2.5"
 
 ## Python import (base Python 2.4)
-import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle
+import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle,codecs
 import subprocess, socket, winsound, traceback, webbrowser, platform
 from thread import start_new_thread, exit
 from urllib2 import urlopen
@@ -249,6 +249,8 @@ def readConfFile(confFile="mediacours.conf"):
     try:
     #if 1:
         fconf=open(confFile,"r")
+        #fconf=codecs.open(confFile,encoding='utf-8')
+        
         config= ConfigParser.ConfigParser()
         config.readfp(fconf)
         if config.has_option(section,"language") == True: language=readParam("language")
@@ -2631,15 +2633,24 @@ if __name__=="__main__":
             print "inputList", inputList
             print "audioinputList", audioinputList
             print "videoinputList", videoinputList
+        
+        # Audio input from configuration file
         try:
-            audioinputName=audioinputList[int(audioinput)]
+            if (audioinput.isdigit()==False):
+                audioinputName=audioinput
+            else:
+                audioinputName=audioinputList[int(audioinput)]
         except IndexError:
             audioinputName="None"
             dialog=wx.MessageDialog(None,message="No audio source found, please restart the client and be sure that \n an audio source is seen by Windows or is setup properly in the config file.",
                                 caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
             dialog.ShowModal()
+        # Video input from configuration file
         try:
-            videoinputName= videoinputList[int(videoinput)]
+            if (videoinput.isdigit()==False):
+                videoinputName=videoinput
+            else:
+                videoinputName= videoinputList[int(videoinput)]
         except IndexError:
             videoinputName="None"
             if 0:
