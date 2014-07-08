@@ -31,7 +31,8 @@ import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfil
 
 if sys.platform=="darwin":
     # To enable AppleScript launch:
-    os.chdir(os.path.expanduser("~/Documents/workspace/audiovideocours/")) 
+    if 0: # don't change path for now 
+        os.chdir(os.path.expanduser("~/Documents/workspace/audiovideocours/")) 
     
 import subprocess, socket, traceback, webbrowser
 #import winsound # windows libs
@@ -43,6 +44,9 @@ from ftplib import FTP
 ## External Python libs import
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
+
+print wx.wx.__version__
+
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
 import cherrypy
 
@@ -1572,8 +1576,12 @@ class BeginFrame(wx.Frame):
             for eachRadio in [radio1,radio2]:
                 self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
             
-        im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        pathBan=os.getcwd()+"/images/ban1.jpg"
+        print pathBan
         
+        if 1:
+            im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+            
         text1="\n\t"+\
         _("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
         _("begin immediately and this window will disappear. ")
@@ -1717,7 +1725,7 @@ class EndingFrame(wx.Frame):
         panel=wx.Panel(self)
         #panel.SetBackgroundColour((244,180,56))
         panel.SetBackgroundColour("steel blue") 
-        logos = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        logos = wx.Image('/Users/francoisfrancois/Development/workspace/audiovideocours/images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         textTitle = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entryTitle = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
         textDescription = wx.StaticText(panel, -1, _("Eventual description:"),
@@ -2239,8 +2247,12 @@ if __name__=="__main__":
             dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
                                     caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
             dialog.ShowModal()
+    
     if sys.platform =='linux2' or 'darwin':
-        if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
+        if os.path.isfile("mediacours.conf"):
+            print "Found and using configuration file in script folder ."
+            readConfFile(confFile=os.path.expanduser("mediacours.conf"))
+        elif os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
             print "Found and using configuration file in ~/audiovideocours"
             readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
         else:
