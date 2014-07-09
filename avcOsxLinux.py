@@ -3,8 +3,8 @@
 #     Linux and OSX version of Audiovideocours
 #     Using Python 2.7 coming with OS X Lion 
 #
-#    (c) Universite de Strasbourg  2006-2012
-#     Conception and development : francois.schnell [AT] unistra.fr  
+#    (c) Universite de Strasbourg  2006-2014
+#     Conception and development : schnellf [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #*******************************************************************************
 
 
-__version__="1.22"
+__version__="1.23Mac"
 
 ## Python import (base Python 2.4)
 
@@ -840,8 +840,11 @@ def recordStop():
         print "trying to stop ffmpeg now"
         os.popen("killall ffmpeg")
     if usage=="audio" and sys.platform=="darwin":
-        print "trying to stop FMLE"
-        flv.stop(FMLEpid)
+        try:
+            print "trying to stop FMLE"
+            flv.stop(FMLEpid)
+        except:
+            pass
         
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
@@ -1575,9 +1578,6 @@ class BeginFrame(wx.Frame):
                 print "Usage selected (audio or video):",self.usage
             for eachRadio in [radio1,radio2]:
                 self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
-            
-        pathBan=os.getcwd()+"/images/ban1.jpg"
-        print pathBan
         
         if 1:
             im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
@@ -1607,7 +1607,8 @@ class BeginFrame(wx.Frame):
             print fontList
         if  liveCheckBox==True:
             liveFeed=wx.CheckBox(panel,-1,_("Live streaming"),)
-        btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
+        btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"))
+        btnStopRecord=wx.Button(parent=panel, id=-1, label="Stop")
         if sys.platform=="linux2": btnRecord.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         if standalone == True:
             btnNext = wx.Button(parent=panel, id=-1, label=_("Other choices"),size=(100,50))
@@ -1626,7 +1627,8 @@ class BeginFrame(wx.Frame):
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
         sizerV.Add(sizerH, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        sizerH.Add(btnRecord, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        sizerH.Add(btnRecord, 0, wx.ALIGN_CENTER|wx.ALL,0)
+        sizerH.Add(btnStopRecord, 0, wx.ALIGN_CENTER|wx.ALL, 0)
         if standalone == True:
             sizerH.Add(btnNext, 0, wx.ALIGN_CENTER|wx.ALL, 10)
             sizerH.Add(btnQuit, 0, wx.ALIGN_CENTER|wx.ALL, 10)
@@ -1634,6 +1636,7 @@ class BeginFrame(wx.Frame):
         panel.Layout() 
         # bind the button events to handlers
         self.Bind(wx.EVT_BUTTON, self.engageRecording, btnRecord)
+        self.Bind(wx.EVT_BUTTON, self.stopRecording, btnStopRecord)
         if standalone == True:
             self.Bind(wx.EVT_BUTTON, self.SkiptoEndingFrame, btnNext)
             self.Bind(wx.EVT_BUTTON, self.exitApp, btnQuit)
@@ -1691,12 +1694,21 @@ class BeginFrame(wx.Frame):
     def engageRecording(self,evt):
         """Confirms and engage recording"""
         if sys.platform=="linux2": setupHooksLinux()
-        global live
+        global live, recording
+        
         if  liveCheckBox==True:
             live=liveFeed.GetValue()
-        if tryFocus==False:
+            
+        if tryFocus==False and recording==False:
             start_new_thread(recordNow,())
-            self.Hide()
+            if 0:
+                self.Hide()
+            if 1:
+                self.Iconize( True )
+                
+    def stopRecording(self,evt):
+        """ Stops recording from the stop button"""
+        stopFromKBhook()
 
 class EndingFrame(wx.Frame):
     """
@@ -2383,16 +2395,38 @@ if __name__=="__main__":
         print ">>>>> yes my lord?"
     
     print "setting up icons"    
+    
     if usage=="audio" and sys.platform in("win32","darwin"):
-        print ">>> Setting up TaskBarIcon"
+        print ">>> Setting up TaskBarIcon <<<"
+        
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
-        tbicon = wx.TaskBarIcon()
-        #print "setting up binding for left click event"
-        #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
-        tbicon.SetIcon(icon1, "AudioCours en attente")
-        #print dir(tbicon)
-        #print dir(frameBegin)
+        
+        
+        if 1:
+            tbicon = wx.TaskBarIcon()
+            #print "setting up binding for left click event"
+            #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
+            
+            def OnTaskBarRight(event):
+                print "test from tb icon"
+            
+            tbicon.SetIcon(icon1, "AudioCours en attente")
+            
+            #add taskbar icon event
+            if 0:
+                #wx.EVT_TASKBAR_CLICK(tbicon, OnTaskBarRight)
+                wx.EVT_KILL_FOCUS(tbicon, OnTaskBarRight)
+                wx.EVT_TASKBAR_CLICK(tbicon, OnTaskBarRight)
+                app.ExitMainLoop()
+                
+            if 0:
+                app.Bind(wx.EVT_TASKBAR_CLICK,OnTaskBarRight,tbicon)
+                
+            #print dir(tbicon)
+            #print dir(frameBegin)
+    
+    
     if usage=="video":
         icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
