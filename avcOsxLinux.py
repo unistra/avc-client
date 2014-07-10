@@ -1679,12 +1679,15 @@ class BeginFrame(wx.Frame):
         """A function to quit the app"""
         print "exit"
         print "trying to close an eventual opened socket"
-        try:
-            mySocket.close()
-        except:
-            pass
-        exitAVC()
-        sys.exit()
+        if 0:
+            try:
+                mySocket.close()
+            except:
+                pass
+        if 0:
+            exitAVC()
+        #sys.exit()
+        quit()
         
     def SkiptoEndingFrame(self,evt):
         """Skip to Ending frame without recording"""
@@ -1695,20 +1698,22 @@ class BeginFrame(wx.Frame):
         """Confirms and engage recording"""
         if sys.platform=="linux2": setupHooksLinux()
         global live, recording
-        
-        if  liveCheckBox==True:
-            live=liveFeed.GetValue()
-            
-        if tryFocus==False and recording==False:
-            start_new_thread(recordNow,())
-            if 0:
-                self.Hide()
-            if 1:
-                self.Iconize( True )
+        if recording==False:
+            if  liveCheckBox==True:
+                live=liveFeed.GetValue()
+                
+            if tryFocus==False and recording==False:
+                start_new_thread(recordNow,())
+                if 0:
+                    self.Hide()
+                if 1:
+                    self.Iconize( True )
                 
     def stopRecording(self,evt):
         """ Stops recording from the stop button"""
-        stopFromKBhook()
+        self.Iconize( True )
+        if recording==True:
+            stopFromKBhook()
 
 class EndingFrame(wx.Frame):
     """
@@ -1872,6 +1877,7 @@ class EndingFrame(wx.Frame):
     def exitPublish(self,evt):
         """Don't publich the recordings on the webserver"""
         global dirNameToPublish, workDirectoryToPublish
+        frameBegin.Iconize( False )
         writeInLogs("- 'Cancel' button pressed at"+ \
         str(datetime.datetime.now())+"\n")
         folder="canceled"
@@ -2210,7 +2216,9 @@ def recoverFileOrFolder(name,pathData, ftpUrl,ftpLogin,ftpPass):
     else:
         result=name+ " is is not a folder or a file. No action taken."
         return result
-          
+    
+
+              
 ## Start app
 if __name__=="__main__":
 
