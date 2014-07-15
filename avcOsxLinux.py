@@ -1742,7 +1742,7 @@ class EndingFrame(wx.Frame):
         panel=wx.Panel(self)
         #panel.SetBackgroundColour((244,180,56))
         panel.SetBackgroundColour("steel blue") 
-        logos = wx.Image('/Users/francoisfrancois/Development/workspace/audiovideocours/images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        logos = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         textTitle = wx.StaticText(panel, -1, _("Title:"),size=(400,-1),style=wx.ALIGN_CENTER)
         entryTitle = wx.TextCtrl(panel, -1,"", size=(fieldSize, -1))
         textDescription = wx.StaticText(panel, -1, _("Eventual description:"),
