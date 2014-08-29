@@ -699,9 +699,10 @@ def screenshot():
         if sys.platform=="darwin" or "linux2":
             t = time.time()
             diaId += 1
-            if sys.platform=="darwin":
+            if sys.platform=="darwin" and audiocue==True:
                 os.system("screencapture -t jpg "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-                #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
+            if sys.platform=="darwin" and audiocue==False:
+                os.system("screencapture -x -t jpg "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             if sys.platform=="linux2":
                 os.system("scrot "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             t = time.time()
