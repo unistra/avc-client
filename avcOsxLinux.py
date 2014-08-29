@@ -246,6 +246,8 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
+audiocue=True
+"make a sound when a screenshot is taken"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     "FTP login for publishing and live screenshots"
@@ -266,7 +268,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
+    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP,audiocue\
     ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer
     
     confFileReport=""
@@ -324,7 +326,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
-        
+        if config.has_option(section,"audiocue") == True: audiocue=readParam("audiocue")
         fconf.close()
     #except:
     if 0:
@@ -672,7 +674,7 @@ def screenshot():
     """
     Take a screenshot and thumbnails of the screen
     """
-    global recording, diaId, t0, timecodeFile
+    global recording, diaId, t0, timecodeFile,audiocue
     time.sleep(tempo)
 
     if recording == True:
@@ -683,6 +685,8 @@ def screenshot():
             myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             timeStamp = str(round((t-t0),2))
             print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+            if audiocue==True:
+                winsound.Beep(500,70)
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
@@ -1673,6 +1677,8 @@ class BeginFrame(wx.Frame):
             if sys.platform=="linux2":
                 #subprocess.Popen(["gedit","~/audiovideocours/mediacours.conf"])
                 os.popen("gedit ~/audiovideocours/mediacours.conf")
+            if sys.platform=="darwin":
+                os.popen("open -t mediacours.conf")
         start_new_thread(launch,())
         
     def exitApp(self,evt):
@@ -2289,7 +2295,7 @@ if __name__=="__main__":
     # Set-up language
     if language=="French":
         print "Setting French language..."
-        langFr = gettext.translation('mediacours', "locale",languages=['fr'],codeset="iso-8859-1")
+        langFr = gettext.translation('mediacours', "./locale",languages=['fr'],codeset="iso-8859-1")
         langFr.install(unicode=True)
                     
     if pathData == None or pathData=="":
