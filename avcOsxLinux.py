@@ -3,8 +3,8 @@
 #     Linux and OSX version of Audiovideocours
 #     Using Python 2.7 coming with OS X Lion 
 #
-#    (c) Universite de Strasbourg  2006-2012
-#     Conception and development : francois.schnell [AT] unistra.fr  
+#    (c) Universite de Strasbourg  2006-2014
+#     Conception and development : schnellf [AT] unistra.fr  
 #---
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #*******************************************************************************
 
 
-__version__="1.22"
+__version__="1.23Mac"
 
 ## Python import (base Python 2.4)
 
@@ -31,7 +31,8 @@ import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfil
 
 if sys.platform=="darwin":
     # To enable AppleScript launch:
-    os.chdir(os.path.expanduser("~/Documents/workspace/audiovideocours/")) 
+    if 0: # don't change path for now 
+        os.chdir(os.path.expanduser("~/Documents/workspace/audiovideocours/")) 
     
 import subprocess, socket, traceback, webbrowser
 #import winsound # windows libs
@@ -43,6 +44,9 @@ from ftplib import FTP
 ## External Python libs import
 import wx, wx.lib.colourdb # GUI
 import wx.lib.hyperlink as hl
+
+print wx.wx.__version__
+
 #import msvcrt,pythoncom,pyHook,serial # access MS C/C++ Runtime lib, MS COM, hook, serial port
 import cherrypy
 
@@ -242,6 +246,8 @@ ftpHandleReady=False
 "For live session: indicates if we have an open FTP connection to send live screenshots"
 previewPlayer="realplayer"
 "Standalone preview player ( realplayer or browser), used in standalone mode only"
+audiocue=True
+"make a sound when a screenshot is taken"
 if 1:# in case no server informations found in the configuration file
     ftpLogin=""
     "FTP login for publishing and live screenshots"
@@ -262,7 +268,7 @@ def readConfFile(confFile="mediacours.conf"):
     ,serialKeyboard,startKey,videoprojectorInstalled,videoprojectorPort,keyboardPort\
     ,videoProjON,videoProjOFF,ftpUrl,eventDelay,maxRecordingLength,recordingPlace\
     ,usage,cparams,bitrate,socketEnabled,standalone,videoEncoder,amxKeyboard,liveCheckBox,\
-    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP\
+    language,ftpLogin,ftpPass,cparams, videoinput,audioinput,flashServerIP,audiocue\
     ,formFormation, audioVideoChoice,urlLiveState,publishingForm, remoteControl, remotePort,previewPlayer
     
     confFileReport=""
@@ -320,7 +326,7 @@ def readConfFile(confFile="mediacours.conf"):
         if config.has_option(section,"remoteControl") == True: remoteControl=readParam("remoteControl")
         if config.has_option(section,"remotePort") == True: remotePort=int(readParam("remotePort"))
         if config.has_option(section,"previewPlayer") == True: previewPlayer=readParam("previewPlayer")
-        
+        if config.has_option(section,"audiocue") == True: audiocue=readParam("audiocue")
         fconf.close()
     #except:
     if 0:
@@ -668,7 +674,7 @@ def screenshot():
     """
     Take a screenshot and thumbnails of the screen
     """
-    global recording, diaId, t0, timecodeFile
+    global recording, diaId, t0, timecodeFile,audiocue
     time.sleep(tempo)
 
     if recording == True:
@@ -679,6 +685,8 @@ def screenshot():
             myscreen.save(workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             timeStamp = str(round((t-t0),2))
             print "Screenshot number ", diaId," taken at timeStamp = ", timeStamp
+            if audiocue==True:
+                winsound.Beep(500,70)
             timecodeFile = open (workDirectory +'/timecode.csv','a')
             timecodeFile.write(timeStamp+"\n")
             timecodeFile.close()
@@ -691,9 +699,10 @@ def screenshot():
         if sys.platform=="darwin" or "linux2":
             t = time.time()
             diaId += 1
-            if sys.platform=="darwin":
+            if sys.platform=="darwin" and audiocue==True:
                 os.system("screencapture -t jpg "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
-                #os.system("screencapture "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.png')
+            if sys.platform=="darwin" and audiocue==False:
+                os.system("screencapture -x -t jpg "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             if sys.platform=="linux2":
                 os.system("scrot "+workDirectory+"/screenshots/" + 'D'+ str(diaId)+'.jpg')
             t = time.time()
@@ -836,8 +845,11 @@ def recordStop():
         print "trying to stop ffmpeg now"
         os.popen("killall ffmpeg")
     if usage=="audio" and sys.platform=="darwin":
-        print "trying to stop FMLE"
-        flv.stop(FMLEpid)
+        try:
+            print "trying to stop FMLE"
+            flv.stop(FMLEpid)
+        except:
+            pass
         
     if live==True:
         liveFeed.SetValue(False) #uncheck live checkbox for next user in GUI    
@@ -1571,9 +1583,10 @@ class BeginFrame(wx.Frame):
                 print "Usage selected (audio or video):",self.usage
             for eachRadio in [radio1,radio2]:
                 self.Bind(wx.EVT_RADIOBUTTON ,onRadio,eachRadio)
-            
-        im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         
+        if 1:
+            im1 = wx.Image('images/ban1.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+            
         text1="\n\t"+\
         _("By pressing the  ' Record ! '  button, the  recording will  ")+"\n\t"+\
         _("begin immediately and this window will disappear. ")
@@ -1599,7 +1612,8 @@ class BeginFrame(wx.Frame):
             print fontList
         if  liveCheckBox==True:
             liveFeed=wx.CheckBox(panel,-1,_("Live streaming"),)
-        btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"),size=(200,50))
+        btnRecord = wx.Button(parent=panel, id=-1, label=_("Record!"))
+        btnStopRecord=wx.Button(parent=panel, id=-1, label="Stop")
         if sys.platform=="linux2": btnRecord.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL,wx.NORMAL, False,"MS Sans Serif"))
         if standalone == True:
             btnNext = wx.Button(parent=panel, id=-1, label=_("Other choices"),size=(100,50))
@@ -1618,7 +1632,8 @@ class BeginFrame(wx.Frame):
         if  liveCheckBox==True:
             sizerV.Add(liveFeed, 0, wx.ALIGN_CENTER|wx.ALL, 2)
         sizerV.Add(sizerH, 0, wx.ALIGN_CENTER|wx.ALL, 10)
-        sizerH.Add(btnRecord, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        sizerH.Add(btnRecord, 0, wx.ALIGN_CENTER|wx.ALL,0)
+        sizerH.Add(btnStopRecord, 0, wx.ALIGN_CENTER|wx.ALL, 0)
         if standalone == True:
             sizerH.Add(btnNext, 0, wx.ALIGN_CENTER|wx.ALL, 10)
             sizerH.Add(btnQuit, 0, wx.ALIGN_CENTER|wx.ALL, 10)
@@ -1626,6 +1641,7 @@ class BeginFrame(wx.Frame):
         panel.Layout() 
         # bind the button events to handlers
         self.Bind(wx.EVT_BUTTON, self.engageRecording, btnRecord)
+        self.Bind(wx.EVT_BUTTON, self.stopRecording, btnStopRecord)
         if standalone == True:
             self.Bind(wx.EVT_BUTTON, self.SkiptoEndingFrame, btnNext)
             self.Bind(wx.EVT_BUTTON, self.exitApp, btnQuit)
@@ -1662,18 +1678,23 @@ class BeginFrame(wx.Frame):
             if sys.platform=="linux2":
                 #subprocess.Popen(["gedit","~/audiovideocours/mediacours.conf"])
                 os.popen("gedit ~/audiovideocours/mediacours.conf")
+            if sys.platform=="darwin":
+                os.popen("open -t mediacours.conf")
         start_new_thread(launch,())
         
     def exitApp(self,evt):
         """A function to quit the app"""
         print "exit"
         print "trying to close an eventual opened socket"
-        try:
-            mySocket.close()
-        except:
-            pass
-        exitAVC()
-        sys.exit()
+        if 0:
+            try:
+                mySocket.close()
+            except:
+                pass
+        if 0:
+            exitAVC()
+        #sys.exit()
+        quit()
         
     def SkiptoEndingFrame(self,evt):
         """Skip to Ending frame without recording"""
@@ -1683,12 +1704,23 @@ class BeginFrame(wx.Frame):
     def engageRecording(self,evt):
         """Confirms and engage recording"""
         if sys.platform=="linux2": setupHooksLinux()
-        global live
-        if  liveCheckBox==True:
-            live=liveFeed.GetValue()
-        if tryFocus==False:
-            start_new_thread(recordNow,())
-            self.Hide()
+        global live, recording
+        if recording==False:
+            if  liveCheckBox==True:
+                live=liveFeed.GetValue()
+                
+            if tryFocus==False and recording==False:
+                start_new_thread(recordNow,())
+                if 0:
+                    self.Hide()
+                if 1:
+                    self.Iconize( True )
+                
+    def stopRecording(self,evt):
+        """ Stops recording from the stop button"""
+        self.Iconize( True )
+        if recording==True:
+            stopFromKBhook()
 
 class EndingFrame(wx.Frame):
     """
@@ -1852,6 +1884,7 @@ class EndingFrame(wx.Frame):
     def exitPublish(self,evt):
         """Don't publich the recordings on the webserver"""
         global dirNameToPublish, workDirectoryToPublish
+        frameBegin.Iconize( False )
         writeInLogs("- 'Cancel' button pressed at"+ \
         str(datetime.datetime.now())+"\n")
         folder="canceled"
@@ -2190,7 +2223,9 @@ def recoverFileOrFolder(name,pathData, ftpUrl,ftpLogin,ftpPass):
     else:
         result=name+ " is is not a folder or a file. No action taken."
         return result
-          
+    
+
+              
 ## Start app
 if __name__=="__main__":
 
@@ -2239,8 +2274,12 @@ if __name__=="__main__":
             dialog=wx.MessageDialog(None,message="No configuration file found in either USERPROFILE or ALLUSERSPEOFILE",
                                     caption="Audiovideocours Error Message", style=wx.OK|wx.ICON_INFORMATION)
             dialog.ShowModal()
+    
     if sys.platform =='linux2' or 'darwin':
-        if os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
+        if os.path.isfile("mediacours.conf"):
+            print "Found and using configuration file in script folder ."
+            readConfFile(confFile=os.path.expanduser("mediacours.conf"))
+        elif os.path.isfile(os.path.expanduser("~/audiovideocours/mediacours.conf")):
             print "Found and using configuration file in ~/audiovideocours"
             readConfFile(confFile=os.path.expanduser("~/audiovideocours/mediacours.conf"))
         else:
@@ -2257,7 +2296,7 @@ if __name__=="__main__":
     # Set-up language
     if language=="French":
         print "Setting French language..."
-        langFr = gettext.translation('mediacours', "locale",languages=['fr'],codeset="iso-8859-1")
+        langFr = gettext.translation('mediacours', "./locale",languages=['fr'],codeset="iso-8859-1")
         langFr.install(unicode=True)
                     
     if pathData == None or pathData=="":
@@ -2371,16 +2410,38 @@ if __name__=="__main__":
         print ">>>>> yes my lord?"
     
     print "setting up icons"    
+    
     if usage=="audio" and sys.platform in("win32","darwin"):
-        print ">>> Setting up TaskBarIcon"
+        print ">>> Setting up TaskBarIcon <<<"
+        
         icon1 = wx.Icon('images/audiocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/audiocours2.ico', wx.BITMAP_TYPE_ICO)
-        tbicon = wx.TaskBarIcon()
-        #print "setting up binding for left click event"
-        #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
-        tbicon.SetIcon(icon1, "AudioCours en attente")
-        #print dir(tbicon)
-        #print dir(frameBegin)
+        
+        
+        if 1:
+            tbicon = wx.TaskBarIcon()
+            #print "setting up binding for left click event"
+            #app.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, onTaskbarActivate)
+            
+            def OnTaskBarRight(event):
+                print "test from tb icon"
+            
+            tbicon.SetIcon(icon1, "AudioCours en attente")
+            
+            #add taskbar icon event
+            if 0:
+                #wx.EVT_TASKBAR_CLICK(tbicon, OnTaskBarRight)
+                wx.EVT_KILL_FOCUS(tbicon, OnTaskBarRight)
+                wx.EVT_TASKBAR_CLICK(tbicon, OnTaskBarRight)
+                app.ExitMainLoop()
+                
+            if 0:
+                app.Bind(wx.EVT_TASKBAR_CLICK,OnTaskBarRight,tbicon)
+                
+            #print dir(tbicon)
+            #print dir(frameBegin)
+    
+    
     if usage=="video":
         icon1 = wx.Icon('images/videocours1.ico', wx.BITMAP_TYPE_ICO)
         icon2 = wx.Icon('images/videocours2.ico', wx.BITMAP_TYPE_ICO)
