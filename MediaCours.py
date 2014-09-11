@@ -24,7 +24,7 @@
 #*******************************************************************************
 
 
-__version__="2.5"
+__version__="2.7b1"
 
 ## Python import (base Python 2.4)
 import sys,os,time,datetime,tarfile,ConfigParser,threading,shutil,gettext,zipfile,pickle,codecs
@@ -503,10 +503,14 @@ def recordNow():
         global pffmpeg #handle for the FFMPEG subprocess
         print "In ffmpegScreencastingRecord"
         videoFileOutput=workDirectory+"/enregistrement-video."+videoFormatFFMPEG
-        if "UScreenCapture" not in videoinputList:
-            dialogText= "Didn't find 'UScreenCapture' as the default video source for screen recording\n "\
-             " please stop (F8) and check you've installed 'Screen Capture DirectShow source filter' \n "\
-             "Windows freeware : http://www.umediaserver.net/umediaserver/download.html" 
+        
+        if "UScreenCapture" not in videoinputList: 
+            dialogText= """ 'Screen Capture DirectShow source filter' ne semble pas present sur ce PC, il est necessaire pour l'option screencasting.
+            Arreter l'enregistrement -F8- et verifiez installation de ce logiciel si vous souhaitez cette option.
+            Il peut être téléchargé sur le site du développeur : http://umediaserver.net/components/index.html
+            Version 32 bits : http://umediaserver.net/bin/UScreenCapture.zip
+            Version 64 bits : http://umediaserver.net/bin/UScreenCapture(x64).zip
+            """      
             print dialogText
             dialog=wx.MessageDialog(None,message=dialogText,
             style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
@@ -2660,10 +2664,15 @@ if __name__=="__main__":
         ## Warning : dirty fix before unicode version with some french characters with devices names 
         # (as FFMPEG don't take numbers as input sources)  
         # others french characters ?? https://forums.alliedmods.net/showthread.php?t=114798    
+        # or http://www.e-bancel.com/codes_utf8_caracteres_accentues.php
         audioinputName=audioinputName.replace("Ã©","é")
         videoinputName=videoinputName.replace("Ã©","é")
         audioinputName=audioinputName.replace("Â®","®")
         videoinputName=videoinputName.replace("Â®","®")
+        audioinputName=audioinputName.replace("Ã¨","è")
+        videoinputName=videoinputName.replace("Ã¨","è")
+        audioinputName=audioinputName.replace("Ãª","ê")
+        videoinputName=videoinputName.replace("Ãª","ê")
             
         print "audioinput is  now >>>", audioinputName
         print "audioinput is  now >>>", videoinputName
