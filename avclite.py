@@ -137,7 +137,10 @@ def publish(pathData):
     """ Open Publish recording"""
     # Open publishing URL
     #url="https://cas.unistra.fr/cas/login?service=https%3A%2F%2Faudiovideocast.unistra.fr%2Favc%2Fauthentication_cas%3FreturnPage%3Dmyspace"
-    url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
+    if 0:
+        url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
+    if 1:
+        url="https://audiovideocast.unistra.fr/avc/myspace_home"
     webbrowser.open(url, new=2, autoraise=True)
     #subprocess.Popen('explorer "%s"'%(pathData))
     
