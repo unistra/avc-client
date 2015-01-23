@@ -231,7 +231,7 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, title):
         
         global mp4ToDesktop
-        wx.Frame.__init__(self, parent, -1, title, pos=(150, 150), size=(850, 690))
+        wx.Frame.__init__(self, parent, -1, title, pos=(150, 150), size=(850, 690),style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
         
         self.Bind(wx.EVT_CLOSE, self.onCloseFrame)
         
