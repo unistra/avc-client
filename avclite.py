@@ -16,6 +16,7 @@ import sys
 from thread import start_new_thread
 import time
 import webbrowser
+import ConfigParser
 import winsound
 
 import wx
@@ -26,7 +27,7 @@ __version__="1.0"
 
 
 # Global variables
-global pathData,audioinputName,videoFileOutput,recording,maxDuration
+global pathData,audioinputName,videoFileOutput,recording,maxDuration,url
 
 pathData=""
 "Gives recording default folder path"
@@ -42,6 +43,20 @@ maxDuration=14400  #14400 = 4h, 3600 = 1h
 "max duration 3600=1h"
 mp4ToDesktop=True
 "record mp4 to Desktop"
+url="https://audiovideocast.unistra.fr/avc/myspace_home"
+#url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
+"url of the pubish button"
+
+def readConfFile(confFile="configuration-Lite.txt"):
+    """ Reading conf. file """
+    global url
+    fconf=open(confFile,"r")
+    config= ConfigParser.ConfigParser()
+    config.readfp(fconf)
+    if config.has_option("AVCLite","url") == True:
+        url=config.get("AVCLite","url")
+        print "found url:",url
+     
 
 def getAudioVideoInputFfmpeg(pathData=pathData):
         """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
@@ -136,11 +151,6 @@ def stopRecording():
 def publish(pathData):
     """ Open Publish recording"""
     # Open publishing URL
-    #url="https://cas.unistra.fr/cas/login?service=https%3A%2F%2Faudiovideocast.unistra.fr%2Favc%2Fauthentication_cas%3FreturnPage%3Dmyspace"
-    if 0:
-        url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
-    if 1:
-        url="https://audiovideocast.unistra.fr/avc/myspace_home"
     webbrowser.open(url, new=2, autoraise=True)
     #subprocess.Popen('explorer "%s"'%(pathData))
     
@@ -417,6 +427,8 @@ class MainFrame(wx.Frame):
 if __name__=="__main__":
         
     __version__="1.0"
+    
+    readConfFile()
     
     # Create a data folder if not present in ALLUSERSDATA
     pathData=createRecordingsFolder()

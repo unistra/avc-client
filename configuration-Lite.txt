@@ -1,0 +1,8 @@
+############################################################
+#         Configuration pour Audiovideocast Lite           #
+############################################################ 
+
+[AVCLite]
+
+# URL serveur (appele lorsqu'on click sur publier)
+#url=http://
