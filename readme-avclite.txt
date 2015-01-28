@@ -12,6 +12,7 @@ your screen.
 
 Audiovideocast wiki:
 https://sites.google.com/site/wikiaudiovideocast/
+https://sites.google.com/site/wikiaudiovideocast/client-logiciel-fr/client-avc-lite
 
 ===  Windows  ===
 

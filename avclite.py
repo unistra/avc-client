@@ -20,7 +20,6 @@ import ConfigParser
 import winsound
 
 import wx
-from mimify import mp
 
 
 __version__="1.0"
@@ -29,6 +28,8 @@ __version__="1.0"
 # Global variables
 global pathData,audioinputName,videoFileOutput,recording,maxDuration,url
 
+mp4ToDesktop=True
+"record mp4 to Desktop"
 pathData=""
 "Gives recording default folder path"
 audioinputName=""
@@ -41,8 +42,7 @@ recording=False
 "recording status True or False"
 maxDuration=14400  #14400 = 4h, 3600 = 1h
 "max duration 3600=1h"
-mp4ToDesktop=True
-"record mp4 to Desktop"
+
 url="https://audiovideocast.unistra.fr/avc/myspace_home"
 #url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
 "url of the pubish button"
@@ -66,7 +66,8 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
         #Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
         cmd = 'ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData
         if 0: os.system(cmd)
-        subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
+        if 0: subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
+        if 1: subprocess.call(cmd,stdin=subprocess.PIPE,shell=True)
         #Read back devices.txt
         audioDevices=[] # List of audio devices
         videoDevices=[] # List of video devices
@@ -445,8 +446,5 @@ if __name__=="__main__":
         #dialog=wx.MessageBox(text, 'Audiovideocast Lite Warning', wx.OK | wx.ICON_INFORMATION)
         dialog=wx.MessageDialog(None,message=text,caption="Audiovideocast Lite WARNING",style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
-
-        
-        
     
     app.MainLoop()
