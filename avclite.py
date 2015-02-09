@@ -67,7 +67,7 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
         cmd = 'ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData
         if 0: os.system(cmd)
         if 0: subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
-        if 1: subprocess.call(cmd,stdin=subprocess.PIPE,shell=True)
+        if 1: subprocess.call(cmd,stdin=subprocess.PIPE,shell=True) # Wait for the shell command to be executed before continuing the Python script
         #Read back devices.txt
         audioDevices=[] # List of audio devices
         videoDevices=[] # List of video devices
