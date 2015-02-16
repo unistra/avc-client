@@ -125,7 +125,7 @@ def engageRecording(pathData,audioinputName,resolution):
     if mp4ToDesktop==True:
         videoFileOutput = os.environ["UserProfile"]+"/Desktop/"+timeStr[0:10]+'-'+ timeStr[11:13] +"h-"+timeStr[14:16] +"m-" +timeStr[17:19]+"s.mp4"   
     
-    cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f  dshow -i audio="%s" -q 5 -vf scale=%s -pix_fmt yuv420p "%s"')%(audioinputName, resolution, videoFileOutput)
+    cmd=('ffmpeg -f dshow -i video="UScreenCapture" -f  dshow -i audio="%s" -q 5 -vf scale=%s -metadata title="AVCL%s" -pix_fmt yuv420p "%s"')%(audioinputName, resolution, resolution,videoFileOutput)
 
     ffmpegHandle=subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
     # Audio cue to confirm recording state
