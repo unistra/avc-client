@@ -42,6 +42,9 @@ recording=False
 "recording status True or False"
 maxDuration=14400  #14400 = 4h, 3600 = 1h
 "max duration 3600=1h"
+resolution="1280:720"
+"Output recording screen resolution"
+#HD720p="1280:720" HD1080p="1920:1080" SD480p="640:480"
 
 url="https://audiovideocast.unistra.fr/avc/myspace_home"
 #url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
@@ -49,15 +52,17 @@ url="https://audiovideocast.unistra.fr/avc/myspace_home"
 
 def readConfFile(confFile="configuration-Lite.txt"):
     """ Reading conf. file """
-    global url
+    global url,resolution
     fconf=open(confFile,"r")
     config= ConfigParser.ConfigParser()
     config.readfp(fconf)
     if config.has_option("AVCLite","url") == True:
         url=config.get("AVCLite","url")
         print "found url:",url
+    if config.has_option("AVCLite","resolution") == True:
+        resolution=config.get("AVCLite","resolution")
+        print "found resolution:",resolution
      
-
 def getAudioVideoInputFfmpeg(pathData=pathData):
         """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
         Returns a list of two lists : [audioDevices,videoDevices]"""
@@ -109,13 +114,10 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
             infoBox=MessageBoxUscreenMedia(frame, "Infos")
         return [audioDevices,videoDevices]
     
-def engageRecording(pathData,audioinputName):
+def engageRecording(pathData,audioinputName,resolution):
     """ Engage recording """
     global ffmpegHandle
-    HD720p="1280:720"
-    HD1080p="1920:1080"
-    SD480p="640:480"
-    resolution=HD720p
+    resolution=resolution
     time = datetime.datetime.now()
     timeStr=str(time)
     if mp4ToDesktop==False:
@@ -362,7 +364,7 @@ class MainFrame(wx.Frame):
                 wx.Frame.SetIcon(self, self.faviconRecording)
                 self.recordingStart=datetime.datetime.now()
                 self.timer.Start(1000)
-                engageRecording(pathData,audioinputName)
+                engageRecording(pathData,audioinputName,resolution)
             if recording==True:
                 self.statusBar.SetStatusText("Enregistrement en cours...")
         wx.CallLater(500,laterOn)

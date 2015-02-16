@@ -6,3 +6,7 @@
 
 # URL server (page called when clicking on "Publish")
 #url=http://
+
+# Output recording screen resolution, 
+# for example HD720p=1280:720 (default), HD1080p=1920:1080 SD480p=640:480
+#resolution=
