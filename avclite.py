@@ -116,7 +116,7 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
     
 def engageRecording(pathData,audioinputName,resolution):
     """ Engage recording """
-    global ffmpegHandle
+    global ffmpegHandle, videoFileOutput
     resolution=resolution
     time = datetime.datetime.now()
     timeStr=str(time)
@@ -151,6 +151,18 @@ def stopRecording():
     time.sleep(0.2)
     winsound.Beep(800,100)
 
+def overlayLogo():
+    """ Overlay a logo if present as images/watermarking.png """
+    if os.path.isfile("images/watermarking.png"):
+        print "Attempting to overlay images/watermarking.png, be patient as the video is re-encoding a new version ..."
+        cmd=('ffmpeg -y -i "%s" -i images/watermarking.png -filter_complex "overlay=main_w-overlay_w-10:main_h-overlay_h-10" "%s"')%(videoFileOutput,videoFileOutput.split(".")[0]+"-logo.mp4")
+        os.system(cmd)
+        #os.unlink(videoFileOutput) 
+    else:
+        text="Fichier watermarking.png introuvable dans le dossier images d'AVC Lite"
+        dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
+        dialog.ShowModal()
+    
 def publish(pathData):
     """ Open Publish recording"""
     # Open publishing URL
@@ -263,8 +275,11 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU,self.helpInfos,helpMenu)
         conf=menuInformation.Append(wx.NewId(),"Choisir un autre dossier d'enregistrement")
         self.Bind(wx.EVT_MENU,self.selectFolder,conf)
+        logo=menuInformation.Append(wx.NewId(),"Copie avec surimpression Logo/Watermarking")
+        self.Bind(wx.EVT_MENU,self.startOverlay,logo)
         version=menuInformation.Append(wx.NewId(),"A propos - Version")
         self.Bind(wx.EVT_MENU,self.about,version)
+        
         self.SetMenuBar(menubar)
                     
         im1 = wx.Image('images/avc_top.jpg', wx.BITMAP_TYPE_ANY).ConvertToBitmap()
@@ -298,7 +313,7 @@ class MainFrame(wx.Frame):
         sizerH.Add(btnPublish, 0, wx.ALIGN_CENTER|wx.RIGHT, padding1)
         sizerH.Add(btnOpen, 0, wx.ALIGN_CENTER|wx.RIGHT, padding1)
         sizerV.Add(self.timeLabel, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, 40)
-        
+         
         #sizerV.Add(text, 0, wx.ALIGN_CENTER|wx.ALL, 10)
         sizerV.Add(wx.StaticBitmap(panel, -1, imExplications, (5, 5)), 0, wx.ALIGN_CENTER|wx.TOP, 0)
         
@@ -420,6 +435,20 @@ class MainFrame(wx.Frame):
         self.statusBar.SetStatusText("Dossier d'enregistrement : "+pathData)
         mp4ToDesktop=False
         
+    def startOverlay(self,evt):
+        """ A function to add a logo overlay"""
+        global videoFileOutput
+        if videoFileOutput != "":
+            overlayLogo()
+        if videoFileOutput == "":
+            selectVideo=wx.FileDialog(self,message="Sélectionner une vidéo mp4 pour débuter le ré-encondage, faites une copie de l'original avant")
+            selectVideo.SetWildcard("*.mp4")
+            selectVideo.ShowModal()
+            videoFileOutput= selectVideo.GetPath()
+            print "Video selected for overlay :", videoFileOutput
+            overlayLogo()
+        videoFileOutput="" 
+            
     def about(self,evt):
         """ A function to show an about popup"""
         text="AudioVideoCast Lite version "+__version__+"  \n\nhttp://audiovideocast.unistra.fr/\n\n"
@@ -429,7 +458,7 @@ class MainFrame(wx.Frame):
 
 if __name__=="__main__":
         
-    __version__="1.0"
+    __version__="1.3"
     
     readConfFile()
     
