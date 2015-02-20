@@ -171,7 +171,12 @@ def publish(pathData):
     
 def openFolder(pathData):
     # Open explorer folder
-    subprocess.Popen('explorer "%s"'%(pathData))
+    
+    # I want to auto select all mp4 in the folder but the following don't work, any idea??
+    # subprocess.Popen('explorer "%s"'%(pathData+"\\*.mp4"))
+    
+    if 1: subprocess.Popen('explorer "%s"'%(pathData))
+    
         
 def createRecordingsFolder():
     """ Create recordings folder """
