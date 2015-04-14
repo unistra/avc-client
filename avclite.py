@@ -142,7 +142,7 @@ def stopRecording():
         ffmpegHandle.kill()
     except:
         print "WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may not be directly readable..."
-        text=_("WARNING: Can't stop properly FFMPEG subprocess,\n attempting forced stop, media may not be readable.")
+        text="WARNING: Can't stop properly FFMPEG subprocess,\n attempting forced stop, media may not be readable."
         dialog=wx.MessageDialog(None,message=text,caption="WARNING",style=wx.OK|wx.ICON_INFORMATION)
         dialog.ShowModal()
         #writeInLogs("- WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may lack header as a result and may not be directly readable... "+ str(datetime.datetime.now())+"\n")
@@ -446,7 +446,7 @@ class MainFrame(wx.Frame):
         if videoFileOutput != "":
             overlayLogo()
         if videoFileOutput == "":
-            selectVideo=wx.FileDialog(self,message="Sélectionner une vidéo mp4 pour débuter le ré-encondage, faites une copie de l'original avant")
+            selectVideo=wx.FileDialog(self,message="Sélectionner une vidéo mp4 pour débuter le ré-encondage.")
             selectVideo.SetWildcard("*.mp4")
             selectVideo.ShowModal()
             videoFileOutput= selectVideo.GetPath()
