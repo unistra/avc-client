@@ -26,7 +26,7 @@ __version__="1.0"
 
 
 # Global variables
-global pathData,audioinputName,videoFileOutput,recording,maxDuration,url
+global pathData,audioinputName,videoFileOutput,recording,maxDuration,url,urlInfo
 
 mp4ToDesktop=True
 "record mp4 to Desktop"
@@ -45,14 +45,15 @@ maxDuration=14400  #14400 = 4h, 3600 = 1h
 resolution="1280:720"
 "Output recording screen resolution"
 #HD720p="1280:720" HD1080p="1920:1080" SD480p="640:480"
-
 url="https://audiovideocast.unistra.fr/avc/myspace_home"
-#url="https://audiovideocast-test.u-strasbg.fr/avc/publication_screencast"
-"url of the pubish button"
+"url launched when clicking on the publish button"
+urlInfo="http://audiovideocast.unistra.fr"
+"url launched when clicking on the help menu"
+
 
 def readConfFile(confFile="configuration-Lite.txt"):
     """ Reading conf. file """
-    global url,resolution
+    global url,resolution,urlInfo
     fconf=open(confFile,"r")
     config= ConfigParser.ConfigParser()
     config.readfp(fconf)
@@ -62,6 +63,9 @@ def readConfFile(confFile="configuration-Lite.txt"):
     if config.has_option("AVCLite","resolution") == True:
         resolution=config.get("AVCLite","resolution")
         print "found resolution:",resolution
+    if config.has_option("AVCLite","urlInfo") == True:
+        urlInfo=config.get("AVCLite","urlInfo")
+        print "found urlInfo:",urlInfo
      
 def getAudioVideoInputFfmpeg(pathData=pathData):
         """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
@@ -424,8 +428,8 @@ class MainFrame(wx.Frame):
         
     def helpInfos(self,evt):
         """ A function to provide help on how to use the software"""
-        url="http://audiovideocast.unistra.fr"
-        webbrowser.open(url, new=2, autoraise=True)
+        global urlInfo
+        webbrowser.open(urlInfo, new=2, autoraise=True)
         
     def selectFolder(self,evt):
         """ A function to select the recording folder"""
@@ -456,7 +460,7 @@ class MainFrame(wx.Frame):
             
     def about(self,evt):
         """ A function to show an about popup"""
-        text="AudioVideoCast Lite version "+__version__+"  \n\nhttp://audiovideocast.unistra.fr/\n\n"
+        text="AudioVideoCast Lite version "+__version__+"  \n\n http://audiovideocast.unistra.fr/\n\n"
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
