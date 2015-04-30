@@ -8,8 +8,12 @@
 #url=http://
 
 # URL Info Help (page called when clicking on Help in the menu)
-#urlInfo=http://www.unistra.fr
+#urlInfo=http://
 
 # Output recording screen resolution, 
 # for example HD720p=1280:720 (default), HD1080p=1920:1080 SD480p=640:480
 #resolution=
+
+# By default recordings are done on the desktop, changing the recording folder
+# is possible by setting the pathData variable
+#pathData=

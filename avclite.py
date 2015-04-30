@@ -22,9 +22,6 @@ import winsound
 import wx
 
 
-__version__="1.0"
-
-
 # Global variables
 global pathData,audioinputName,videoFileOutput,recording,maxDuration,url,urlInfo
 
@@ -49,11 +46,20 @@ url="https://audiovideocast.unistra.fr/avc/myspace_home"
 "url launched when clicking on the publish button"
 urlInfo="http://audiovideocast.unistra.fr"
 "url launched when clicking on the help menu"
+pathSettings=os.environ["ALLUSERSPROFILE"]+"\\audiovideocast"
+"A folder containing some operational varaibles like the list of audio and video devices returned by ffmpeg and error logs"
 
-
+def showVuMeter():
+    """ If available in installation folder show VUMeter.exe
+    http://www.vuplayer.com/files/vumeter.zip """
+    try:
+        subprocess.Popen(["VUMeter.exe"])
+    except:
+        print "Couldn't find VUMeter.exe"  
+        
 def readConfFile(confFile="configuration-Lite.txt"):
     """ Reading conf. file """
-    global url,resolution,urlInfo
+    global url,resolution,urlInfo,pathData,mp4ToDesktop
     fconf=open(confFile,"r")
     config= ConfigParser.ConfigParser()
     config.readfp(fconf)
@@ -66,14 +72,18 @@ def readConfFile(confFile="configuration-Lite.txt"):
     if config.has_option("AVCLite","urlInfo") == True:
         urlInfo=config.get("AVCLite","urlInfo")
         print "found urlInfo:",urlInfo
+    if config.has_option("AVCLite","pathData") == True:
+        pathData=config.get("AVCLite","pathData")
+        print "found pathData:",pathData
+        mp4ToDesktop=False
      
-def getAudioVideoInputFfmpeg(pathData=pathData):
+def getAudioVideoInputFfmpeg(pathSettings=pathSettings):
         """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
         Returns a list of two lists : [audioDevices,videoDevices]"""
         #ffmpeg.exe don't work with input number. It is necessary to get the name of the Direcshow input.
         #also subprocess.Popen returns an empty string I therefore create the output in a file that i read just after
         #Ask ffmpeg.exe to give devices seen by direcshow on windows and write it to devices.txt file in the AVC data folder       
-        cmd = 'ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathData
+        cmd = 'ffmpeg -list_devices true -f dshow -i dummy > "%s"\devices.txt 2>&1' %pathSettings
         if 0: os.system(cmd)
         if 0: subprocess.Popen(cmd,stdin=subprocess.PIPE,shell=True)
         if 1: subprocess.call(cmd,stdin=subprocess.PIPE,shell=True) # Wait for the shell command to be executed before continuing the Python script
@@ -82,7 +92,7 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
         videoDevices=[] # List of video devices
         audioIndex=None # Index position where audio devices listing is starting
         videoIndex=None # Index position where video devices listing is starting
-        fileDevices=open(pathData+"\devices.txt","r") #as direct shell communication is not possible (=>file intermediary)
+        fileDevices=open(pathSettings+"\devices.txt","r") #as direct shell communication is not possible (=>file intermediary)
         devicesList=fileDevices.readlines()
         fileDevices.close()
         def fixCaracters(name):
@@ -118,9 +128,9 @@ def getAudioVideoInputFfmpeg(pathData=pathData):
             infoBox=MessageBoxUscreenMedia(frame, "Infos")
         return [audioDevices,videoDevices]
     
-def engageRecording(pathData,audioinputName,resolution):
+def engageRecording(audioinputName,resolution):
     """ Engage recording """
-    global ffmpegHandle, videoFileOutput
+    global ffmpegHandle, videoFileOutput,pathData
     resolution=resolution
     time = datetime.datetime.now()
     timeStr=str(time)
@@ -182,16 +192,15 @@ def openFolder(pathData):
     if 1: subprocess.Popen('explorer "%s"'%(pathData))
     
         
-def createRecordingsFolder():
+def createSettingsFolder():
     """ Create recordings folder """
-    # Create a default folder for the recordings
-    pathData=os.environ["ALLUSERSPROFILE"]+"\\audiovideocast"
+    # Create a default folder for the recording settings
+    
     if os.path.isdir(os.environ["ALLUSERSPROFILE"]+"\\audiovideocast"):
-        print "Default user data exists at ALLUSERSPROFILE\\audiovideocast : OK"
+        print "Default settings folder exists at ALLUSERSPROFILE\\audiovideocast : OK"
     else: 
-        print "Creating default data folder in ALLUSERSPROFILE\\audiovideocast"
-        os.mkdir(pathData) 
-    return pathData
+        print "Creating default settings folder in ALLUSERSPROFILE\\audiovideocast"
+        os.mkdir(pathSettings) 
 
 def checkMedia(mediaFile="",checkDelay=10):
     """ Check if the media file - mp3, flv or mp4 - is created and not empty after checkDelay seconds""" 
@@ -282,10 +291,13 @@ class MainFrame(wx.Frame):
         menubar.Append(menuInformation,"Menu")
         helpMenu=menuInformation.Append(wx.NewId(),"Site Audiovideocast et aide")
         self.Bind(wx.EVT_MENU,self.helpInfos,helpMenu)
+        
         conf=menuInformation.Append(wx.NewId(),"Choisir un autre dossier d'enregistrement")
         self.Bind(wx.EVT_MENU,self.selectFolder,conf)
+        
         logo=menuInformation.Append(wx.NewId(),"Copie avec surimpression Logo/Watermarking")
         self.Bind(wx.EVT_MENU,self.startOverlay,logo)
+        
         version=menuInformation.Append(wx.NewId(),"A propos - Version")
         self.Bind(wx.EVT_MENU,self.about,version)
         
@@ -388,7 +400,7 @@ class MainFrame(wx.Frame):
                 wx.Frame.SetIcon(self, self.faviconRecording)
                 self.recordingStart=datetime.datetime.now()
                 self.timer.Start(1000)
-                engageRecording(pathData,audioinputName,resolution)
+                engageRecording(audioinputName,resolution)
             if recording==True:
                 self.statusBar.SetStatusText("Enregistrement en cours...")
         wx.CallLater(500,laterOn)
@@ -415,7 +427,8 @@ class MainFrame(wx.Frame):
             
     def orderOpen(self,evt):
         """ Order Open/Publish from the GUI button"""
-        global mp4ToDesktop
+        global mp4ToDesktop,pathData
+        print ">>>>>> pathData in orderOpen =", pathData
         if mp4ToDesktop==False:
             openFolder(pathData)
         if mp4ToDesktop==True:    
@@ -464,23 +477,26 @@ class MainFrame(wx.Frame):
         dialog=wx.MessageDialog(self,message=text,
         style=wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         dialog.ShowModal()
+        
 
 if __name__=="__main__":
         
-    __version__="1.3"
+    __version__="1.5"
     
     readConfFile()
     
     # Create a data folder if not present in ALLUSERSDATA
-    pathData=createRecordingsFolder()
+    createSettingsFolder()
     
     app=wx.App(redirect=False)
     frame = MainFrame(None, "Audiovideocast Lite") 
     frame.Show(True)
     
+    showVuMeter()
+    
     # Use audio source
     try:
-        audioinputName=getAudioVideoInputFfmpeg(pathData)[0][0]
+        audioinputName=getAudioVideoInputFfmpeg(pathSettings)[0][0]
     except IndexError:
         text="Merci de brancher un micro et de relancer l'application."
         #dialog=wx.MessageBox(text, 'Audiovideocast Lite Warning', wx.OK | wx.ICON_INFORMATION)
