@@ -266,6 +266,12 @@ class MainFrame(wx.Frame):
         global mp4ToDesktop
         wx.Frame.__init__(self, parent, -1, title, pos=(150, 150), size=(850, 690),style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
         
+        
+        # Stop recording if Windows session closes while recording with http://www.wxpython.org/docs/api/wx.CloseEvent-class.html#CanVeto
+        # unfortunately it's too late as the session already killed ffmpeg violently
+        self.Bind(wx.EVT_QUERY_END_SESSION, self.onCloseSessionWhileRecording)
+        # self.Bind(wx.EVT_END_SESSION, self.orderStopRecording)
+        
         self.Bind(wx.EVT_CLOSE, self.onCloseFrame)
         
         panel=wx.Panel(self)
@@ -356,7 +362,12 @@ class MainFrame(wx.Frame):
         if recording==False:
             self.Destroy()
             sys.exit()    
-    
+            
+    def onCloseSessionWhileRecording(self,evt):
+        """Explains why the recording is corrupted to the user. """
+        dialog = wx.MessageDialog(self, message = "Ne pas fermer Windows lorsque enregistrement est en cours.\nL'enregistrement est probablement corrompu.", caption = "Caption", style = wx.YES_NO, pos = wx.DefaultPosition)
+        dialog.ShowModal()
+        
     def update(self, evt):
         """ Update duration label and stop recording if above maxDuration """
         global maxDuration,recording
