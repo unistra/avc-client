@@ -21,7 +21,6 @@ import winsound
 
 import wx
 
-
 # Global variables
 global pathData,audioinputName,videoFileOutput,recording,maxDuration,url,urlInfo
 
@@ -42,12 +41,12 @@ maxDuration=14400  #14400 = 4h, 3600 = 1h
 resolution="1280:720"
 "Output recording screen resolution"
 #HD720p="1280:720" HD1080p="1920:1080" SD480p="640:480"
-url="https://audiovideocast.unistra.fr/avc/myspace_home"
+url="https://audiovideocast.unistra.fr/avc/publication_screencast"
 "url launched when clicking on the publish button"
 urlInfo="http://audiovideocast.unistra.fr"
 "url launched when clicking on the help menu"
 pathSettings=os.environ["ALLUSERSPROFILE"]+"\\audiovideocast"
-"A folder containing some operational varaibles like the list of audio and video devices returned by ffmpeg and error logs"
+"A folder containing some operational variables like the list of audio and video devices returned by FFMPEG and error logs"
 
 def showVuMeter():
     """ If available in installation folder show VUMeter.exe
@@ -59,7 +58,7 @@ def showVuMeter():
         
 def readConfFile(confFile="configuration-Lite.txt"):
     """ Reading conf. file """
-    global url,resolution,urlInfo,pathData,mp4ToDesktop
+    global url,resolution,urlInfo,pathData,mp4ToDesktop,maxDuration
     fconf=open(confFile,"r")
     config= ConfigParser.ConfigParser()
     config.readfp(fconf)
@@ -76,6 +75,9 @@ def readConfFile(confFile="configuration-Lite.txt"):
         pathData=config.get("AVCLite","pathData")
         print "found pathData:",pathData
         mp4ToDesktop=False
+    if config.has_option("AVCLite","maxDuration") == True:
+        maxDuration=int(config.get("AVCLite","maxDuration"))
+        print "found maxDuration:",maxDuration
      
 def getAudioVideoInputFfmpeg(pathSettings=pathSettings):
         """A function to get Audio input from ffmpeg.exe (http://ffmpeg.zeranoe.com/builds/)
@@ -161,9 +163,12 @@ def stopRecording():
         dialog.ShowModal()
         #writeInLogs("- WARNING: Can't stop properly FFMPEG subprocess, attempting forced taskkill, media may lack header as a result and may not be directly readable... "+ str(datetime.datetime.now())+"\n")
         os.popen("taskkill /F /IM  ffmpeg.exe") 
+        
     winsound.Beep(800,100)
     time.sleep(0.2)
     winsound.Beep(800,100)
+    
+    
 
 def overlayLogo():
     """ Overlay a logo if present as images/watermarking.png """
@@ -226,22 +231,22 @@ class MessageBoxUscreenMedia(wx.Frame):
         
         panel=wx.Panel(self)
         panel.SetBackgroundColour("#5789FF") 
-        textToShow= "\n'Screen Capture DirectShow source Filter' ne semble pas présent sur ce PC,\n Ce filtre permet aux applications Windows d'enregistrer l'écran.\n\nIl peut être téléchargé sur le site du développeur Umedia (page, fichier) :\n" 
+        textToShow= "\n'Screen Capture DirectShow source Filter' ne semble pas présent sur ce PC,\n Ce filtre permet aux applications Windows d'enregistrer l'écran.\n\nIl peut être téléchargé sur le site du développeur Umedia :\n" 
         infoLabel = wx.StaticText(panel, -1,  textToShow,style=wx.ALIGN_LEFT)
         infoLabel2 = wx.StaticText(panel, -1,  "\nRelancer l'application après installation.",style=wx.ALIGN_LEFT)
         panel.SetBackgroundColour("steel blue") 
         infoLabel.SetForegroundColour("white")
         infoLabel2.SetForegroundColour("white")
         
-        self.btnSiteUmedia = wx.Button(parent=panel, id=-1, label="http://umediaserver.net/components",size=(400,40))
-        self.Bind(wx.EVT_BUTTON,self.openUmediaSite,self.btnSiteUmedia)
+        #self.btnSiteUmedia = wx.Button(parent=panel, id=-1, label="http://umediaserver.net/components",size=(400,40))
+        #self.Bind(wx.EVT_BUTTON,self.openUmediaSite,self.btnSiteUmedia)
         
-        self.btnDownload = wx.Button(parent=panel, id=-1, label="http://umediaserver.net/bin/UScreenCapture.zip",size=(400,40))
+        self.btnDownload = wx.Button(parent=panel, id=-1, label="Télécharger UScreenCapture\n(http://umediaserver.net/components)",size=(400,40))
         self.Bind(wx.EVT_BUTTON,self.downloadFilter,self.btnDownload)
         
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(infoLabel, flag=wx.ALIGN_CENTER)
-        self.sizer.Add(self.btnSiteUmedia, flag=wx.ALIGN_CENTER)
+        #self.sizer.Add(self.btnSiteUmedia, flag=wx.ALIGN_CENTER)
         self.sizer.Add(self.btnDownload, flag=wx.ALIGN_CENTER)
         self.sizer.Add(infoLabel2, flag=wx.ALIGN_CENTER)
         
@@ -492,7 +497,7 @@ class MainFrame(wx.Frame):
 
 if __name__=="__main__":
         
-    __version__="1.5"
+    __version__="1.7"
     
     readConfFile()
     

@@ -17,3 +17,7 @@
 # By default recordings are done on the desktop, changing the recording folder
 # is possible by setting the pathData variable
 #pathData=
+
+# Maximum recording duration in seconds 3600 = 1h (default 14400 = 4h)
+# Beyond recording stops and an informative popup appears
+# maxDuration=14400
