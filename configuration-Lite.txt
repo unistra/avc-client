@@ -20,4 +20,4 @@
 
 # Maximum recording duration in seconds 3600 = 1h (default 14400 = 4h)
 # Beyond recording stops and an informative popup appears
-# maxDuration=14400
+#maxDuration=14400
